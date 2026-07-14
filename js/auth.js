@@ -189,57 +189,7 @@ function closeModal(modalId) {
     if (el) el.classList.remove('active');
 }
 
-function generateDeviceId() {
-    let id = localStorage.getItem('device_id');
-    if (id) return id;
-    const nav = navigator;
-    const screen = window.screen;
-    const components = [
-        nav.userAgent || '',
-        nav.language || '',
-        screen.width || '',
-        screen.height || '',
-        nav.platform || '',
-        new Date().getTimezoneOffset() || ''
-    ];
-    const raw = components.join('||');
-    let hash = 0;
-    for (let i = 0; i < raw.length; i++) {
-        const ch = raw.charCodeAt(i);
-        hash = ((hash << 5) - hash) + ch;
-        hash |= 0;
-    }
-    id = 'dev_' + Math.abs(hash).toString(36) + '_' + Date.now().toString(36);
-    localStorage.setItem('device_id', id);
-    return id;
-}
 
-async function getDeviceName() {
-    const ua = navigator.userAgent;
-    const isMobile = /Mobile|Android|iPhone|iPad/i.test(ua);
-    const browser = /Chrome/i.test(ua) ? 'Chrome' : /Firefox/i.test(ua) ? 'Firefox' : /Safari/i.test(ua) ? 'Safari' : /Edge/i.test(ua) ? 'Edge' : 'Unknown';
-    return `${isMobile ? 'هاتف' : 'حاسوب'} - ${browser}`;
-}
-
-async function registerDevice(userId) {
-    // Device registration is best-effort — NEVER blocks login
-    try {
-        const deviceId = generateDeviceId();
-        const deviceName = await getDeviceName();
-        const deviceType = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'mobile' : 'desktop';
-        await fetch(`${CONFIG.SUPABASE.URL}/functions/v1/device-auth/register-device`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', apikey: CONFIG.SUPABASE.ANON_KEY, Authorization: `Bearer ${CONFIG.SUPABASE.ANON_KEY}` },
-            body: JSON.stringify({
-                user_id: userId, device_id: deviceId, device_name: deviceName,
-                device_type: deviceType, ip_address: '', user_agent: navigator.userAgent
-            })
-        });
-    } catch (error) {
-        console.warn('Device registration failed:', error);
-    }
-    return true; // Always allow login
-}
 
 async function handleLogin(event) {
     event.preventDefault();
@@ -308,11 +258,8 @@ async function handleLogin(event) {
         cacheUser(user);
         closeModal('loginModal');
 
-        if (!user.grade_id) {
-            window.location.href = 'select-grade.html';
-        } else {
-            window.location.href = 'dashboard.html';
-        }
+        const target = !user.grade_id ? 'select-grade.html' : 'dashboard.html';
+        setTimeout(() => { window.location.href = target; }, 50);
     } catch (error) {
         console.error('Login error:', error);
         showAlert('حدث خطأ أثناء تسجيل الدخول', 'error');
@@ -359,7 +306,7 @@ async function handleRegister(event) {
         localStorage.removeItem('isAdmin');
         cacheUser(newUser);
         closeModal('registerModal');
-        window.location.href = 'select-grade.html';
+        setTimeout(() => { window.location.href = 'select-grade.html'; }, 50);
     } catch (error) {
         console.error('Registration error:', error);
         showAlert('حدث خطأ أثناء إنشاء الحساب', 'error');
@@ -421,19 +368,6 @@ function logout() {
     sessionStorage.removeItem(SESSION_USER_KEY);
     currentUser = null;
     window.location.href = 'index.html';
-}
-
-function fullLogout() {
-    localStorage.removeItem('userId');
-    localStorage.removeItem('isAdmin');
-    localStorage.removeItem('loginTime');
-    localStorage.removeItem('admin_session');
-    localStorage.removeItem('admin_expires');
-    localStorage.removeItem('admin_sig');
-    localStorage.removeItem('device_id');
-    sessionStorage.clear();
-    currentUser = null;
-    window.location.href = 'login.html';
 }
 
 function showAlert(message, type = 'info') {
@@ -714,13 +648,9 @@ async function handleVerifyCode(event) {
     }
 }
 
-// التحقق من جلسة الأدمن (محلي أولاً، ثم عبر السيرفر إن أمكن)
-async function requireAdmin() {
+window.requireAdmin = async function requireAdmin() {
     const sessionId = localStorage.getItem('admin_session');
-    if (!sessionId) {
-        window.location.href = 'login.html';
-        return false;
-    }
+    if (!sessionId) return false;
 
     const expiresAt = parseInt(localStorage.getItem('admin_expires'));
     if (expiresAt && Date.now() > expiresAt) {
@@ -729,7 +659,6 @@ async function requireAdmin() {
         localStorage.removeItem('admin_sig');
         localStorage.removeItem('isAdmin');
         localStorage.removeItem('userId');
-        window.location.href = 'login.html';
         return false;
     }
 
@@ -744,14 +673,8 @@ async function requireAdmin() {
             })
         });
         const data = await res.json();
-        if (data.valid) return true;
+        return !!data.valid;
     } catch (e) {
-        console.warn('requireAdmin: تعذر الاتصال بخادم التحقق، إعادة التوجيه لتسجيل الدخول');
-        window.location.href = 'login.html';
         return false;
     }
-
-    return false;
-}
-
-window.requireAdmin = requireAdmin;
+};
