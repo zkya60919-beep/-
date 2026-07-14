@@ -298,14 +298,6 @@ async function handleLogin(event) {
             return;
         }
 
-        // Device check (skip for admin)
-        const deviceOk = await registerDevice(user.id);
-
-        if (!deviceOk) {
-            if (btn) setButtonLoading(btn, false);
-            return;
-        }
-
         localStorage.setItem('userId', user.phone);
         localStorage.setItem('loginTime', Date.now().toString());
         cacheUser(user);
