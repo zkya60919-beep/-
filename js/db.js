@@ -315,7 +315,7 @@ const db = {
             .select('*, months(name)')
             .eq('user_id', userId)
             .order('end_date', { ascending: false });
-        if (error) throw error;
+        if (error) { console.error('getUserSubscriptions error:', error); throw error; }
         return data || [];
     },
 

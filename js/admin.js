@@ -2448,24 +2448,33 @@ async function approvePaymentReq(id) {
 
         if (request.month_id) {
             try {
-                await supabase.from('subscriptions').insert({
+                const sub = await db.createSubscription({
                     user_id: request.student_id,
-                    month_id: request.month_id,
+                    month_id: parseInt(request.month_id),
                     start_date: startDate.toISOString(),
                     end_date: endDate.toISOString(),
                     status: 'active'
                 });
-            } catch (e) { errors.push('الاشتراك الشهري: ' + e.message); }
+                console.log('Subscription created:', sub);
+            } catch (e) {
+                console.error('Subscription insert error:', e);
+                errors.push('الاشتراك الشهري: ' + e.message);
+            }
         }
 
         if (request.course_id) {
             try {
-                await supabase.from('course_purchases').insert({
+                const { data: cp, error: cpErr } = await supabase.from('course_purchases').insert({
                     user_id: request.student_id,
-                    course_id: request.course_id,
+                    course_id: parseInt(request.course_id),
                     status: 'active'
-                });
-            } catch (e) { errors.push('شراء الكورس: ' + e.message); }
+                }).select();
+                if (cpErr) throw cpErr;
+                console.log('Course purchase created:', cp);
+            } catch (e) {
+                console.error('Course purchase insert error:', e);
+                errors.push('شراء الكورس: ' + e.message);
+            }
         }
 
         await db.updatePaymentRequest(id, {
