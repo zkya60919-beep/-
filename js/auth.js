@@ -245,7 +245,6 @@ async function handleLogin(event) {
     event.preventDefault();
 
     if (!window.supabase || !window.supabase.from) {
-        console.error('Supabase غير مُهيأ');
         showAlert('❌ خطأ في الاتصال بقاعدة البيانات', 'error');
         return;
     }
@@ -257,29 +256,7 @@ async function handleLogin(event) {
     if (btn) setButtonLoading(btn, true);
 
     try {
-        // Admin check
-        const adminRes = await fetch(`${CONFIG.SUPABASE.URL}/functions/v1/admin-auth`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', apikey: CONFIG.SUPABASE.ANON_KEY, Authorization: `Bearer ${CONFIG.SUPABASE.ANON_KEY}` },
-            body: JSON.stringify({ phone, password })
-        });
-        const adminData = await adminRes.json();
-
-        if (adminRes.ok && adminData.session_id) {
-            localStorage.setItem('admin_session', adminData.session_id);
-            localStorage.setItem('admin_expires', adminData.expires_at);
-            localStorage.setItem('admin_sig', adminData.signature);
-            localStorage.setItem('isAdmin', 'true');
-            localStorage.setItem('userId', phone);
-            localStorage.setItem('loginTime', Date.now().toString());
-            sessionStorage.removeItem(SESSION_USER_KEY);
-            showAlert('✅ تم تسجيل الدخول كمدير', 'success');
-            setTimeout(() => window.location.href = 'admin.html', 500);
-            return;
-        }
-
-        localStorage.removeItem('isAdmin');
-
+        // Fetch user first to check if admin
         const { data: user, error } = await supabase
             .from('users')
             .select('*')
@@ -298,24 +275,38 @@ async function handleLogin(event) {
             return;
         }
 
+        // Admin check only for admin users
+        if (user.division === 'admin' || user.role === 'admin') {
+            try {
+                const adminRes = await fetch(`${CONFIG.SUPABASE.URL}/functions/v1/admin-auth`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', apikey: CONFIG.SUPABASE.ANON_KEY, Authorization: `Bearer ${CONFIG.SUPABASE.ANON_KEY}` },
+                    body: JSON.stringify({ phone, password })
+                });
+                const adminData = await adminRes.json();
+
+                if (adminRes.ok && adminData.session_id) {
+                    localStorage.setItem('admin_session', adminData.session_id);
+                    localStorage.setItem('admin_expires', adminData.expires_at);
+                    localStorage.setItem('admin_sig', adminData.signature);
+                    localStorage.setItem('isAdmin', 'true');
+                    localStorage.setItem('userId', phone);
+                    localStorage.setItem('loginTime', Date.now().toString());
+                    sessionStorage.removeItem(SESSION_USER_KEY);
+                    showAlert('✅ تم تسجيل الدخول كمدير', 'success');
+                    setTimeout(() => window.location.href = 'admin.html', 500);
+                    return;
+                }
+            } catch (_) {
+                // EF failed for admin — fall through to regular login
+            }
+        }
+
+        localStorage.removeItem('isAdmin');
         localStorage.setItem('userId', user.phone);
         localStorage.setItem('loginTime', Date.now().toString());
         cacheUser(user);
         closeModal('loginModal');
-
-        // Log successful login
-        try {
-            await supabase.from('login_logs').insert({
-                user_id: user.id,
-                phone: user.phone,
-                action: 'login',
-                status: 'success',
-                user_agent: navigator.userAgent,
-                device_id: localStorage.getItem('device_id')
-            });
-        } catch (e) {
-            console.warn('فشل تسجيل الدخول في login_logs:', e);
-        }
 
         if (!user.grade_id) {
             window.location.href = 'select-grade.html';
@@ -364,6 +355,7 @@ async function handleRegister(event) {
         if (insertError) throw insertError;
 
         localStorage.setItem('userId', newUser.phone);
+        localStorage.setItem('loginTime', Date.now().toString());
         localStorage.removeItem('isAdmin');
         cacheUser(newUser);
         closeModal('registerModal');
