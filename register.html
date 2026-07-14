@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- ===== SEO Primary Tags ===== -->
+    <title>إنشاء حساب جديد | منصة الباسط للعلوم الشرعية</title>
+    <meta name="description" content="أنشئ حسابك في منصة الباسط للعلوم الشرعية مجاناً وابدأ رحلتك في تعلم الفقه والعقيدة والتفسير والحديث مع أ/ محمد عبد الباسط.">
+    <meta name="keywords" content="إنشاء حساب الباسط, تسجيل الباسط, Albasit register, منصة الباسط, علوم شرعية اعدادي ثانوي">
+    <meta name="author" content="أ/ محمد عبد الباسط">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <link rel="canonical" href="https://albasit.vercel.app/register.html">
+
+    <!-- ===== Open Graph / Facebook ===== -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://albasit.vercel.app/register.html">
+    <meta property="og:title" content="إنشاء حساب جديد | منصة الباسط للعلوم الشرعية">
+    <meta property="og:description" content="انضم إلى منصة الباسط مجاناً وابدأ تعلم العلوم الشرعية مع نخبة من الشروحات التفاعلية.">
+    <meta property="og:image" content="https://albasit.vercel.app/images/logo.jpg">
+    <meta property="og:image:alt" content="منصة الباسط للعلوم الشرعية - إنشاء حساب">
+    <meta property="og:locale" content="ar_EG">
+    <meta property="og:site_name" content="منصة الباسط">
+
+    <!-- ===== Twitter Card ===== -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="إنشاء حساب | منصة الباسط للعلوم الشرعية">
+    <meta name="twitter:description" content="ابدأ رحلتك في العلوم الشرعية مع منصة الباسط - اشترك مجاناً">
+    <meta name="twitter:image" content="https://albasit.vercel.app/images/logo.jpg">
+
+    <!-- ===== Performance: Preconnect ===== -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://supabase.co">
+    <link rel="preconnect" href="https://supabase.co">
+
+    <!-- ===== Styles ===== -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap">
+</head>
+<body>
+    <!-- Load Supabase library first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Header with Logo -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <img src="images/logo.jpg" alt="الباسط" class="logo-img">
+                </div>
+                <nav class="nav">
+                    <ul class="nav-list">
+                        <li><a href="index.html" class="nav-link">الرئيسية</a></li>
+                        <li><a href="about.html" class="nav-link">نبذة عنا</a></li>
+                        <li class="nav-divider"></li>
+                        <li><a href="login.html" class="btn btn-outline btn-mobile">تسجيل الدخول</a></li>
+                        <li><button class="btn btn-outline btn-mobile" onclick="window.location.href='index.html'">العودة</button></li>
+                    </ul>
+                </nav>
+                <div class="auth-buttons" id="authButtons">
+                    <a href="login.html" class="btn btn-outline">تسجيل الدخول</a>
+                </div>
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="القائمة">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+        <div class="nav-overlay" onclick="toggleMobileMenu()"></div>
+    </header>
+
+    <!-- Register Section -->
+    <section class="auth-section">
+        <div class="container">
+            <div class="auth-container">
+                <div class="auth-card">
+                    <div class="auth-header" style="text-align: center;">
+                        <img src="images/logo.jpg" alt="الباسط" style="height: 80px; border-radius: 12px; margin-bottom: 16px; object-fit: contain;">
+                        <h1 class="auth-title">إنشاء حساب جديد</h1>
+                        <p class="auth-subtitle">انضم إلى منصة الباسط للعلوم الشرعية</p>
+                    </div>
+                    
+                    <form class="auth-form" id="registerForm" onsubmit="handleRegister(event)">
+                        <div class="form-group">
+                            <label for="registerName">الاسم الكامل</label>
+                            <input type="text" id="registerName" name="name" placeholder="أدخل اسمك الكامل" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="registerPhone">رقم الهاتف</label>
+                            <input type="tel" id="registerPhone" name="phone" placeholder="أدخل رقم هاتفك" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="registerPassword">كلمة المرور</label>
+                            <div class="password-wrapper">
+                                <input type="password" id="registerPassword" name="password" placeholder="أدخل كلمة المرور" required>
+                                <button type="button" class="password-toggle" onclick="toggleFieldVisibility('registerPassword', this)" tabindex="-1" aria-label="إظهار/إخفاء كلمة المرور">👁</button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="registerDivision">الشعبة</label>
+                            <select id="registerDivision" name="division" required>
+                                <option value="">اختر الشعبة</option>
+                                <option value="علمي">علمي</option>
+                                <option value="أدبي">أدبي</option>
+                                <option value="إعدادي">إعدادي</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-full btn-large">إنشاء الحساب</button>
+                    </form>
+                    
+                    <div class="auth-footer">
+                        <p class="auth-footer-text">لديك حساب بالفعل؟ <a href="login.html">تسجيل الدخول</a></p>
+                        <p class="auth-footer-text"><a href="index.html">العودة للصفحة الرئيسية</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="js/config.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

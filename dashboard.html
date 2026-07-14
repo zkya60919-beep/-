@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- ===== SEO ===== -->
+    <title>لوحة الطالب | منصة الباسط للعلوم الشرعية</title>
+    <meta name="description" content="لوحة تحكم الطالب في منصة الباسط - تصفح الفيديوهات والمذكرات والامتحانات وأدِر اشتراكك وإعدادات حسابك">
+    <meta name="keywords" content="لوحة الطالب الباسط, dashboard الباسط, علوم شرعية, منصة الباسط">
+    <meta name="author" content="أ/ محمد عبد الباسط">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="canonical" href="https://albasit.vercel.app/dashboard.html">
+
+    <!-- ===== Fonts ===== -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap">
+
+    <!-- ===== Styles ===== -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/final-reviews.css">
+    <link rel="stylesheet" href="css/video-player.css">
+
+    <!-- ===== Scripts ===== -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body class="dashboard-page">
+    <!-- Load Supabase library first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- ===== Header ===== -->
+    <header class="header" role="banner">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="index.html" aria-label="العودة للرئيسية">
+                        <img src="images/logo.jpg" alt="منصة الباسط" class="logo-img" width="56" height="56">
+                    </a>
+                </div>
+                <nav class="nav" role="navigation" aria-label="القائمة الرئيسية">
+                    <ul class="nav-list">
+                        <li><a href="index.html" class="nav-link">الرئيسية</a></li>
+                        <li><a href="about.html" class="nav-link">نبذة عنا</a></li>
+                        <li><a href="dashboard.html" class="nav-link active" aria-current="page">لوحتي</a></li>
+                    </ul>
+                </nav>
+                <div class="auth-buttons" id="authButtons"></div>
+                <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()" aria-label="فتح القائمة" aria-expanded="false">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+        <div class="nav-overlay" onclick="toggleMobileMenu()"></div>
+    </header>
+
+    <!-- ===== Main ===== -->
+    <main id="main-content">
+        <div class="container">
+            <div class="dashboard-container">
+
+                <!-- ===== Sidebar ===== -->
+                <aside class="sidebar" role="navigation" aria-label="قائمة لوحة التحكم">
+                    <div class="sidebar-profile">
+                        <div class="profile-avatar" id="profileAvatar" onclick="document.getElementById('avatarInput').click()" style="cursor:pointer;position:relative">
+                            <img id="avatarImg" src="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:none">
+                            <svg id="avatarIcon" width="32" height="32" viewBox="0 0 24 24" fill="white"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                            <div style="position:absolute;bottom:0;right:0;background:var(--primary);border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid var(--white)">📷</div>
+                        </div>
+                        <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
+                        <p class="profile-name" id="sidebarUserName">...</p>
+                        <p class="profile-grade" id="userGrade">...</p>
+                    </div>
+
+                    <nav class="sidebar-menu">
+                        <button type="button" class="menu-item active" data-section="overview" aria-label="نظرة عامة">
+                            <span class="menu-icon" aria-hidden="true">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+                            </span>
+                            <span>نظرة عامة</span>
+                        </button>
+                        <button type="button" class="menu-item" data-section="videos" aria-label="الفيديوهات">
+                            <span class="menu-icon" aria-hidden="true">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 9l-7 4V8l7 4zm9 5H3V5h18v12z"/></svg>
+                            </span>
+                            <span>الفيديوهات</span>
+                        </button>
+                        <button type="button" class="menu-item" data-section="notes" aria-label="المذكرات">
+                            <span class="menu-icon" aria-hidden="true">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                            </span>
+                            <span>المذكرات</span>
+                        </button>
+                        <button type="button" class="menu-item" data-section="audio" aria-label="الصوتيات">
+                            <span class="menu-icon" aria-hidden="true">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6zm-2 16c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+                            </span>
+                            <span>الصوتيات</span>
+                        </button>
+                        <button type="button" class="menu-item" data-section="exams" aria-label="الامتحانات">
+                            <span class="menu-icon" aria-hidden="true">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
+                            </span>
+                            <span>الامتحانات</span>
+                        </button>
+                        <button type="button" class="menu-item" data-section="final-reviews" aria-label="المراجعات النهائية">
+                            <span class="menu-icon" aria-hidden="true">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
+                            </span>
+                            <span>المراجعات النهائية</span>
+                        </button>
+                        <button type="button" class="menu-item" data-section="subscription" aria-label="الاشتراكات">
+                            <span class="menu-icon" aria-hidden="true">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+                            </span>
+                            <span>الاشتراكات</span>
+                        </button>
+                        <!-- ===== NEW: Account Settings ===== -->
+                        <button type="button" class="menu-item" onclick="window.location.href='student-payment-requests.html'" aria-label="طلبات الدفع">
+                            <span class="menu-icon" aria-hidden="true">📋</span>
+                            <span>طلبات الدفع</span>
+                        </button>
+                        <button type="button" class="menu-item" data-section="account-settings" aria-label="إعدادات الحساب">
+                            <span class="menu-icon" aria-hidden="true">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                            </span>
+                            <span>إعدادات الحساب</span>
+                        </button>
+                    </nav>
+                </aside>
+
+                <!-- ===== Dashboard Content ===== -->
+                <div class="dashboard-content">
+
+                    <h1 class="sr-only">لوحة الطالب - منصة الباسط للعلوم الشرعية</h1>
+
+                    <!-- Overview Section -->
+                    <section id="overview-section" class="dashboard-section active" aria-labelledby="overviewTitle">
+                        <div class="section-header-row">
+                            <h2 class="section-title" id="overviewTitle">نظرة عامة</h2>
+                            <p class="section-welcome" id="welcomeMsg">أهلاً بك في منصة الباسط 👋</p>
+                        </div>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-icon-wrap stat-icon-green" aria-hidden="true">
+                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>الطالب</h3>
+                                    <p id="userNameOverview">—</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon-wrap stat-icon-blue" aria-hidden="true">
+                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/></svg>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>الصف الدراسي</h3>
+                                    <p id="userGradeOverview">—</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon-wrap stat-icon-amber" aria-hidden="true">
+                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>حالة الاشتراك</h3>
+                                    <p id="userSubscriptionStatus">—</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="quick-actions">
+                            <h3 class="quick-title">إجراءات سريعة</h3>
+                            <div class="actions-grid">
+                                <button type="button" class="action-btn" onclick="showSection('subscription')">
+                                    <span class="action-icon" aria-hidden="true">💳</span>
+                                    <span>إدارة الاشتراكات</span>
+                                </button>
+                                <button type="button" class="action-btn" onclick="showCodeModal()">
+                                    <span class="action-icon" aria-hidden="true">🔑</span>
+                                    <span>إدخال كود التفعيل</span>
+                                </button>
+                                <button type="button" class="action-btn" onclick="showSection('videos')">
+                                    <span class="action-icon" aria-hidden="true">🎬</span>
+                                    <span>مشاهدة الفيديوهات</span>
+                                </button>
+                                <button type="button" class="action-btn" onclick="showSection('account-settings')">
+                                    <span class="action-icon" aria-hidden="true">⚙️</span>
+                                    <span>إعدادات الحساب</span>
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Videos Section -->
+                    <section id="videos-section" class="dashboard-section" aria-labelledby="videosTitle">
+                        <h2 class="section-title" id="videosTitle">الفيديوهات</h2>
+                        <p class="section-hint">محتوى خاص بصفك فقط — اختر الشهر</p>
+                        <div class="months-tabs" id="monthsTabs" role="tablist"></div>
+                        <div class="videos-container content-grid" id="videosContainer" role="list">
+                            <div class="loading-grid">
+                                <div class="content-skeleton"><div class="skeleton skeleton-thumbnail"></div><div class="skeleton skeleton-text" style="margin:16px;width:70%;"></div><div class="skeleton skeleton-text-sm" style="margin:4px 16px 16px;width:50%;"></div></div>
+                                <div class="content-skeleton"><div class="skeleton skeleton-thumbnail"></div><div class="skeleton skeleton-text" style="margin:16px;width:70%;"></div><div class="skeleton skeleton-text-sm" style="margin:4px 16px 16px;width:50%;"></div></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Notes Section -->
+                    <section id="notes-section" class="dashboard-section" aria-labelledby="notesTitle">
+                        <h2 class="section-title" id="notesTitle">المذكرات</h2>
+                        <p class="section-hint">ملفات PDF حسب الشهر</p>
+                        <div class="months-tabs" id="notesMonthsTabs" role="tablist"></div>
+                        <div class="notes-container content-grid" id="notesContainer" role="list"></div>
+                    </section>
+
+                    <!-- Audio Section -->
+                    <section id="audio-section" class="dashboard-section" aria-labelledby="audioTitle">
+                        <h2 class="section-title" id="audioTitle">الصوتيات</h2>
+                        <p class="section-hint">استمع مباشرة داخل المنصة</p>
+                        <div class="months-tabs" id="audioMonthsTabs" role="tablist"></div>
+                        <div class="audio-container content-grid" id="audioContainer" role="list"></div>
+                    </section>
+
+                    <!-- Exams Section -->
+                    <section id="exams-section" class="dashboard-section" aria-labelledby="examsTitle">
+                        <h2 class="section-title" id="examsTitle">الامتحانات</h2>
+                        <p class="section-hint">حل الامتحان واحفظ نتيجتك</p>
+                        <div class="months-tabs" id="examsMonthsTabs" role="tablist"></div>
+                        <div class="exams-container content-grid" id="examsContainer" role="list"></div>
+                    </section>
+
+                    <!-- Final Reviews Section -->
+                    <section id="final-reviews-section" class="dashboard-section" aria-labelledby="finalReviewsTitle">
+                        <h2 class="section-title" id="finalReviewsTitle">المراجعات النهائية</h2>
+                        <p class="section-hint">محتوى مدفوع - فيديوهات، مذكرات، صوتيات، وامتحانات</p>
+                        <div class="final-reviews-tabs">
+                            <button type="button" class="final-reviews-tab active" data-tab="available">المتاحة للشراء</button>
+                            <button type="button" class="final-reviews-tab" data-tab="purchased">مراجعاتي</button>
+                        </div>
+                        <div class="final-reviews-container content-grid" id="finalReviewsContainer" role="list">
+                            <p class="empty-state">جاري التحميل...</p>
+                        </div>
+                    </section>
+
+                    <!-- Subscription Section -->
+                    <section id="subscription-section" class="dashboard-section" aria-labelledby="subscriptionTitle">
+                        <h2 class="section-title" id="subscriptionTitle">باقات الاشتراك</h2>
+                        <div class="packages-grid">
+                            <div class="package-card package-monthly" id="packageMonthlyCard">
+                                <div class="package-icon" aria-hidden="true">📅</div>
+                                <h3>اشتراك شهري</h3>
+                                <p>يفتح لك الشهر الذي تحدده من قائمة الشهور لمدة 30 يوماً</p>
+                                <div class="package-price">
+                                    <span id="packageMonthlyPrice">—</span>
+                                    <small>ج.م</small>
+                                </div>
+                            </div>
+                            <div class="package-card package-term1">
+                                <div class="package-badge">الأكثر طلباً</div>
+                                <div class="package-icon" aria-hidden="true">📚</div>
+                                <h3>اشتراك الترم الأول</h3>
+                                <p>يفتح الشهور: الأول، الثاني، الثالث، الرابع تلقائياً</p>
+                                <div class="package-price">
+                                    <span id="packageTerm1Price">—</span>
+                                    <small>ج.م</small>
+                                </div>
+                                <button type="button" class="btn btn-primary btn-full" onclick="subscribeToTerm(1)">اشترك في الترم الأول</button>
+                            </div>
+                            <div class="package-card package-term2">
+                                <div class="package-icon" aria-hidden="true">🎓</div>
+                                <h3>اشتراك الترم الثاني</h3>
+                                <p>يفتح الشهور: الخامس، السادس، السابع، الثامن تلقائياً</p>
+                                <div class="package-price">
+                                    <span id="packageTerm2Price">—</span>
+                                    <small>ج.م</small>
+                                </div>
+                                <button type="button" class="btn btn-primary btn-full" onclick="subscribeToTerm(2)">اشترك في الترم الثاني</button>
+                            </div>
+                        </div>
+
+                        <div class="subscription-months-panel">
+                            <div class="panel-header">
+                                <h3>تفاصيل الشهور</h3>
+                            </div>
+                            <div class="subscriptions-grid" id="subscriptionsList"></div>
+                            <div class="code-cta">
+                                <p>لديك كود تفعيل بعد الدفع؟</p>
+                                <button type="button" class="btn btn-outline" onclick="showCodeModal()">إدخال الكود</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ===== Account Settings Section ===== -->
+                    <section id="account-settings-section" class="dashboard-section" aria-labelledby="accountSettingsTitle">
+                        <h2 class="section-title" id="accountSettingsTitle">إعدادات الحساب</h2>
+
+                        <!-- Alert Container -->
+                        <div id="settingsAlertContainer" style="margin-bottom: 16px;"></div>
+
+                        <div class="settings-grid">
+
+                            <!-- Change Password -->
+                            <div class="settings-card">
+                                <div class="settings-card-header">
+                                    <div class="settings-card-icon" aria-hidden="true">🔒</div>
+                                    <div>
+                                        <h3 class="settings-card-title">تغيير كلمة المرور</h3>
+                                        <p class="settings-card-desc">حافظ على أمان حسابك بتغيير كلمة المرور بانتظام</p>
+                                    </div>
+                                </div>
+
+                                <form id="changePasswordForm" onsubmit="handleChangePassword(event)" novalidate>
+                                    <div class="form-group">
+                                        <label for="currentPassword">كلمة المرور الحالية</label>
+                                        <div class="input-with-toggle">
+                                            <input type="password" id="currentPassword" name="currentPassword"
+                                                   required placeholder="أدخل كلمة مرورك الحالية"
+                                                   autocomplete="current-password">
+                                            <button type="button" class="input-toggle-btn"
+                                                    onclick="togglePasswordVisibility('currentPassword', this)"
+                                                    aria-label="إظهار/إخفاء كلمة المرور">👁️</button>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="newPassword">كلمة المرور الجديدة</label>
+                                        <div class="input-with-toggle">
+                                            <input type="password" id="newPassword" name="newPassword"
+                                                   required placeholder="6 أحرف على الأقل"
+                                                   autocomplete="new-password" minlength="6">
+                                            <button type="button" class="input-toggle-btn"
+                                                    onclick="togglePasswordVisibility('newPassword', this)"
+                                                    aria-label="إظهار/إخفاء كلمة المرور">👁️</button>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="confirmPassword">تأكيد كلمة المرور الجديدة</label>
+                                        <div class="input-with-toggle">
+                                            <input type="password" id="confirmPassword" name="confirmPassword"
+                                                   required placeholder="أعد كتابة كلمة المرور الجديدة"
+                                                   autocomplete="new-password">
+                                            <button type="button" class="input-toggle-btn"
+                                                    onclick="togglePasswordVisibility('confirmPassword', this)"
+                                                    aria-label="إظهار/إخفاء كلمة المرور">👁️</button>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary" id="changePasswordBtn">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+                                        حفظ كلمة المرور
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Change Grade -->
+                            <div class="settings-card">
+                                <div class="settings-card-header">
+                                    <div class="settings-card-icon" aria-hidden="true">🎓</div>
+                                    <div>
+                                        <h3 class="settings-card-title">تغيير الصف الدراسي</h3>
+                                        <p class="settings-card-desc">غيّر صفك الدراسي إذا انتقلت لمرحلة جديدة</p>
+                                    </div>
+                                </div>
+
+                                <form id="changeGradeForm" onsubmit="handleChangeGrade(event)" novalidate>
+                                    <div class="form-group">
+                                        <label for="newGradeSelect">الصف الدراسي الجديد</label>
+                                        <select id="newGradeSelect" name="newGrade" required>
+                                            <option value="">جاري تحميل الصفوف...</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="settings-warning" role="alert">
+                                        <span aria-hidden="true">⚠️</span>
+                                        <span>تغيير الصف الدراسي سيؤثر على المحتوى الظاهر لك. اشتراكاتك الحالية لن تتأثر.</span>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary" id="changeGradeBtn">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+                                        حفظ الصف الدراسي
+                                    </button>
+                                </form>
+                            </div>
+
+                        </div><!-- /.settings-grid -->
+
+                        <!-- Account Info -->
+                        <div class="account-info-card">
+                            <h3 class="account-info-title">معلومات الحساب</h3>
+                            <div class="account-info-grid">
+                                <div class="account-info-item">
+                                    <span class="account-info-label">الاسم</span>
+                                    <span class="account-info-value" id="accountInfoName">—</span>
+                                </div>
+                                <div class="account-info-item">
+                                    <span class="account-info-label">رقم الهاتف</span>
+                                    <span class="account-info-value" id="accountInfoPhone">—</span>
+                                </div>
+                                <div class="account-info-item">
+                                    <span class="account-info-label">الصف الدراسي</span>
+                                    <span class="account-info-value" id="accountInfoGrade">—</span>
+                                </div>
+                                <div class="account-info-item">
+                                    <span class="account-info-label">الشعبة</span>
+                                    <span class="account-info-value" id="accountInfoDivision">—</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Logout Button -->
+                        <div class="settings-card" style="margin-top:20px">
+                            <div class="settings-card-header">
+                                <div class="settings-card-icon" aria-hidden="true">🚪</div>
+                                <div>
+                                    <h3 class="settings-card-title">تسجيل الخروج</h3>
+                                    <p class="settings-card-desc">اخرج من حسابك نهائياً</p>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-danger" onclick="fullLogout()" style="width:100%;margin-top:12px;padding:12px;background:#dc2625;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer">
+                                تسجيل الخروج
+                            </button>
+                        </div>
+
+                    </section><!-- /#account-settings-section -->
+
+                </div><!-- /.dashboard-content -->
+            </div><!-- /.dashboard-container -->
+        </div><!-- /.container -->
+    </main>
+
+    <!-- Activation Code Modal -->
+    <div class="modal" id="codeModal" role="dialog" aria-modal="true" aria-labelledby="codeModalTitle">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal('codeModal')" aria-label="إغلاق">&times;</button>
+            <h2 class="modal-title" id="codeModalTitle">إدخال كود التفعيل</h2>
+            <p class="modal-desc">أدخل الكود الذي وصلك بعد الدفع لتفعيل الشهر لمدة 30 يوماً</p>
+            <form onsubmit="handleCodeSubmit(event)">
+                <div class="form-group">
+                    <label for="activationCode">كود التفعيل</label>
+                    <input type="text" id="activationCode" required placeholder="مثال: AB12CD34" autocomplete="off" style="text-transform:uppercase; letter-spacing: 2px;">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full" id="activateCodeBtn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+                    تفعيل الشهر
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer" role="contentinfo">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>© 2026 منصة الباسط للعلوم الشرعية. جميع الحقوق محفوظة.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/config.js?v=3"></script>
+    <script src="js/supabase.js?v=3"></script>
+    <script src="js/session-guard.js?v=3"></script>
+    <script src="js/db.js?v=3"></script>
+    <script src="js/video-utils.js?v=3"></script>
+    <script src="js/auth.js?v=3"></script>
+    <script src="js/main.js?v=3"></script>
+    <script src="js/dashboard.js?v=3"></script>
+    <script src="js/final-reviews.js?v=3"></script>
+    <script src="js/video-player.js?v=3"></script>
+    <script src="js/account-settings.js?v=3"></script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Sync grade display
+        const syncGrade = () => {
+            const g = document.getElementById('userGrade')?.textContent;
+            const o = document.getElementById('userGradeOverview');
+            if (o && g && g !== '...') o.textContent = g;
+        };
+        setTimeout(syncGrade, 900);
+
+        // Load grades for settings when section is opened
+        document.querySelectorAll('.menu-item').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.dataset.section === 'account-settings') {
+                    setTimeout(() => {
+                        loadGradesForSettings();
+                        loadAccountInfo();
+                    }, 100);
+                }
+            });
+        });
+    });
+
+    // Load account info into settings card
+    function loadAccountInfo() {
+        const cached = sessionStorage.getItem('albasit_user_cache');
+        if (!cached) return;
+        try {
+            const user = JSON.parse(cached);
+            const nameEl   = document.getElementById('accountInfoName');
+            const phoneEl  = document.getElementById('accountInfoPhone');
+            const divEl    = document.getElementById('accountInfoDivision');
+            const gradeEl  = document.getElementById('accountInfoGrade');
+            if (nameEl)  nameEl.textContent  = user.name  || '—';
+            if (phoneEl) phoneEl.textContent = user.phone || '—';
+            if (divEl)   divEl.textContent   = user.division || '—';
+            // Grade will be set when loadGradesForSettings resolves
+            if (gradeEl && user.grade_id) {
+                const gradeDisplay = document.getElementById('userGrade')?.textContent;
+                if (gradeDisplay && gradeDisplay !== '...') gradeEl.textContent = gradeDisplay;
+            }
+        } catch (_) {}
+    }
+    </script>
+</body>
+</html>

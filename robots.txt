@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /admin-add-video.html
+Disallow: /admin-add-note.html
+Disallow: /admin-add-exam.html
+Disallow: /admin-add-audio.html
+Disallow: /admin-add-final-review.html
+Disallow: /disable-rls.sql
+Disallow: /setup-database.sql
+Disallow: /scratch/
+
+# السماح لجميع محركات البحث بفهرسة المنصة
+Sitemap: https://albasit.vercel.app/sitemap.xml

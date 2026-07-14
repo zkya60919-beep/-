@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- ===== SEO ===== -->
+    <title>الامتحان | منصة الباسط للعلوم الشرعية</title>
+    <meta name="description" content="الامتحانات التفاعلية وقياس مستوى تحصيل الطالب في العلوم الشرعية على منصة الباسط.">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="canonical" href="https://albasit.vercel.app/exam.html">
+
+    <!-- ===== Performance: Preconnect ===== -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- ===== Styles ===== -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/exam.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap">
+</head>
+<body>
+    <!-- Load Supabase library first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="index.html" class="logo-text">الباسط</a>
+                </div>
+                <nav class="nav">
+                    <ul class="nav-list">
+                        <li><a href="index.html" class="nav-link">الرئيسية</a></li>
+                        <li><a href="about.html" class="nav-link">نبذة عنا</a></li>
+                        <li><a href="dashboard.html" class="nav-link">لوحتي</a></li>
+                    </ul>
+                </nav>
+                <div class="auth-buttons" id="authButtons"></div>
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="القائمة">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+        <div class="nav-overlay" onclick="toggleMobileMenu()"></div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <section class="exam-section">
+            <div class="container">
+                <div class="page-back-bar">
+                    <button type="button" class="btn btn-outline" onclick="goBackToDashboard('exams')">← العودة للوحة التحكم</button>
+                </div>
+                <!-- Exam Header -->
+                <div class="exam-header">
+                    <div class="exam-info">
+                        <h1 class="exam-title" id="examTitle">جاري التحميل...</h1>
+                        <div class="exam-meta">
+                            <span id="examDuration">-</span>
+                            <span id="examQuestions">-</span>
+                        </div>
+                    </div>
+                    <div class="exam-timer">
+                        <div class="timer-display" id="timerDisplay">00:00</div>
+                    </div>
+                </div>
+
+                <!-- Exam Questions -->
+                <div class="exam-questions" id="examQuestions">
+                    <div class="spinner"></div>
+                </div>
+
+                <!-- Exam Actions -->
+                <div class="exam-actions">
+                    <button class="btn btn-primary btn-large" onclick="submitExam()">تسليم الامتحان</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Result Modal -->
+    <div class="modal" id="resultModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('resultModal')">&times;</span>
+            <h2 class="modal-title">نتيجة الامتحان</h2>
+            <div class="result-content">
+                <div class="result-score">
+                    <div class="score-circle">
+                        <span id="scorePercentage">0%</span>
+                    </div>
+                </div>
+                <div class="result-details">
+                    <div class="result-item">
+                        <span class="label">الدرجة:</span>
+                        <span class="value" id="scoreValue">0 / 0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">الإجابات الصحيحة:</span>
+                        <span class="value" id="correctAnswers">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">الإجابات الخاطئة:</span>
+                        <span class="value" id="wrongAnswers">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">الوقت:</span>
+                        <span class="value" id="timeTaken">0 دقيقة</span>
+                    </div>
+                </div>
+                <div class="result-status" id="resultStatus"></div>
+                <button class="btn btn-primary btn-full" onclick="goToDashboard()">العودة للوحة التحكم</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/exam.js"></script>
+</body>
+</html>

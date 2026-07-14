@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- ===== SEO ===== -->
+    <title>اختر الصف الدراسي | منصة الباسط للعلوم الشرعية</title>
+    <meta name="description" content="اختر صفك الدراسي للبدء في تصفح المناهج والدروس الخاصة بك على منصة الباسط.">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="canonical" href="https://albasit.vercel.app/select-grade.html">
+
+    <!-- ===== Performance: Preconnect ===== -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- ===== Styles ===== -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap">
+</head>
+<body>
+    <!-- Load Supabase library first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="index.html" class="logo-text">الباسط</a>
+                </div>
+                <nav class="nav">
+                    <ul class="nav-list">
+                        <li><a href="index.html" class="nav-link">الرئيسية</a></li>
+                        <li><a href="about.html" class="nav-link">نبذة عنا</a></li>
+                        <li><button class="btn btn-primary btn-mobile" onclick="goToDashboard()">لوحتي</button></li>
+                    </ul>
+                </nav>
+                <div class="auth-buttons" id="authButtons"></div>
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+        <div class="nav-overlay" onclick="toggleMobileMenu()"></div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <section class="grade-selection-section">
+            <div class="container">
+                <div class="selection-header">
+                    <h1 class="page-title">اختر صفك الدراسي</h1>
+                    <p class="page-subtitle">يرجى اختيار صفك الدراسي للبدء في استخدام المنصة</p>
+                </div>
+                <div class="grades-grid" id="gradesGrid">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <div class="logo-text">الباسط</div>
+                    <p>منصة تعليمية احترافية للطلاب</p>
+                </div>
+                <div class="footer-links">
+                    <h3>روابط سريعة</h3>
+                    <ul>
+                        <li><a href="index.html">الرئيسية</a></li>
+                        <li><a href="about.html">نبذة عنا</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h3>تواصل معنا</h3>
+                    <div class="social-links">
+                        <a href="#" class="social-link">فيسبوك</a>
+                        <a href="#" class="social-link">واتساب</a>
+                        <a href="#" class="social-link">تيليجرام</a>
+                        <a href="#" class="social-link">يوتيوب</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 منصة الباسط. جميع الحقوق محفوظة.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/select-grade.js"></script>
+    <style>@media (max-width: 600px) { .grades-grid { grid-template-columns: 1fr; } }</style>
+</body>
+</html>

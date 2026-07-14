@@ -1,0 +1,304 @@
+/* Payment Page Styles */
+
+.payment-section {
+    padding: 80px 0;
+    min-height: calc(100vh - 200px);
+}
+
+.payment-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.payment-summary {
+    margin-bottom: 48px;
+}
+
+.summary-card {
+    background: var(--white);
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: var(--shadow-xl);
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.summary-item:last-child {
+    border-bottom: none;
+}
+
+.summary-item.total {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--primary-color);
+    padding-top: 24px;
+}
+
+.summary-item .label {
+    color: var(--gray-600);
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.summary-item .value {
+    font-weight: 800;
+    color: var(--gray-900);
+    font-size: 16px;
+}
+
+/* Payment Methods */
+.payment-methods-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.payment-method-card {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 40px 30px;
+    text-align: center;
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+    transition: var(--transition);
+    border: 3px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.payment-method-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient-primary);
+    transform: scaleX(0);
+    transition: var(--transition);
+}
+
+.payment-method-card:hover::before {
+    transform: scaleX(1);
+}
+
+.payment-method-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-xl);
+}
+
+.payment-method-card.selected {
+    border-color: var(--primary-color);
+    background: rgba(16, 185, 129, 0.1);
+    box-shadow: var(--shadow-lg);
+}
+
+.payment-icon {
+    font-size: 56px;
+    margin-bottom: 20px;
+}
+
+.payment-method-card h3 {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--gray-900);
+}
+
+/* Payment Actions */
+.payment-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.payment-actions .btn {
+    padding: 18px;
+    font-size: 16px;
+}
+
+.payment-actions .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .payment-section {
+        padding: 30px 0;
+    }
+    
+    .summary-card {
+        padding: 24px 20px;
+    }
+    
+    .payment-methods-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .payment-method-card {
+        padding: 24px 20px;
+    }
+    
+    .payment-icon {
+        font-size: 40px;
+        margin-bottom: 14px;
+    }
+
+    .payment-method-card h3 {
+        font-size: 15px;
+    }
+
+    .summary-item {
+        padding: 14px 0;
+        font-size: 14px;
+    }
+
+    .summary-item.total {
+        font-size: 20px;
+        padding-top: 16px;
+    }
+}
+
+.paymob-container {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+}
+
+.paymob-container.hidden {
+    display: none !important;
+}
+
+.paymob-overlay {
+    width: 100%;
+    max-width: 1100px;
+    max-height: 95vh;
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+}
+
+.paymob-overlay iframe {
+    width: 100%;
+    height: 75vh;
+    border: none;
+}
+
+.paymob-overlay-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.paymob-overlay-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.paymob-close-button {
+    background: transparent;
+    border: none;
+    color: #111827;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+.paymob-overlay-note {
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #374151;
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+}
+
+@media (max-width: 480px) {
+    .payment-section {
+        padding: 20px 0;
+    }
+
+    .payment-methods-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .payment-method-card {
+        padding: 20px 16px;
+    }
+
+    .payment-icon {
+        font-size: 36px;
+    }
+
+    .payment-method-card h3 {
+        font-size: 14px;
+    }
+
+    .summary-card {
+        padding: 20px 16px;
+    }
+    
+    .summary-item {
+        font-size: 13px;
+        padding: 12px 0;
+    }
+    
+    .summary-item.total {
+        font-size: 18px;
+    }
+
+    .payment-actions .btn {
+        padding: 14px;
+        font-size: 14px;
+    }
+
+    .paymob-overlay {
+        border-radius: 12px;
+    }
+
+    .paymob-overlay iframe {
+        height: 70vh;
+    }
+
+    .paymob-overlay-header {
+        padding: 12px;
+    }
+
+    .paymob-overlay-header h3 {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 360px) {
+    .payment-section { padding: 12px 0; }
+    .payment-methods-grid { gap: 8px; }
+    .payment-method-card { padding: 14px 12px; }
+    .payment-icon { font-size: 28px; }
+    .payment-method-card h3 { font-size: 12px; }
+    .summary-card { padding: 16px 12px; }
+    .summary-item { font-size: 12px; padding: 10px 0; }
+    .summary-item.total { font-size: 16px; }
+    .payment-actions .btn { padding: 12px; font-size: 13px; }
+    .payment-actions { flex-direction: column; gap: 8px; }
+    .payment-actions .btn { width: 100%; }
+}
+

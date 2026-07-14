@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>????? ???? - ???? ??????</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/admin-forms.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap">
+</head>
+<body>
+    <!-- Load Supabase library first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <header class="admin-header">
+        <div class="container">
+            <div class="admin-header-content">
+                <div class="logo"><a href="admin.html" class="logo-text">??????</a><span class="admin-badge">????? ????</span></div>
+                <a href="admin.html" class="btn btn-outline btn-light">? ??????</a>
+            </div>
+        </div>
+    </header>
+    <main class="form-page">
+        <div class="container">
+            <form id="audioForm" class="admin-form-card">
+                <h1 class="form-page-title">????? ???? MP3</h1>
+                <div class="form-row">
+                    <div class="form-group"><label for="audioGrade">????</label><select id="audioGrade" required></select></div>
+                    <div class="form-group"><label for="audioMonth">?????</label><select id="audioMonth" required></select></div>
+                </div>
+                <div class="form-group"><label for="audioTitle">???????</label><input type="text" id="audioTitle" required></div>
+                <div class="form-group"><label for="audioDescription">?????</label><textarea id="audioDescription" rows="3"></textarea></div>
+                <div class="form-group">
+                    <label>??? MP3</label>
+                    <div class="drop-zone" id="mp3DropZone"><p>???? MP3 ?? ???? ?????</p></div>
+                    <input type="file" id="mp3Input" accept="audio/*,.mp3" style="display:none">
+                </div>
+                <div class="pricing-section">
+                    <div class="pricing-header">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="audioFree" onchange="toggleAudioPrice()">
+                            <span>?????</span>
+                        </label>
+                        <span class="price-badge">?????</span>
+                    </div>
+                    <div class="price-input-group" id="audioPriceGroup">
+                        <label for="audioPrice">??? ?????? (?.?)</label>
+                        <input type="number" id="audioPrice" min="0" step="0.01" placeholder="????: 50">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-lg">??? ??????</button>
+                    <a href="admin.html" class="btn btn-outline">?????</a>
+                </div>
+            </form>
+        </div>
+    </main>
+    <script src="js/config.js?v=3"></script>
+    <script src="js/supabase.js?v=3"></script>
+    <script src="js/db.js?v=3"></script>
+    <script src="js/cloudinary.js?v=3"></script>
+    <script src="js/auth.js?v=3"></script>
+    <script src="js/main.js?v=3"></script>
+    <script>
+        function setupDropZone(zoneId, inputId, onSelect) {
+            const zone = document.getElementById(zoneId);
+            const input = document.getElementById(inputId);
+            zone.addEventListener('click', () => input.click());
+            zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
+            zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+                const file = e.dataTransfer.files?.[0];
+                if (file) onSelect(file, zone);
+            });
+            input.addEventListener('change', () => {
+                const file = input.files?.[0];
+                if (file) onSelect(file, zone);
+            });
+        }
+        function showFilePreview(zone, file, label) {
+            const p = zone.querySelector('p');
+            if (p) p.textContent = label || `? ${file.name}`;
+            zone.classList.add('has-file');
+        }
+        let mp3File = null;
+        function toggleAudioPrice() {
+            const isFree = document.getElementById('audioFree').checked;
+            const group = document.getElementById('audioPriceGroup');
+            group.classList.toggle('hidden', isFree);
+            if (isFree) document.getElementById('audioPrice').value = '';
+        }
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!await requireAdmin()) return;
+            toggleAudioPrice();
+            const grades = await db.getGrades();
+            const g = document.getElementById('audioGrade');
+            g.innerHTML = grades.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
+            async function months() {
+                const id = parseInt(g.value);
+                await db.ensureNineMonths(id);
+                const m = await db.getMonths(id);
+                document.getElementById('audioMonth').innerHTML = m.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
+            }
+            g.onchange = months;
+            await months();
+            setupDropZone('mp3DropZone', 'mp3Input', (f, z) => { mp3File = f; showFilePreview(z, f); });
+            document.getElementById('audioForm').onsubmit = async (e) => {
+                e.preventDefault();
+                if (!mp3File) { showAlert('???? ??? ?????', 'error'); return; }
+                const isFree = document.getElementById('audioFree').checked;
+                const priceInput = document.getElementById('audioPrice').value;
+                const price = isFree ? 0 : (priceInput ? parseFloat(priceInput) : null);
+                if (!isFree && (price === null || isNaN(price))) { showAlert('??? ??? ?????? ?? ????? ?????', 'error'); return; }
+                try {
+                    const url = (await uploadAttachment(mp3File, 'audio')).secure_url;
+                    await db.createAudio({
+                        grade_id: parseInt(g.value),
+                        month_id: parseInt(document.getElementById('audioMonth').value),
+                        title: document.getElementById('audioTitle').value,
+                        description: document.getElementById('audioDescription').value,
+                        audio_url: url,
+                        is_free: isFree
+                    });
+                    showAlert('?? ?????', 'success');
+                    setTimeout(() => location.href = 'admin.html', 1000);
+                } catch (err) { console.error('Audio save error:', err); showAlert('???: ' + err.message, 'error'); }
+            };
+        });
+    </script>
+</body>
+</html>

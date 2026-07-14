@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار تسجيل الدخول</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .log-entry.success {
+            color: green;
+        }
+        .log-entry.error {
+            color: red;
+        }
+        .log-entry.warning {
+            color: orange;
+        }
+        .log-entry.info {
+            color: blue;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>اختبار تسجيل الدخول</h1>
+        
+        <div class="form-group">
+            <label for="testPhone">رقم الهاتف:</label>
+            <input type="tel" id="testPhone" placeholder="أدخل رقم الهاتف">
+        </div>
+        
+        <div class="form-group">
+            <label for="testPassword">كلمة المرور:</label>
+            <input type="password" id="testPassword" placeholder="أدخل كلمة المرور">
+        </div>
+        
+        <button onclick="testLogin()">اختبار تسجيل الدخول</button>
+        <button onclick="clearLog()">مسح السجل</button>
+        
+        <div id="status"></div>
+        
+        <div class="log" id="log">
+            <div class="log-entry info">جاهز للاختبار...</div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabase.js"></script>
+    <script>
+        function addLog(message, type = 'info') {
+            const log = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function setStatus(message, type) {
+            const status = document.getElementById('status');
+            status.className = `status ${type}`;
+            status.textContent = message;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '<div class="log-entry info">تم مسح السجل...</div>';
+            document.getElementById('status').textContent = '';
+        }
+
+        async function testLogin() {
+            clearLog();
+            addLog('=== بدء اختبار تسجيل الدخول ===', 'info');
+
+            const phone = document.getElementById('testPhone').value.trim();
+            const password = document.getElementById('testPassword').value;
+
+            addLog(`رقم الهاتف: ${phone}`, 'info');
+            addLog(`كلمة المرور: ${password ? '***' : 'فارغة'}`, 'info');
+
+            if (!phone || !password) {
+                addLog('الرجاء إدخال رقم الهاتف وكلمة المرور', 'error');
+                setStatus('الرجاء إدخال جميع البيانات', 'error');
+                return;
+            }
+
+            try {
+                addLog('التحقق من الاتصال بـ Supabase...', 'info');
+                if (!window.supabase || !window.supabase.from) {
+                    addLog('Supabase غير مُهيأ', 'error');
+                    setStatus('خطأ في الاتصال بقاعدة البيانات', 'error');
+                    return;
+                }
+                addLog('Supabase جاهز', 'success');
+
+                addLog('التحقق من المستخدم في قاعدة البيانات...', 'info');
+                const { data: user, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('phone', phone)
+                    .maybeSingle();
+
+                addLog(`نتيجة البحث: ${JSON.stringify(user)}`, 'info');
+                addLog(`خطأ: ${error ? JSON.stringify(error) : 'لا يوجد'}`, error ? 'error' : 'info');
+
+                if (error) {
+                    addLog(`خطأ في البحث: ${error.message}`, 'error');
+                    setStatus('خطأ في الاتصال بقاعدة البيانات', 'error');
+                    return;
+                }
+
+                if (!user) {
+                    addLog('المستخدم غير موجود في قاعدة البيانات', 'error');
+                    setStatus('رقم الهاتف غير مسجل', 'error');
+                    return;
+                }
+
+                addLog('المستخدم موجود', 'success');
+                addLog(`بيانات المستخدم: ${JSON.stringify(user)}`, 'info');
+
+                addLog('التحقق من كلمة المرور...', 'info');
+                if (user.password !== password) {
+                    addLog('كلمة المرور غير صحيحة', 'error');
+                    setStatus('كلمة المرور غير صحيحة', 'error');
+                    return;
+                }
+
+                addLog('كلمة المرور صحيحة', 'success');
+
+                addLog('التحقق من grade_id...', 'info');
+                addLog(`grade_id: ${user.grade_id}`, user.grade_id ? 'success' : 'warning');
+
+                if (!user.grade_id) {
+                    addLog('grade_id غير موجود - يجب اختيار الصف', 'warning');
+                    setStatus('يجب اختيار الصف الدراسي', 'error');
+                    return;
+                }
+
+                addLog('جميع الشروط صحيحة', 'success');
+                setStatus('✅ تسجيل الدخول ناجح! يجب الدخول للداشبورد', 'success');
+
+                addLog('محاولة حفظ البيانات في localStorage...', 'info');
+                localStorage.setItem('userId', user.phone);
+                localStorage.setItem('loginTime', Date.now().toString());
+                sessionStorage.setItem('albasit_user_cache', JSON.stringify(user));
+                addLog('تم حفظ البيانات', 'success');
+
+                addLog('محاولة إعادة التوجيه إلى dashboard.html...', 'info');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 2000);
+
+            } catch (error) {
+                addLog(`استثناء: ${error.message}`, 'error');
+                setStatus('حدث خطأ غير متوقع', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

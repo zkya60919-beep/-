@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- ===== SEO ===== -->
+    <title>الشهور الدراسية | منصة الباسط للعلوم الشرعية</title>
+    <meta name="description" content="تصفح الشهور الدراسية والمناهج المتاحة لصفك الدراسي على منصة الباسط.">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="canonical" href="https://albasit.vercel.app/months.html">
+
+    <!-- ===== Performance: Preconnect ===== -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- ===== Styles ===== -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap">
+</head>
+<body>
+    <!-- Load Supabase library first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="index.html" class="logo-text">الباسط</a>
+                </div>
+                <nav class="nav">
+                    <ul class="nav-list">
+                        <li><a href="index.html" class="nav-link">الرئيسية</a></li>
+                        <li><a href="about.html" class="nav-link">نبذة عنا</a></li>
+                        <li><a href="dashboard.html" class="nav-link">لوحتي</a></li>
+                    </ul>
+                </nav>
+                <div class="auth-buttons" id="authButtons"></div>
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+        <div class="nav-overlay" onclick="toggleMobileMenu()"></div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <section class="months-section">
+            <div class="container">
+                <div class="selection-header">
+                    <h1 class="page-title">الشهور الدراسية</h1>
+                    <p class="page-subtitle">اختر الشهر الذي تريد دراسته</p>
+                </div>
+                <div class="months-grid" id="monthsGrid">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <div class="logo-text">الباسط</div>
+                    <p>منصة تعليمية احترافية للطلاب</p>
+                </div>
+                <div class="footer-links">
+                    <h3>روابط سريعة</h3>
+                    <ul>
+                        <li><a href="index.html">الرئيسية</a></li>
+                        <li><a href="about.html">نبذة عنا</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h3>تواصل معنا</h3>
+                    <div class="social-links">
+                        <a href="#" class="social-link">فيسبوك</a>
+                        <a href="#" class="social-link">واتساب</a>
+                        <a href="#" class="social-link">تيليجرام</a>
+                        <a href="#" class="social-link">يوتيوب</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 منصة الباسط. جميع الحقوق محفوظة.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkAuth();
+            if (!currentUser || !currentUser.grade_id) {
+                window.location.href = 'select-grade.html';
+                return;
+            }
+            
+            await loadMonths();
+        });
+
+        async function loadMonths() {
+            try {
+                const monthsGrid = document.getElementById('monthsGrid');
+                monthsGrid.innerHTML = '<div class="spinner"></div>';
+                
+                const months = await db.getMonths(currentUser.grade_id);
+                
+                if (months.length === 0) {
+                    monthsGrid.innerHTML = '<p class="text-center">لا توجد شهور دراسية حالياً</p>';
+                    return;
+                }
+                
+                monthsGrid.innerHTML = months.map(month => `
+                    <div class="grade-card" onclick="selectMonth(${month.id})">
+                        <div class="grade-card-icon">📅</div>
+                        <h3 class="grade-card-title">${month.name}</h3>
+                        <p class="grade-card-description">اضغط لعرض المحتوى</p>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error loading months:', error);
+                const monthsGrid = document.getElementById('monthsGrid');
+                monthsGrid.innerHTML = '<p class="text-center">حدث خطأ أثناء تحميل الشهور</p>';
+            }
+        }
+
+        function selectMonth(monthId) {
+            sessionStorage.setItem('selectedMonthId', monthId);
+            window.location.href = 'dashboard.html';
+        }
+    </script>
+</body>
+</html>

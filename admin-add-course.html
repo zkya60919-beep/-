@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="إضافة كورس جديد">
+    <title>إضافة كورس جديد - الباسط</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/admin-forms.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap">
+</head>
+<body class="admin-page">
+    <!-- Load Supabase library first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Admin Header -->
+    <header class="admin-header">
+        <div class="container">
+            <div class="admin-header-content">
+                <div class="logo">
+                    <a href="index.html"><img src="images/logo.jpg" alt="الباسط" class="logo-img"></a>
+                    <span class="admin-badge">لوحة التحكم</span>
+                </div>
+                <div class="admin-user">
+                    <span class="user-name">المدرس</span>
+                    <button class="mobile-menu-btn" onclick="toggleAdminMobileMenu()" aria-label="القائمة">
+                        <span></span><span></span><span></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Admin Layout -->
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <nav class="admin-nav">
+                <div class="nav-item" data-section="dashboard">
+                    <span>📊</span>
+                    <span>Dashboard</span>
+                </div>
+                <div class="nav-item" data-section="courses">
+                    <span>🎓</span>
+                    <span>كورساتنا</span>
+                </div>
+                <div class="nav-divider"></div>
+                <div class="nav-item" onclick="window.location.href='admin.html'">
+                    <span>🔙</span>
+                    <span>رجوع للرئيسية</span>
+                </div>
+            </nav>
+        </aside>
+        <div class="admin-sidebar-overlay" onclick="closeAdminMobileMenu()"></div>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <div class="section-header">
+                <a href="admin.html" class="btn btn-outline">← رجوع</a>
+                <h2 class="section-title">إضافة كورس جديد</h2>
+            </div>
+
+            <div class="admin-form-card">
+                <form onsubmit="handleCourseSubmit(event)">
+                    <input type="hidden" id="courseId">
+                    
+                    <div class="form-group">
+                        <label for="courseTitle">اسم الكورس</label>
+                        <input type="text" id="courseTitle" required placeholder="مثال: شرح التفسير كامل">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="courseDescription">وصف الكورس</label>
+                        <textarea id="courseDescription" rows="3" placeholder="وصف موجز للكورس"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="courseGrade">الصف الدراسي</label>
+                        <select id="courseGrade" required></select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="courseThumbnail">صورة الكورس</label>
+                        <div class="file-upload-area">
+                            <input type="file" id="courseThumbnail" accept="image/*" onchange="handleThumbnailPreview(event)">
+                            <div class="file-upload-placeholder" id="thumbnailPlaceholder">
+                                <span class="upload-icon">📷</span>
+                                <p>اسحب وأفلت الصورة هنا</p>
+                                <p class="upload-hint">أو</p>
+                                <button type="button" class="btn btn-outline" onclick="document.getElementById('courseThumbnail').click()">اختر من الجهاز</button>
+                            </div>
+                            <div class="thumbnail-preview" id="thumbnailPreview" style="display: none;">
+                                <img id="thumbnailImage" src="" alt="معاينة الصورة">
+                                <button type="button" class="remove-thumbnail" onclick="removeThumbnail()">×</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="coursePrice">سعر الكورس (ج.م)</label>
+                        <input type="number" id="coursePrice" required min="0" step="0.01" placeholder="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="courseStatus">حالة الكورس</label>
+                        <select id="courseStatus" required>
+                            <option value="draft">مسودة</option>
+                            <option value="published">منشور</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Video Upload Section -->
+                    <div class="form-group">
+                        <label>فيديوهات الكورس (الحد الأقصى 20 فيديو)</label>
+                        <div id="videoUploadArea" class="video-upload-area">
+                            <div class="upload-placeholder">
+                                <span class="upload-icon">📁</span>
+                                <p>اسحب وأفلت الفيديوهات هنا</p>
+                                <p class="upload-hint">أو</p>
+                                <button type="button" class="btn btn-outline" onclick="document.getElementById('videoFilesInput').click()">اختر من الجهاز</button>
+                                <input type="file" id="videoFilesInput" multiple accept="video/*" style="display: none;" onchange="handleVideoFileSelect(event)">
+                            </div>
+                        </div>
+                        <div id="videoList" class="video-list"></div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-full" id="courseSubmitBtn">حفظ الكورس</button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/config.js?v=3"></script>
+    <script src="js/supabase.js?v=3"></script>
+    <script src="js/db.js?v=3"></script>
+    <script src="js/auth.js?v=3"></script>
+    <script src="js/main.js?v=3"></script>
+    <script src="js/admin.js?v=3"></script>
+    <script src="js/cloudinary.js?v=3"></script>
+    <script src="js/admin-add-course.js?v=3"></script>
+</body>
+</html>

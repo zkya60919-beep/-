@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مشاهدة الكورس | الباسط</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/video-player.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap">
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <img src="images/logo.jpg" alt="الباسط" class="logo-img">
+                </div>
+                <nav class="nav">
+                    <ul class="nav-list">
+                        <li><a href="index.html" class="nav-link">الرئيسية</a></li>
+                        <li><a href="dashboard.html" class="nav-link">لوحتي</a></li>
+                    </ul>
+                </nav>
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="القائمة">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+        <div class="nav-overlay" onclick="toggleMobileMenu()"></div>
+    </header>
+
+    <section style="padding: 60px 0;">
+        <div class="container">
+            <div id="playerContainer" class="text-center" style="padding: 60px;">
+                <p>جاري تحميل مشغل الكورس...</p>
+            </div>
+        </div>
+    </section>
+
+    <script src="js/config.js?v=3"></script>
+    <script src="js/supabase.js?v=3"></script>
+    <script src="js/db.js?v=3"></script>
+    <script src="js/auth.js?v=3"></script>
+    <script src="js/main.js?v=3"></script>
+    <script src="js/video-utils.js?v=3"></script>
+    <script src="js/video-player.js?v=3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
+    <script>
+        let currentCourse = null;
+        let currentCourseVideos = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkAuth();
+            const params = new URLSearchParams(window.location.search);
+            const courseId = params.get('id');
+            if (!courseId) { window.location.href = 'index.html'; return; }
+
+            const container = document.getElementById('playerContainer');
+            try {
+                const { data: course } = await supabase
+                    .from('courses')
+                    .select('*, course_videos(*)')
+                    .eq('id', courseId)
+                    .single();
+
+                if (!course) throw new Error('Not found');
+
+                currentCourse = course;
+                currentCourseVideos = course.course_videos || [];
+
+                // Check if user has access (purchased or free)
+                const hasAccess = await checkCourseAccess(courseId);
+
+                container.innerHTML = `
+                    <h1 style="margin-bottom:24px;font-size:22px">${escapeHtml(course.title)}</h1>
+                    <div style="max-width:800px;margin:0 auto">
+                        ${currentCourseVideos.length > 0 ? currentCourseVideos.map((v, i) => `
+                            <div class="course-video-row" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--white);border-radius:12px;margin-bottom:8px;box-shadow:var(--shadow-sm);${hasAccess ? '' : 'opacity:0.6'}">
+                                <span style="background:var(--gradient-primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">${i+1}</span>
+                                <div style="flex:1;text-align:right">
+                                    <strong>${escapeHtml(v.title)}</strong>
+                                    <span style="font-size:13px;color:var(--gray-500);margin-right:8px">${formatDuration(v.duration)}</span>
+                                </div>
+                                ${hasAccess
+                                    ? `<button onclick="playCourseVideo(${v.id})" class="btn btn-primary btn-sm">مشاهدة</button>`
+                                    : '<span style="color:var(--gray-400);font-size:13px">🔒 مقفل</span>'}
+                            </div>
+                        `).join('') : '<p style="text-align:center;color:var(--gray-500);padding:20px">لا توجد فيديوهات في هذا الكورس</p>'}
+                    </div>
+                    <div style="text-align:center;margin-top:24px">
+                        <button class="btn btn-outline" onclick="window.location.href='course-details.html?id=${courseId}'">← العودة للتفاصيل</button>
+                    </div>
+                `;
+            } catch (e) {
+                container.innerHTML = `
+                    <div style="text-align:center;padding:60px">
+                        <p style="color:var(--gray-500);font-size:18px">تعذر تحميل الكورس</p>
+                        <button class="btn btn-outline" onclick="window.location.href='index.html'" style="margin-top:16px">العودة للرئيسية</button>
+                    </div>
+                `;
+            }
+        });
+
+        async function checkCourseAccess(courseId) {
+            if (!currentUser) return false;
+            // Free course
+            if (currentCourse && currentCourse.price === 0) return true;
+            try {
+                const { data: purchase } = await supabase
+                    .from('course_purchases')
+                    .select('id')
+                    .eq('user_id', currentUser.id)
+                    .eq('course_id', courseId)
+                    .eq('status', 'active')
+                    .maybeSingle();
+                return !!purchase;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function playCourseVideo(courseVideoId) {
+            if (!currentUser) {
+                showAlert('الرجاء تسجيل الدخول أولاً', 'error');
+                return;
+            }
+
+            const video = currentCourseVideos.find(v => v.id === courseVideoId);
+            if (!video) {
+                showAlert('الفيديو غير موجود', 'error');
+                return;
+            }
+
+            const container = document.getElementById('playerContainer');
+            container.innerHTML = `
+                <div style="max-width:900px;margin:0 auto">
+                    <div id="courseVideoPlayer" style="width:100%;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;position:relative"></div>
+                    <div style="text-align:center;margin-top:12px">
+                        <button class="btn btn-outline" onclick="location.reload()">← العودة لقائمة الفيديوهات</button>
+                    </div>
+                </div>
+            `;
+
+            try {
+                const playerEl = document.getElementById('courseVideoPlayer');
+                let playUrl = video.video_url;
+
+                // Try to get a signed URL (secure), fall back to direct URL
+                try {
+                    const session = await supabase.auth.getSession();
+                    const token = session.data.session?.access_token;
+                    if (token) {
+                        const signedRes = await fetch(`${CONFIG.SUPABASE.URL}/functions/v1/signed-url`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify({ course_video_id: courseVideoId, user_id: currentUser.id })
+                        });
+                        if (signedRes.ok) {
+                            const signedData = await signedRes.json();
+                            if (signedData.success && signedData.signed_url) {
+                                playUrl = signedData.signed_url;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    // Signed URL EF unavailable, use direct URL
+                }
+
+                // Load HLS.js if needed
+                if (!window.Hls) {
+                    await new Promise((resolve, reject) => {
+                        const s = document.createElement('script');
+                        s.src = 'https://cdn.jsdelivr.net/npm/hls.js@1';
+                        s.onload = resolve;
+                        s.onerror = reject;
+                        document.head.appendChild(s);
+                    });
+                }
+
+                // Use ProfessionalVideoPlayer if available, else build inline
+                if (window.ProfessionalVideoPlayer) {
+                    const player = new ProfessionalVideoPlayer(playerEl, {
+                        autoplay: true,
+                        id: `course-${courseVideoId}`
+                    });
+                    const sourceType = playUrl.includes('.m3u8') ? 'hls' : 'direct';
+                    player.loadSource(playUrl, sourceType, `course-${courseVideoId}`);
+                } else {
+                    // Build premium player inline with watermark and security
+                    buildCoursePlayer(playerEl, playUrl);
+                }
+
+            } catch (e) {
+                container.innerHTML = `
+                    <div style="max-width:600px;margin:0 auto;padding:40px;background:var(--white);border-radius:12px;box-shadow:var(--shadow-md);text-align:center">
+                        <h2 style="color:var(--danger);font-size:20px">عذراً، لا يمكن تشغيل الفيديو</h2>
+                        <p style="margin:12px 0;color:var(--gray-500)">${e.message || 'حدث خطأ أثناء تحميل الفيديو'}</p>
+                        <button class="btn btn-primary" onclick="location.reload()" style="margin-top:8px">العودة للمقاطع</button>
+                    </div>
+                `;
+            }
+        }
+
+        function buildCoursePlayer(container, videoUrl) {
+            container.innerHTML = `
+                <video id="courseVideo" class="premium-video" playsinline disablePictureInPicture controlsList="nodownload noremoteplayback" oncontextmenu="return false;" style="width:100%;height:100%;object-fit:contain;background:#000">
+                    <source src="${escapeHtml(videoUrl)}">
+                </video>
+                <div class="premium-watermark" id="courseWatermark">حقوق الطبع محفوظة لمنصة الباسط التعليمية</div>
+                <div class="player-spinner" id="courseSpinner">
+                    <div class="spinner-ring"></div>
+                </div>
+                <div class="center-play-btn" id="courseCenterPlayBtn">▶</div>
+            `;
+
+            const video = document.getElementById('courseVideo');
+            const watermark = document.getElementById('courseWatermark');
+            const spinner = document.getElementById('courseSpinner');
+            const centerPlayBtn = document.getElementById('courseCenterPlayBtn');
+
+            // Watermark with user info
+            if (currentUser) {
+                watermark.textContent = `مُسجل للطالب: ${currentUser.name} (${currentUser.phone})`;
+                function moveWatermark() {
+                    const rect = container.getBoundingClientRect();
+                    const maxT = Math.max(20, rect.height - 80);
+                    const maxL = Math.max(20, rect.width - 280);
+                    watermark.style.top = `${Math.max(20, Math.random() * maxT)}px`;
+                    watermark.style.left = `${Math.max(20, Math.random() * maxL)}px`;
+                }
+                setTimeout(moveWatermark, 1000);
+                setInterval(moveWatermark, 6000);
+            }
+
+            video.addEventListener('loadedmetadata', () => { spinner.style.display = 'none'; centerPlayBtn.classList.add('hide'); });
+            video.addEventListener('error', () => { spinner.style.display = 'none'; });
+            video.addEventListener('click', () => { if (video.paused) video.play(); else video.pause(); });
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.key === ' ' || e.key === 'k') { e.preventDefault(); if (video.paused) video.play(); else video.pause(); }
+                if (e.key === 'f' || e.key === 'F') { e.preventDefault(); if (!document.fullscreenElement) container.requestFullscreen(); else document.exitFullscreen(); }
+            });
+
+            // Tab switch pause
+            document.addEventListener('visibilitychange', () => { if (document.hidden && !video.paused) video.pause(); });
+
+            video.play().then(() => { centerPlayBtn.classList.add('hide'); spinner.style.display = 'none'; }).catch(() => { spinner.style.display = 'none'; });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const d = document.createElement('div');
+            d.textContent = text;
+            return d.innerHTML;
+        }
+    </script>
+</body>
+</html>

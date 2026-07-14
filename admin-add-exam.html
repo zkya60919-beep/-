@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>????? ?????? - ???? ??????</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/admin-forms.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap">
+</head>
+<body>
+    <!-- Load Supabase library first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <header class="admin-header">
+        <div class="container">
+            <div class="admin-header-content">
+                <div class="logo"><a href="admin.html" class="logo-text">??????</a><span class="admin-badge">????? ??????</span></div>
+                <a href="admin.html" class="btn btn-outline btn-light">? ??????</a>
+            </div>
+        </div>
+    </header>
+    <main class="form-page">
+        <div class="container">
+            <form id="examForm" class="admin-form-card">
+                <h1 class="form-page-title">????? ??????</h1>
+                <div class="form-row">
+                    <div class="form-group"><label for="examGrade">????</label><select id="examGrade" required></select></div>
+                    <div class="form-group"><label for="examMonth">?????</label><select id="examMonth" required></select></div>
+                </div>
+                <div class="form-group"><label for="examTitle">????? ????????</label><input type="text" id="examTitle" required></div>
+                <div class="form-group"><label for="examDuration">????? (?????)</label><input type="number" id="examDuration" value="30" min="5" required></div>
+                <div class="pricing-section">
+                    <div class="pricing-header">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="examFree" onchange="toggleExamPrice()">
+                            <span>?????</span>
+                        </label>
+                        <span class="price-badge">?????</span>
+                    </div>
+                    <div class="price-input-group" id="examPriceGroup">
+                        <label for="examPrice">??? ???????? (?.?)</label>
+                        <input type="number" id="examPrice" min="0" step="0.01" placeholder="????: 50">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>??? ???/???? ???????? (???????)</label>
+                    <input type="file" id="examFile" accept="image/*,application/pdf">
+                    <div id="examFilePreview" style="margin-top:8px;"></div>
+                </div>
+
+                <div class="questions-builder">
+                    <div class="section-header-inline">
+                        <h3>???????</h3>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="addQuestion()">+ ????</button>
+                    </div>
+                    <div id="questionsContainer"></div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-lg">??? ????????</button>
+                    <a href="admin.html" class="btn btn-outline">?????</a>
+                </div>
+            </form>
+        </div>
+    </main>
+    <script src="js/config.js?v=3"></script>
+    <script src="js/supabase.js?v=3"></script>
+    <script src="js/db.js?v=3"></script>
+    <script src="js/cloudinary.js?v=3"></script>
+    <script src="js/auth.js?v=3"></script>
+    <script src="js/main.js?v=3"></script>
+    <script>
+        let qIndex = 0;
+        function setUploadProgress(pct, text) {
+            const fill = document.getElementById('progressFill');
+            const label = document.getElementById('progressText');
+            if (fill) fill.style.width = pct + '%';
+            if (label) label.textContent = text || pct + '%';
+        }
+        function toggleExamPrice() {
+            const isFree = document.getElementById('examFree').checked;
+            const group = document.getElementById('examPriceGroup');
+            group.classList.toggle('hidden', isFree);
+            if (isFree) document.getElementById('examPrice').value = '';
+        }
+        function addQuestion() {
+            const id = qIndex++;
+            const html = `
+                <div class="question-block" data-qid="${id}">
+                    <div class="form-group">
+                        <label>?? ??????</label>
+                        <input type="text" class="q-text" required>
+                    </div>
+                    <div class="form-group">
+                        <label>?????</label>
+                        <select class="q-type" onchange="toggleOptions(this)">
+                            <option value="mcq">?????? ?? ?????</option>
+                            <option value="true_false">?? / ???</option>
+                        </select>
+                    </div>
+                    <div class="q-options">
+                        <input type="text" class="opt" placeholder="?????? 1">
+                        <input type="text" class="opt" placeholder="?????? 2">
+                        <input type="text" class="opt" placeholder="?????? 3">
+                        <input type="text" class="opt" placeholder="?????? 4">
+                    </div>
+                    <div class="form-group">
+                        <label>??????? ??????? (??? ?????? 0-3 ?? true/false)</label>
+                        <input type="text" class="q-answer" required>
+                    </div>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="this.closest('.question-block').remove()">???</button>
+                </div>`;
+            document.getElementById('questionsContainer').insertAdjacentHTML('beforeend', html);
+        }
+        function toggleOptions(sel) {
+            const block = sel.closest('.question-block');
+            const opts = block.querySelector('.q-options');
+            opts.style.display = sel.value === 'mcq' ? 'grid' : 'none';
+        }
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!await requireAdmin()) return;
+            toggleExamPrice();
+            addQuestion();
+            const grades = await db.getGrades();
+            const g = document.getElementById('examGrade');
+            g.innerHTML = grades.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
+            async function months() {
+                const id = parseInt(g.value);
+                await db.ensureNineMonths(id);
+                const m = await db.getMonths(id);
+                document.getElementById('examMonth').innerHTML = m.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
+            }
+            g.onchange = months;
+            await months();
+            document.getElementById('examFile').addEventListener('change', (ev) => {
+                const file = ev.target.files[0];
+                const preview = document.getElementById('examFilePreview');
+                if (file && preview) preview.innerHTML = `<div style="padding:8px;border:1px solid #eee;border-radius:6px;">${file.name} — ${(file.size/1024/1024).toFixed(2)} ?.?</div>`;
+            });
+
+            document.getElementById('examForm').onsubmit = async (e) => {
+                e.preventDefault();
+                const questions = [];
+                document.querySelectorAll('.question-block').forEach(block => {
+                    const type = block.querySelector('.q-type').value;
+                    const opts = [...block.querySelectorAll('.opt')].map(o => o.value).filter(Boolean);
+                    questions.push({
+                        question_text: block.querySelector('.q-text').value,
+                        question_type: type,
+                        options: type === 'mcq' ? opts : null,
+                        correct_answer: block.querySelector('.q-answer').value,
+                        marks: 1
+                    });
+                });
+                if (!questions.length) { showAlert('??? ?????? ?????? ??? ?????', 'error'); return; }
+
+                const isFree = document.getElementById('examFree').checked;
+                const priceInput = document.getElementById('examPrice').value;
+                const price = isFree ? 0 : (priceInput ? parseFloat(priceInput) : null);
+                if (!isFree && (price === null || isNaN(price))) { showAlert('??? ??? ???????? ?? ????? ?????', 'error'); return; }
+
+                let fileUrl = null;
+                const fileInput = document.getElementById('examFile');
+                if (fileInput && fileInput.files && fileInput.files[0]) {
+                    try {
+                        setUploadProgress(0, '???? ??? ??? ????????...');
+                        fileUrl = (await uploadPDF(fileInput.files[0], 'exams', (pct) => setUploadProgress(pct, `??? ${pct}%`))).secure_url;
+                    } catch (err) {
+                        console.error('Upload error', err);
+                        showAlert('??? ??? ?????: ' + err.message, 'error');
+                        return;
+                    } finally {
+                        setUploadProgress(100, '??');
+                    }
+                }
+
+                try {
+                    const exam = await db.createExam({
+                        grade_id: parseInt(g.value),
+                        month_id: parseInt(document.getElementById('examMonth').value),
+                        title: document.getElementById('examTitle').value,
+                        duration: parseInt(document.getElementById('examDuration').value),
+                        is_free: isFree
+                    });
+                    if (fileUrl) {
+                        try { await db.updateExam(exam.id, { file_url: fileUrl }); } catch (e) { console.warn('file_url column not available:', e.message); }
+                    }
+                    await db.saveExamQuestions(exam.id, questions);
+                    showAlert('?? ????? ????????', 'success');
+                    setTimeout(() => location.href = 'admin.html', 1000);
+                } catch (err) { console.error('Exam save error:', err); showAlert('???: ' + (err.message || '??? ???'), 'error'); }
+            };
+        });
+    </script>
+    <style>.q-options { display: grid; gap: 8px; margin-bottom: 12px; } .section-header-inline { display: flex; justify-content: space-between; align-items: center; margin: 24px 0 16px; }</style>
+</body>
+</html>

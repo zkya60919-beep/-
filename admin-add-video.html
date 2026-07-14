@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إضافة فيديو - لوحة المدرس</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/admin-forms.css">
+    <link rel="stylesheet" href="css/admin-video-upload.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body>
+    <!-- Load Supabase library first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <header class="admin-header">
+        <div class="container">
+            <div class="admin-header-content">
+                <div class="logo">
+                    <a href="admin.html" class="logo-text">الباسط</a>
+                    <span class="admin-badge">إضافة فيديو</span>
+                </div>
+                <a href="admin.html" class="btn btn-outline btn-light">← العودة</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="form-page">
+        <div class="container">
+            <form id="videoForm" class="admin-form-card video-form-page">
+                <h1 class="form-page-title">إضافة فيديو <span>Cloudinary Upload</span></h1>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="videoGrade">الصف الدراسي</label>
+                        <select id="videoGrade" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="videoMonth">الشهر</label>
+                        <select id="videoMonth" required></select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="videoTitle">عنوان الفيديو</label>
+                    <input type="text" id="videoTitle" required placeholder="أدخل عنوان الفيديو">
+                </div>
+
+                <div class="form-group">
+                    <label for="videoDescription">وصف الفيديو</label>
+                    <textarea id="videoDescription" rows="3" placeholder="أدخل وصفاً للفيديو"></textarea>
+                </div>
+
+                <div class="media-upload-grid" style="grid-template-columns: 1fr;">
+                    <div class="form-group" style="display: none;">
+                        <label>صورة مصغرة (Thumbnail)</label>
+                        <div class="drop-zone" id="thumbDropZone">
+                            <div class="drop-zone-icon">🖼️</div>
+                            <div class="drop-zone-text">اسحب الصورة أو اضغط للاختيار</div>
+                            <div class="drop-zone-subtext">JPG / PNG</div>
+                            <img id="thumbPreview" class="preview-container" alt="معاينة الصورة">
+                            <div id="thumbBadge" class="file-selected-badge"></div>
+                        </div>
+                        <input type="file" id="thumbInput" accept="image/*" style="display: none;">
+                    </div>
+
+                    <div class="form-group">
+                        <label>ملف الفيديو</label>
+                        <div class="drop-zone" id="videoDropZone">
+                            <div class="drop-zone-icon">🎥</div>
+                            <div class="drop-zone-text">اسحب الفيديو أو اضغط للاختيار من الجهاز</div>
+                            <div class="drop-zone-subtext">MP4 / MOV / MKV - يدعم الفيديوهات الطويلة جداً</div>
+                            <div id="videoBadge" class="file-selected-badge"></div>
+                        </div>
+                        <input type="file" id="videoInput" accept="video/*" style="display: none;">
+                    </div>
+                </div>
+
+                <div class="progress-card" id="uploadProgressCard">
+                    <div class="progress-header">
+                        <div class="progress-title" id="uploadStatusText">جاهز للرفع</div>
+                        <div class="progress-percentage" id="uploadPercentage">0%</div>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-bar-fill" id="uploadProgressBarFill"></div>
+                    </div>
+                    <div class="progress-actions">
+                        <button type="button" class="progress-btn btn-retry" id="retryBtn" style="display:none">🔄 إعادة محاولة</button>
+                        <button type="button" class="progress-btn btn-cancel" id="cancelBtn">❌ إلغاء</button>
+                    </div>
+                </div>
+
+                <div class="form-group pricing-group" style="display: none;">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="videoFree"> مجاني للجميع
+                    </label>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">رفع وحفظ الفيديو</button>
+                    <a href="admin.html" class="btn btn-outline">إلغاء</a>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="js/config.js?v=3"></script>
+    <script src="js/supabase.js?v=3"></script>
+    <script src="js/auth.js?v=3"></script>
+    <script src="js/db.js?v=3"></script>
+    <script src="js/cloudinary.js?v=3"></script>
+    <script src="js/main.js?v=3"></script>
+    <script src="js/admin-add-video.js?v=3"></script>
+</body>
+</html>

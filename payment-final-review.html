@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- ===== SEO ===== -->
+    <title>شراء المراجعة النهائية | منصة الباسط للعلوم الشرعية</title>
+    <meta name="description" content="أكمل عملية الدفع للوصول إلى محتوى المراجعات النهائية في العلوم الشرعية على منصة الباسط.">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="canonical" href="https://albasit.vercel.app/payment-final-review.html">
+
+    <!-- ===== Performance: Preconnect ===== -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- ===== Styles ===== -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/payment.css">
+    <link rel="stylesheet" href="css/final-reviews.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap">
+</head>
+<body class="payment-page">
+    <!-- Load Supabase library first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="dashboard.html" class="logo-text">الباسط</a>
+                </div>
+                <nav class="nav">
+                    <ul class="nav-list">
+                        <li><a href="dashboard.html" class="nav-link">لوحتي</a></li>
+                    </ul>
+                </nav>
+                <div class="auth-buttons" id="authButtons"></div>
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+        <div class="nav-overlay" onclick="toggleMobileMenu()"></div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="page-back-bar">
+                <button type="button" class="btn btn-outline" onclick="goBackToDashboard('final-reviews')">← العودة للوحة التحكم</button>
+            </div>
+            <div class="payment-container">
+                <div class="payment-header">
+                    <h1 class="payment-title">شراء المراجعة النهائية</h1>
+                    <p class="payment-subtitle">أكمل عملية الدفع للوصول إلى المحتوى</p>
+                </div>
+
+                <div class="payment-summary">
+                    <div class="summary-row">
+                        <span class="summary-label">المبلغ</span>
+                        <span class="summary-value" id="amountDisplay">—</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">نوع الدفع</span>
+                        <span class="summary-value">مراجعة نهائية</span>
+                    </div>
+                </div>
+
+                <div class="payment-methods">
+                    <h2 class="methods-title">اختر طريقة الدفع</h2>
+                    <div class="methods-grid">
+                        <div class="payment-method-card" onclick="selectPaymentMethod('visa', this)">
+                            <div class="method-icon">💳</div>
+                            <div class="method-info">
+                                <h3>بطاقة ائتمان</h3>
+                                <p>Visa / Mastercard</p>
+                            </div>
+                        </div>
+                        <div class="payment-method-card" onclick="selectPaymentMethod('vodafone_cash', this)">
+                            <div class="method-icon">📱</div>
+                            <div class="method-info">
+                                <h3>فودافون كاش</h3>
+                                <p>الدفع عبر المحفظة</p>
+                            </div>
+                        </div>
+                        <div class="payment-method-card" onclick="selectPaymentMethod('instapay', this)">
+                            <div class="method-icon">🏦</div>
+                            <div class="method-info">
+                                <h3>إنستا باي</h3>
+                                <p>الدفع عبر البنك</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="payment-actions">
+                    <button type="button" class="btn btn-primary btn-lg" id="payButton" disabled onclick="processPayment()">
+                        متابعة الدفع
+                    </button>
+                    <button type="button" class="btn btn-outline" onclick="goBackToDashboard('final-reviews')">
+                        العودة للوحة التحكم
+                    </button>
+                </div>
+                <div id="paymobContainer" class="paymob-container hidden"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 منصة الباسط. جميع الحقوق محفوظة.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/config.js?v=3"></script>
+    <script src="js/supabase.js?v=3"></script>
+    <script src="js/db.js?v=3"></script>
+    <script src="js/auth.js?v=3"></script>
+    <script src="js/main.js?v=3"></script>
+    <script src="js/payment-utils.js?v=3"></script>
+    <script src="js/payment-final-review.js?v=3"></script>
+</body>
+</html>

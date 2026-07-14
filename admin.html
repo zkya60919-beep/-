@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="لوحة تحكم المدرس">
+    <title>لوحة التحكم - الباسط</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="admin-page">
+    <!-- Load Supabase library first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Admin Header -->
+    <header class="admin-header">
+        <div class="container">
+            <div class="admin-header-content">
+                <div class="logo">
+                    <a href="index.html"><img src="images/logo.jpg" alt="الباسط" class="logo-img"></a>
+                    <span class="admin-badge">لوحة التحكم</span>
+                </div>
+                <div class="admin-user">
+                    <span class="user-name">المدرس</span>
+                    <button class="mobile-menu-btn" onclick="toggleAdminMobileMenu()" aria-label="القائمة">
+                        <span></span><span></span><span></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Admin Layout -->
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <nav class="admin-nav">
+                <div class="nav-item active" data-section="dashboard">
+                    <span>📊</span>
+                    <span>Dashboard</span>
+                </div>
+                <div class="nav-item" data-section="grades">
+                    <span>📚</span>
+                    <span>الصفوف</span>
+                </div>
+                <div class="nav-item" data-section="months">
+                    <span>📅</span>
+                    <span>الشهور</span>
+                </div>
+                <div class="nav-item" data-section="videos">
+                    <span>🎬</span>
+                    <span>الفيديوهات</span>
+                </div>
+                <div class="nav-item" data-section="products">
+                    <span>📄</span>
+                    <span>المذكرات</span>
+                </div>
+                <div class="nav-item" data-section="audio">
+                    <span>🎵</span>
+                    <span>الصوتيات</span>
+                </div>
+                <div class="nav-item" data-section="exams">
+                    <span>📝</span>
+                    <span>الامتحانات</span>
+                </div>
+                <div class="nav-item" data-section="students">
+                    <span>👥</span>
+                    <span>الطلاب</span>
+                </div>
+                <div class="nav-item" data-section="subscriptions">
+                    <span>💳</span>
+                    <span>الاشتراكات</span>
+                </div>
+                <div class="nav-item" data-section="payments">
+                    <span>💰</span>
+                    <span>الأرباح</span>
+                </div>
+                <div class="nav-item" data-section="payment-requests">
+                    <span>📋</span>
+                    <span>طلبات الدفع</span>
+                </div>
+                <div class="nav-item" data-section="payment-settings">
+                    <span>⚙️</span>
+                    <span>إعدادات الدفع</span>
+                </div>
+                <div class="nav-item" data-section="final-reviews">
+                    <span>📚</span>
+                    <span>المراجعات النهائية</span>
+                </div>
+                <div class="nav-item" data-section="courses">
+                    <span>🎓</span>
+                    <span>كورساتنا</span>
+                </div>
+                <div class="nav-item" data-section="settings">
+                    <span>⚙️</span>
+                    <span>الإعدادات</span>
+                </div>
+                <div class="nav-divider"></div>
+                <div class="nav-item" onclick="logout()" style="color: #ef4444;">
+                    <span>🚪</span>
+                    <span>خروج</span>
+                </div>
+            </nav>
+        </aside>
+        <div class="admin-sidebar-overlay" onclick="closeAdminMobileMenu()"></div>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Dashboard Section -->
+            <section id="admin-dashboard" class="admin-section active">
+                <h2 class="section-title">لوحة المعلومات</h2>
+                <div class="stats-grid">
+                    <div class="stat-card" onclick="showAdminSection('students')" style="cursor: pointer;">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-info">
+                            <h3>عدد الطلاب</h3>
+                            <p id="totalStudents">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" onclick="showAdminSection('videos')" style="cursor: pointer;">
+                        <div class="stat-icon">🎬</div>
+                        <div class="stat-info">
+                            <h3>عدد الفيديوهات</h3>
+                            <p id="totalVideos">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" onclick="showAdminSection('products')" style="cursor: pointer;">
+                        <div class="stat-icon">📄</div>
+                        <div class="stat-info">
+                            <h3>عدد المذكرات</h3>
+                            <p id="totalNotes">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" onclick="showAdminSection('audio')" style="cursor: pointer;">
+                        <div class="stat-icon">🎵</div>
+                        <div class="stat-info">
+                            <h3>عدد الصوتيات</h3>
+                            <p id="totalAudio">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" onclick="showAdminSection('exams')" style="cursor: pointer;">
+                        <div class="stat-icon">📝</div>
+                        <div class="stat-info">
+                            <h3>عدد الامتحانات</h3>
+                            <p id="totalExams">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" onclick="showAdminSection('subscriptions')" style="cursor: pointer;">
+                        <div class="stat-icon">💳</div>
+                        <div class="stat-info">
+                            <h3>عدد الاشتراكات</h3>
+                            <p id="totalSubscriptions">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" onclick="showAdminSection('payments')" style="cursor: pointer;">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-info">
+                            <h3>الأرباح الشهرية</h3>
+                            <p id="monthlyRevenue">0 ج.م</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" onclick="showAdminSection('final-reviews')" style="cursor: pointer;">
+                        <div class="stat-icon">📚</div>
+                        <div class="stat-info">
+                            <h3>المراجعات النهائية</h3>
+                            <p id="totalFinalReviews">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" onclick="showAdminSection('courses')" style="cursor: pointer;">
+                        <div class="stat-icon">🎓</div>
+                        <div class="stat-info">
+                            <h3>الكورسات</h3>
+                            <p id="totalCourses">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" onclick="showAdminSection('payment-requests')" style="cursor: pointer;">
+                        <div class="stat-icon">📋</div>
+                        <div class="stat-info">
+                            <h3>طلبات دفع جديدة</h3>
+                            <p id="totalPendingRequests">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="charts-grid charts-grid-3">
+                    <div class="chart-card">
+                        <h3>الطلاب حسب الصف</h3>
+                        <canvas id="studentsByGradeChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>الفيديوهات حسب الصف</h3>
+                        <canvas id="videosByGradeChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>الاشتراكات النشطة</h3>
+                        <canvas id="subscriptionsChart"></canvas>
+                    </div>
+                    <div class="chart-card chart-wide">
+                        <h3>الأرباح (مدفوعات ناجحة)</h3>
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+                <!-- Revenue Reports -->
+                <div class="reports-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:24px">
+                    <div class="stat-card">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-info">
+                            <h3>إيرادات اليوم</h3>
+                            <p id="todayRevenue">0 ج.م</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-info">
+                            <h3>إيرادات الشهر</h3>
+                            <p id="monthRevenue">0 ج.م</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <h3>مدفوعات ناجحة</h3>
+                            <p id="successfulPayments">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">❌</div>
+                        <div class="stat-info">
+                            <h3>مدفوعات فاشلة</h3>
+                            <p id="failedPayments">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-card" style="margin-top:24px">
+                    <h3>أحدث المدفوعات</h3>
+                    <div id="latestPaymentsList" style="max-height:300px;overflow-y:auto">
+                        <p class="text-center" style="color:var(--gray-500);padding:20px">جاري التحميل...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Grades Section -->
+            <section id="admin-grades" class="admin-section">
+                <div class="section-header">
+                    <button class="btn btn-outline" onclick="showAdminSection('dashboard')">← رجوع</button>
+                    <h2 class="section-title">إدارة الصفوف الدراسية</h2>
+                    <button class="btn btn-primary" onclick="showGradeModal()">إضافة صف جديد</button>
+                </div>
+                <div class="data-table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>الترتيب</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gradesTableBody">
+                            <tr><td colspan="4" class="text-center">جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Months Section -->
+            <section id="admin-months" class="admin-section">
+                <div class="section-header">
+                    <button class="btn btn-outline" onclick="showAdminSection('dashboard')">← رجوع</button>
+                    <h2 class="section-title">إدارة الشهور</h2>
+                    <div class="filters">
+                        <select id="gradeFilter" onchange="loadMonths()">
+                            <option value="">كل الصفوف</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="showMonthModal()">إضافة شهر جديد</button>
+                    </div>
+                </div>
+                <div class="data-table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>الصف</th>
+                                <th>الترتيب</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="monthsTableBody">
+                            <tr><td colspan="5" class="text-center">جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Videos Section -->
+            <section id="admin-videos" class="admin-section">
+                <div class="section-header">
+                    <button class="btn btn-outline" onclick="showAdminSection('dashboard')">← رجوع</button>
+                    <h2 class="section-title">إدارة الفيديوهات</h2>
+                    <div class="filters">
+                        <select id="videoGradeFilter">
+                            <option value="">كل الصفوف</option>
+                        </select>
+                        <select id="videoMonthFilter">
+                            <option value="">كل الشهور</option>
+                        </select>
+                        <a href="admin-add-video.html" class="btn btn-primary" data-admin-link>إضافة فيديو</a>
+                    </div>
+                </div>
+                <div class="data-table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>العنوان</th>
+                                <th>الصف</th>
+                                <th>الشهر</th>
+                                <th>النوع</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="videosTableBody">
+                            <tr><td colspan="5" class="text-center">جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Products Section -->
+            <section id="admin-products" class="admin-section">
+                <div class="section-header">
+                    <button class="btn btn-outline" onclick="showAdminSection('dashboard')">← رجوع</button>
+                    <h2 class="section-title">إدارة المذكرات</h2>
+                    <div class="filters">
+                        <select id="productGradeFilter" onchange="loadProducts()">
+                            <option value="">كل الصفوف</option>
+                        </select>
+                        <select id="productMonthFilter" onchange="loadProducts()">
+                            <option value="">كل الشهور</option>
+                        </select>
+                        <a href="admin-add-note.html" class="btn btn-primary" data-admin-link>إضافة مذكرة</a>
+                    </div>
+                </div>
+                <div class="data-table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>العنوان</th>
+                                <th>الصف</th>
+                                <th>الشهر</th>
+                                <th>النوع</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <tr><td colspan="5" class="text-center">جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Audio Section -->
+            <section id="admin-audio" class="admin-section">
+                <div class="section-header">
+                    <button class="btn btn-outline" onclick="showAdminSection('dashboard')">← رجوع</button>
+                    <h2 class="section-title">إدارة الصوتيات</h2>
+                    <div class="filters">
+                        <select id="audioGradeFilter" onchange="loadAudio()">
+                            <option value="">كل الصفوف</option>
+                        </select>
+                        <select id="audioMonthFilter" onchange="loadAudio()">
+                            <option value="">كل الشهور</option>
+                        </select>
+                        <a href="admin-add-audio.html" class="btn btn-primary" data-admin-link>إضافة صوتي</a>
+                    </div>
+                </div>
+                <div class="data-table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>العنوان</th>
+                                <th>الصف</th>
+                                <th>الشهر</th>
+                                <th>النوع</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audioTableBody">
+                            <tr><td colspan="5" class="text-center">جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Exams Section -->
+            <section id="admin-exams" class="admin-section">
+                <div class="section-header">
+                    <button class="btn btn-outline" onclick="showAdminSection('dashboard')">← رجوع</button>
+                    <h2 class="section-title">إدارة الامتحانات</h2>
+                    <div class="filters">
+                        <select id="examGradeFilter" onchange="loadExams()">
+                            <option value="">كل الصفوف</option>
+                        </select>
+                        <select id="examMonthFilter" onchange="loadExams()">
+                            <option value="">كل الشهور</option>
+                        </select>
+                        <a href="admin-add-exam.html" class="btn btn-primary" data-admin-link>إضافة امتحان</a>
+                    </div>
+                </div>
+                <div class="data-table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>العنوان</th>
+                                <th>الصف</th>
+                                <th>الشهر</th>
+                                <th>المدة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="examsTableBody">
+                            <tr><td colspan="5" class="text-center">جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Students Section -->
+            <section id="admin-students" class="admin-section">
+                <div class="section-header">
+                    <button class="btn btn-outline" onclick="showAdminSection('dashboard')">← رجوع</button>
+                    <h2 class="section-title">إدارة الطلاب</h2>
+                    <div class="filters">
+                        <div class="search-box">
+                            <input type="text" id="studentSearch" placeholder="بحث بالاسم أو رقم الهاتف..." oninput="debounceSearch()">
+                        </div>
+                        <select id="studentGradeFilter" onchange="loadStudents()">
+                            <option value="">كل الصفوف</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="data-table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>رقم الهاتف</th>
+                                <th>الصف</th>
+                                <th>الشعبة</th>
+                                <th>الاشتراك</th>
+                                <th>التسجيلات</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTableBody">
+                            <tr><td colspan="7" class="text-center">جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Subscriptions Section -->
+            <section id="admin-subscriptions" class="admin-section">
+                <div class="section-header">
+                    <button class="btn btn-outline" onclick="showAdminSection('dashboard')">← رجوع</button>
+                    <h2 class="section-title">إدارة الاشتراكات</h2>
+                </div>
+                <div class="data-table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>الطالب</th>
+                                <th>الشهر</th>
+                                <th>تاريخ البدء</th>
+                                <th>تاريخ الانتهاء</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subscriptionsTableBody">
+                            <tr><td colspan="6" class="text-center">جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Payments Section -->
+            <section id="admin-payments" class="admin-section">
+                <div class="section-header">
+                    <button class="btn btn-outline" onclick="showAdminSection('dashboard')">← رجوع</button>
+                    <h2 class="section-title">إدارة المدفوعات</h2>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        <button class="btn btn-sm btn-outline" onclick="exportPaymentsCSV()">📥 CSV</button>
+                        <button class="btn btn-sm btn-outline" onclick="exportPaymentsExcel()">📊 Excel</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteAllPayments()">🗑 حذف الكل</button>
+                    </div>
+                </div>
+                <div class="data-table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>الطالب</th>
+                                <th>المبلغ</th>
+                                <th>عدد الشهور</th>
+                                <th>طريقة الدفع</th>
+                                <th>الحالة</th>
+                                <th>التاريخ</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentsTableBody">
+                            <tr><td colspan="7" class="text-center">جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+
+            <!-- Final Reviews Section -->
+            <section id="admin-final-reviews" class="admin-section">
+                <div class="section-header">
+                    <button class="btn btn-outline" onclick="showAdminSection('dashboard')">← رجوع</button>
+                    <h2 class="section-title">إدارة المراجعات النهائية</h2>
+                    <div class="filters">
+                        <select id="finalReviewGradeFilter" onchange="loadFinalReviews()">
+                            <option value="">كل الصفوف</option>
+                        </select>
+                        <a href="admin-add-final-review.html" class="btn btn-primary" data-admin-link>إضافة مراجعة نهائية</a>
+                    </div>
+                </div>
+                <div class="data-table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>العنوان</th>
+                                <th>الصف</th>
+                                <th>السعر</th>
+                                <th>المحتوى</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="finalReviewsTableBody">
+                            <tr><td colspan="6" class="text-center">جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Courses Section -->
+            <section id="admin-courses" class="admin-section">
+                <div class="section-header">
+                    <button class="btn btn-outline" onclick="showAdminSection('dashboard')">← رجوع</button>
+                    <h2 class="section-title">إدارة الكورسات</h2>
+                    <a href="admin-add-course.html" class="btn btn-primary">إضافة كورس جديد</a>
+                </div>
+                <div class="data-table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>صورة</th>
+                                <th>اسم الكورس</th>
+                                <th>الصف</th>
+                                <th>عدد الفيديوهات</th>
+                                <th>السعر</th>
+                                <th>الحالة</th>
+                                <th>تاريخ الإنشاء</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="coursesTableBody">
+                            <tr><td colspan="8" class="text-center">جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="admin-settings" class="admin-section">
+                <div class="section-header">
+                    <button class="btn btn-outline" onclick="showAdminSection('dashboard')">← رجوع</button>
+                    <h2 class="section-title">⚙️ الإعدادات</h2>
+                </div>
+                <div class="settings-container">
+                    <form id="settingsForm" onsubmit="saveSettings(event)">
+
+                        <!-- بيانات المدرس -->
+                        <div class="settings-section-card">
+                            <div class="settings-section-header">
+                                <span class="settings-section-icon">👤</span>
+                                <span>بيانات المدرس</span>
+                            </div>
+                            <div class="settings-section-body">
+                                <div class="settings-field">
+                                    <label for="teacherPhone">رقم هاتف المدرس (للدخول)</label>
+                                    <input type="tel" id="teacherPhone" required>
+                                </div>
+                                <div class="settings-field">
+                                    <label for="teacherPassword">كلمة مرور المدرس</label>
+                                    <div class="password-wrapper">
+                                        <input type="password" id="teacherPassword" required>
+                                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility()" tabindex="-1" aria-label="إظهار/إخفاء كلمة المرور">👁</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- الاشتراكات الشهرية -->
+                        <div class="settings-section-card">
+                            <div class="settings-section-header">
+                                <span class="settings-section-icon">📅</span>
+                                <span>أسعار الاشتراكات الشهرية</span>
+                            </div>
+                            <div class="settings-section-body">
+                                <div id="gradesMonthlyContainer" class="settings-inner-grid">
+                                    <p class="loading-text">جاري تحميل الصفوف...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- الاشتراكات المكثفة -->
+                        <div class="settings-section-card">
+                            <div class="settings-section-header">
+                                <span class="settings-section-icon">📚</span>
+                                <span>أسعار الاشتراكات المكثفة (كل ترم 4 شهور)</span>
+                            </div>
+                            <div class="settings-section-body">
+                                <div id="gradesTermContainer"></div>
+                            </div>
+                        </div>
+
+                        <!-- اشتراك الصف الثالث الثانوي -->
+                        <div class="settings-section-card grade6-special">
+                            <div class="settings-section-header">
+                                <span class="settings-section-icon">⭐</span>
+                                <span>اشتراك الصف الثالث الثانوي (منفصل عن باقي الصفوف)</span>
+                            </div>
+                            <div class="settings-section-body">
+                                <p style="color:var(--warning);font-size:13px;margin-bottom:12px;">هذا السعر مخصص للصف الثالث الثانوي فقط — مستقل عن الأسعار الشهرية العامة</p>
+                                <div class="settings-price-card" style="background:linear-gradient(135deg,#fef9c3,#fff);border:2px solid #f59e0b;padding:16px;border-radius:12px">
+                                    <span class="grade-label" style="font-weight:800;font-size:16px">الثالث الثانوي</span>
+                                    <input type="number" class="price-input" id="grade6MonthlyPrice" value="" placeholder="0" style="border-color:#f59e0b;font-size:18px;font-weight:700;width:120px">
+                                    <span class="price-suffix">ج.م / شهرياً</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- مدة الاشتراك -->
+                        <div class="settings-section-card">
+                            <div class="settings-section-header">
+                                <span class="settings-section-icon">⏱️</span>
+                                <span>مدة الاشتراك</span>
+                            </div>
+                            <div class="settings-section-body">
+                                <div class="settings-duration-grid">
+                                    <div class="settings-field">
+                                        <label for="subscriptionDuration">الاشتراك الشهري (أيام)</label>
+                                        <input type="number" id="subscriptionDuration" placeholder="30" required>
+                                    </div>
+                                    <div class="settings-field">
+                                        <label for="termSubscriptionDuration">الاشتراك الفصلي (أيام) — الافتراضي 365</label>
+                                        <input type="number" id="termSubscriptionDuration" placeholder="365">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-save" id="saveSettingsBtn">
+                            <span class="btn-save-text">💾 حفظ الإعدادات</span>
+                            <span class="btn-save-spinner"></span>
+                        </button>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+
+
+    <!-- Student Detail Modal -->
+    <div class="modal" id="studentDetailModal">
+        <div class="modal-content modal-lg">
+            <span class="close-modal" onclick="closeModal('studentDetailModal')">&times;</span>
+            <h2 class="modal-title">تفاصيل الطالب</h2>
+            <div id="studentDetailContainer">
+                <p class="text-center">جاري التحميل...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="gradeModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('gradeModal')">&times;</span>
+            <h2 class="modal-title">إضافة/تعديل صف</h2>
+            <form onsubmit="handleGradeSubmit(event)">
+                <input type="hidden" id="gradeId">
+                <div class="form-group">
+                    <label for="gradeName">اسم الصف</label>
+                    <input type="text" id="gradeName" required>
+                </div>
+                <div class="form-group">
+                    <label for="gradeOrder">الترتيب</label>
+                    <input type="number" id="gradeOrder" required>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="gradeVisible"> ظهور للطلاب
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">حفظ</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="monthModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('monthModal')">&times;</span>
+            <h2 class="modal-title">إضافة/تعديل شهر</h2>
+            <form onsubmit="handleMonthSubmit(event)">
+                <input type="hidden" id="monthId">
+                <div class="form-group">
+                    <label for="monthGrade">الصف</label>
+                    <select id="monthGrade" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="monthName">اسم الشهر</label>
+                    <input type="text" id="monthName" required>
+                </div>
+                <div class="form-group">
+                    <label for="monthOrder">الترتيب</label>
+                    <input type="number" id="monthOrder" required>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="monthVisible"> ظهور للطلاب
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">حفظ</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="videoModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('videoModal')">&times;</span>
+            <h2 class="modal-title">إضافة/تعديل فيديو</h2>
+            <form onsubmit="handleVideoSubmit(event)">
+                <input type="hidden" id="videoId">
+                <div class="form-group">
+                    <label for="videoGrade">الصف</label>
+                    <select id="videoGrade" required onchange="loadVideoMonths()"></select>
+                </div>
+                <div class="form-group">
+                    <label for="videoMonth">الشهر</label>
+                    <select id="videoMonth" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="videoTitle">العنوان</label>
+                    <input type="text" id="videoTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="videoUrl">رابط الفيديو</label>
+                    <input type="url" id="videoUrl" required>
+                </div>
+                <div class="form-group">
+                    <label for="videoThumbnail">رابط الصورة المصغرة</label>
+                    <input type="url" id="videoThumbnail">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="videoFree"> مجاني
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">حفظ</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('productModal')">&times;</span>
+            <h2 class="modal-title">إضافة/تعديل مذكرة</h2>
+            <form onsubmit="handleProductSubmit(event)">
+                <input type="hidden" id="productId">
+                <div class="form-group">
+                    <label for="productGrade">الصف</label>
+                    <select id="productGrade" required onchange="loadProductMonths()"></select>
+                </div>
+                <div class="form-group">
+                    <label for="productMonth">الشهر</label>
+                    <select id="productMonth" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="productTitle">العنوان</label>
+                    <input type="text" id="productTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="productFile">رابط الملف</label>
+                    <input type="url" id="productFile" required>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="productFree"> مجاني
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">حفظ</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="audioModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('audioModal')">&times;</span>
+            <h2 class="modal-title">إضافة/تعديل صوتي</h2>
+            <form onsubmit="handleAudioSubmit(event)">
+                <input type="hidden" id="audioId">
+                <div class="form-group">
+                    <label for="audioGrade">الصف</label>
+                    <select id="audioGrade" required onchange="loadAudioMonths()"></select>
+                </div>
+                <div class="form-group">
+                    <label for="audioMonth">الشهر</label>
+                    <select id="audioMonth" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="audioTitle">العنوان</label>
+                    <input type="text" id="audioTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="audioFile">رابط الملف</label>
+                    <input type="url" id="audioFile" required>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="audioFree"> مجاني
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">حفظ</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="examModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('examModal')">&times;</span>
+            <h2 class="modal-title">إضافة/تعديل امتحان</h2>
+            <form onsubmit="handleExamSubmit(event)">
+                <input type="hidden" id="examId">
+                <div class="form-group">
+                    <label for="examGrade">الصف</label>
+                    <select id="examGrade" required onchange="loadExamMonths()"></select>
+                </div>
+                <div class="form-group">
+                    <label for="examMonth">الشهر</label>
+                    <select id="examMonth" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="examTitle">العنوان</label>
+                    <input type="text" id="examTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="examDuration">المدة (دقائق)</label>
+                    <input type="number" id="examDuration" required>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="examFree"> مجاني
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">حفظ</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Course Modal -->
+    <div class="modal" id="courseModal">
+        <div class="modal-content modal-lg">
+            <span class="close-modal" onclick="closeModal('courseModal')">&times;</span>
+            <h2 class="modal-title" id="courseModalTitle">إضافة كورس جديد</h2>
+            <form onsubmit="handleCourseSubmit(event)">
+                <input type="hidden" id="courseId">
+                <div class="form-group">
+                    <label for="courseTitle">اسم الكورس</label>
+                    <input type="text" id="courseTitle" required placeholder="مثال: شرح التفسير كامل">
+                </div>
+                <div class="form-group">
+                    <label for="courseDescription">وصف الكورس</label>
+                    <textarea id="courseDescription" rows="3" placeholder="وصف موجز للكورس"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="courseGrade">الصف الدراسي</label>
+                    <select id="courseGrade" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="courseThumbnail">صورة الكورس</label>
+                    <input type="url" id="courseThumbnail" placeholder="رابط صورة الكورس">
+                </div>
+                <div class="form-group">
+                    <label for="coursePrice">سعر الكورس (ج.م)</label>
+                    <input type="number" id="coursePrice" required min="0" step="0.01" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label for="courseStatus">حالة الكورس</label>
+                    <select id="courseStatus" required>
+                        <option value="draft">مسودة</option>
+                        <option value="published">منشور</option>
+                    </select>
+                </div>
+                
+                <!-- Video Upload Section -->
+                <div class="form-group">
+                    <label>فيديوهات الكورس (الحد الأقصى 20 فيديو)</label>
+                    <div id="videoUploadArea" class="video-upload-area">
+                        <div class="upload-placeholder">
+                            <span class="upload-icon">📁</span>
+                            <p>اسحب وأفلت الفيديوهات هنا</p>
+                            <p class="upload-hint">أو</p>
+                            <button type="button" class="btn btn-outline" onclick="document.getElementById('videoFilesInput').click()">اختر من الجهاز</button>
+                            <input type="file" id="videoFilesInput" multiple accept="video/*" style="display: none;" onchange="handleVideoFileSelect(event)">
+                        </div>
+                    </div>
+                    <div id="videoList" class="video-list"></div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-full" id="courseSubmitBtn">حفظ الكورس</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Payment Requests Section -->
+    <section id="admin-payment-requests" class="admin-section">
+        <div class="section-header">
+            <button class="btn btn-outline" onclick="showAdminSection('dashboard')">← رجوع</button>
+            <h2 class="section-title">📋 طلبات الدفع</h2>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <select class="form-input" style="width:auto" id="paymentReqFilter" onchange="loadPaymentRequests()">
+                    <option value="">الكل</option>
+                    <option value="pending">قيد الانتظار</option>
+                    <option value="approved">مقبول</option>
+                    <option value="rejected">مرفوض</option>
+                </select>
+                <input type="text" class="form-input" style="width:200px" id="paymentReqSearch" placeholder="بحث بالاسم أو الهاتف..." oninput="debounceSearchPaymentReq()">
+                <select class="form-input" style="width:auto" id="paymentReqSort" onchange="loadPaymentRequests()">
+                    <option value="newest">الأحدث أولاً</option>
+                    <option value="oldest">الأقدم أولاً</option>
+                </select>
+            </div>
+        </div>
+        <div class="data-table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>الطالب</th>
+                        <th>الهاتف</th>
+                        <th>الصف / الكورس</th>
+                        <th>المبلغ</th>
+                        <th>وسيلة الدفع</th>
+                        <th>الإيصال</th>
+                        <th>التاريخ</th>
+                        <th>الحالة</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="paymentRequestsTableBody">
+                    <tr><td colspan="10" class="text-center">جاري التحميل...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- Rejection Modal -->
+        <div class="modal" id="rejectionModal">
+            <div class="modal-content" style="max-width:400px">
+                <h3>سبب الرفض</h3>
+                <textarea class="form-input" id="rejectionReason" rows="4" placeholder="أدخل سبب الرفض..."></textarea>
+                <div style="display:flex;gap:8px;margin-top:12px">
+                    <button class="btn btn-danger" id="confirmRejectBtn">تأكيد الرفض</button>
+                    <button class="btn btn-outline" onclick="closeModal('rejectionModal')">إلغاء</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Payment Settings Section -->
+    <section id="admin-payment-settings" class="admin-section">
+        <div class="section-header">
+            <h2 class="section-title">⚙️ إعدادات الدفع</h2>
+        </div>
+        <div style="max-width:600px;margin:0 auto">
+            <div class="summary-card" style="padding:24px">
+                <form id="paymentSettingsForm" onsubmit="savePaymentSettings(event)">
+                    <div class="form-group">
+                        <label>رقم فودافون كاش</label>
+                        <input type="text" class="form-input" id="settingsVodafone" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ID انستا باي</label>
+                        <input type="text" class="form-input" id="settingsInstapay" required>
+                    </div>
+                    <div class="form-group">
+                        <label>تعليمات الدفع</label>
+                        <textarea class="form-input" id="settingsInstructions" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>مدة الاشتراك (أيام)</label>
+                        <input type="number" class="form-input" id="settingsDuration" min="1" max="365" required>
+                    </div>
+                    <div class="form-group">
+                        <label>الحجم المسموح به للملف (MB)</label>
+                        <input type="number" class="form-input" id="settingsFileSize" min="1" max="50" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">حفظ الإعدادات</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <script src="js/config.js?v=3"></script>
+    <script src="js/supabase.js?v=3"></script>
+    <script src="js/db.js?v=3"></script>
+    <script src="js/auth.js?v=3"></script>
+    <script src="js/main.js?v=3"></script>
+    <script src="js/admin.js?v=3"></script>
+</body>
+</html>

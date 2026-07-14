@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- ===== SEO Primary Tags ===== -->
+    <title>نبذة عنا | منصة الباسط للعلوم الشرعية</title>
+    <meta name="description" content="تعرف على منصة الباسط للعلوم الشرعية، ورؤيتنا لتسهيل وتأصيل العلم الشرعي للمراحل الإعدادية والثانوية مع الأستاذ محمد عبد الباسط.">
+    <meta name="keywords" content="عن الباسط, من نحن, محمد عبد الباسط, منصة الباسط للعلوم الشرعية, معلم علوم شرعية, شريعة وقانون الأزهر">
+    <meta name="author" content="أ/ محمد عبد الباسط">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <link rel="canonical" href="https://albasit.vercel.app/about.html">
+
+    <!-- ===== Structured Data Schema.org ===== -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "محمد عبد الباسط",
+      "jobTitle": "معلم العلوم الشرعية",
+      "description": "مدرس العلوم الشرعية للصفوف الإعدادية والثانوية، خريج كلية الشريعة والقانون جامعة الأزهر",
+      "knowsAbout": ["الفقه", "العقيدة", "التفسير", "الحديث", "العلوم الشرعية"],
+      "affiliation": {
+        "@type": "EducationalOrganization",
+        "name": "منصة الباسط للعلوم الشرعية",
+        "url": "https://albasit.vercel.app"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "EducationalOrganization",
+      "name": "منصة الباسط للعلوم الشرعية",
+      "description": "منصة تعليمية متخصصة في شرح العلوم الشرعية للمراحل الإعدادية والثانوية",
+      "url": "https://albasit.vercel.app",
+      "founder": {
+        "@type": "Person",
+        "name": "محمد عبد الباسط"
+      }
+    }
+    </script>
+
+    <!-- ===== Open Graph / Facebook ===== -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://albasit.vercel.app/about.html">
+    <meta property="og:title" content="نبذة عنا | منصة الباسط للعلوم الشرعية">
+    <meta property="og:description" content="تعرف على رؤية ورسالة منصة الباسط والأستاذ محمد عبد الباسط لتأصيل وتيسير العلوم الشرعية.">
+    <meta property="og:image" content="https://albasit.vercel.app/images/logo.jpg">
+    <meta property="og:image:alt" content="منصة الباسط للعلوم الشرعية">
+    <meta property="og:locale" content="ar_EG">
+    <meta property="og:site_name" content="منصة الباسط">
+
+    <!-- ===== Twitter Card ===== -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="نبذة عنا | منصة الباسط للعلوم الشرعية">
+    <meta name="twitter:description" content="تعرف على منصة الباسط وفريق العمل والمؤهلات الأكاديمية للأستاذ محمد عبد الباسط.">
+    <meta name="twitter:image" content="https://albasit.vercel.app/images/logo.jpg">
+
+    <!-- ===== Performance: Preconnect ===== -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://supabase.co">
+    <link rel="preconnect" href="https://supabase.co">
+
+    <!-- ===== Styles ===== -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/about.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap">
+</head>
+<body>
+    <!-- Load Supabase library first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="index.html" class="logo-text">الباسط</a>
+                </div>
+                <nav class="nav">
+                    <ul class="nav-list">
+                        <li><a href="index.html" class="nav-link">الرئيسية</a></li>
+                        <li><a href="about.html" class="nav-link active">نبذة عنا</a></li>
+                        <li class="nav-divider"></li>
+                        <li class="nav-auth-btn"><button class="btn btn-outline" onclick="showLoginModal(); closeMobileMenu()">تسجيل الدخول</button></li>
+                        <li class="nav-auth-btn"><button class="btn btn-primary" onclick="showRegisterModal(); closeMobileMenu()">إنشاء حساب</button></li>
+                    </ul>
+                </nav>
+                <div class="auth-buttons" id="authButtons"></div>
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+        <div class="nav-overlay" onclick="toggleMobileMenu()"></div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Page Title -->
+        <section class="page-header">
+            <div class="container">
+                <h1 class="page-title">نبذة عنا</h1>
+                <p class="page-subtitle">تعرف على منصة الباسط وفريق العمل</p>
+            </div>
+        </section>
+
+        <!-- Teacher Section -->
+        <section class="teacher-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">المدرس</h2>
+                </div>
+                <div class="teacher-card">
+                    <div class="teacher-image">
+                        <div class="teacher-avatar-large">
+                            <img src="images/teacher.jpeg" alt="الأستاذ محمد عبد الباسط" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                        </div>
+                    </div>
+                    <div class="teacher-info">
+                        <h3 class="teacher-name">أ / محمد عبد الباسط</h3>
+                        <p class="teacher-subtitle">معلم أول أ - معهد قنا النموذجي بنين</p>
+                        <p class="teacher-subtitle">المؤسس والمشرف العام على منصة "الباسط للعلوم الشرعية"</p>
+                        
+                        <div class="teacher-qualifications">
+                            <h4>🎓 المؤهلات الأكاديمية:</h4>
+                            <ul>
+                                <li>ماجستير في القانون العام – جامعة جنوب الوادي (تقدير: جيد جداً)</li>
+                                <li>ماجستير في حقوق الإنسان – جامعة جنوب الوادي</li>
+                                <li>دبلوم العلوم الشرعية – جامعة الإسكندرية (تقدير: جيد جداً)</li>
+                                <li>ليسانس الشريعة والقانون – جامعة الأزهر الشريف (تقدير: جيد جداً)</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="teacher-bio">
+                            <h4>📌 نبذة تعريفية</h4>
+                            <p>معلم وباحث أجمع بين أصالة العلوم الشرعية والعمق الأكاديمي القانوني. أسعى من خلال منصة الباسط للعلوم الشرعية إلى تقديم العلم الشرعي بأسلوب منهجي وميسر، يربط بين فقه الدليل والتطبيق السلوكي. أكرس جهدي لتقريب المسائل الفقهية للأجيال الناشئة.</p>
+                        </div>
+                        
+                        <div class="teacher-vision">
+                            <h4>🎯 الرؤية والرسالة</h4>
+                            <p><strong>رؤيتنا:</strong> أن نكون الوجهة الأولى لطالب العلم الباحث عن الفهم الصحيح، المتأصل، البعيد عن الإفراط والتفريط.</p>
+                            <p><strong>رسالتنا:</strong> تيسير المعارف الشرعية وتأصيل المفاهيم الدينية عبر منهجية تعليمية تفاعلية، تحول العلم إلى واقع عملي وأخلاقي في حياة الطالب.</p>
+                        </div>
+                        
+                        <div class="teacher-activities">
+                            <h4>🛠️ خبراتنا وأنشطتنا التعليمية</h4>
+                            <ul>
+                                <li><strong>منصة الباسط للعلوم الشرعية:</strong> إدارة وتقديم شروحات دورية ومتابعة تقييمية لمستوى الطلاب</li>
+                                <li><strong>سلسلة "الباسط" التعليمية:</strong> إعداد وتصميم مذكرات وكتيبات دراسية احترافية تعتمد على (الخرائط الذهنية والتشجير) لتسهيل الفهم والحفظ</li>
+                                <li><strong>قناة "بين السطور" (واتساب):</strong> نافذة تواصل مباشرة لتقديم الفوائد الشرعية، التوجيهات التربوية، والدعم الفوري للطلاب وأولياء الأمور</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="teacher-motto">
+                            <p class="motto-text">✨ شعارنا</p>
+                            <p class="motto-quote">"مَن يُرِدِ اللَّهُ بِهِ خَيْرًا يُفَقِّهْهُ فِي الدِّينِ.. معاً لـتأصيل العلم وتيسير الفهم."</p>
+                        </div>
+                        
+                        <div class="teacher-social">
+                            <h4>📞 للتواصل والاشتراك</h4>
+                            <p class="contact-info">للانضمام إلى مجتمعنا التعليمي والاستفسار عن المناهج والدروس، يمكنكم التواصل معنا مباشرة عبر الواتساب:</p>
+                            <div class="social-links">
+                                <a href="https://wa.me/201127025715" class="social-link whatsapp" target="_blank">📱 01127025715</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Designer Section -->
+        <section class="designer-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">مصمم الموقع</h2>
+                </div>
+                <div class="designer-card">
+                    <div class="designer-image">
+                        <div class="designer-avatar-large">
+                            <img src="images/ahmed-zaki.png" alt="أحمد زكي" style="width:100%;height:100%;object-fit:cover;display:block">
+                        </div>
+                    </div>
+                    <div class="designer-info">
+                        <h3 class="designer-name">م/أحمد زكي مصطفي موسي</h3>
+                        <p class="designer-description">مطور Full Stack متخصص في بناء المنصات التعليمية والتطبيقات الحديثة. يقدم حلولاً تقنية مبتكرة لتطوير التعليم الرقمي.</p>
+                        <div class="designer-details">
+                            <div class="detail-item">
+                                <span class="detail-label">التخصص:</span>
+                                <span class="detail-value">Full Stack Developer</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">الخبرة:</span>
+                                <span class="detail-value">+5 سنوات</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">المهارات:</span>
+                                <span class="detail-value">HTML, CSS, JavaScript, React, Node.js, Supabase, Cloudinary</span>
+                            </div>
+                        </div>
+                        <div class="designer-social">
+                            <h4>وسائل التواصل</h4>
+                            <div class="social-links">
+                                <a href="https://www.facebook.com/share/1KumySXfSu/" class="social-link facebook" target="_blank">فيسبوك</a>
+                                <a href="https://wa.me/201102958780" class="social-link whatsapp" target="_blank">واتساب</a>
+                                <a href="https://github.com/zkya60919-beep/-" class="social-link github" target="_blank">GitHub</a>
+                                <a href="https://www.linkedin.com/in/ahmed-zaki-bb9a5a324" class="social-link linkedin" target="_blank">LinkedIn</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Platform Section -->
+        <section class="platform-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">عن المنصة</h2>
+                </div>
+                <div class="platform-info">
+                    <p class="platform-description">منصة الباسط للعلوم الشرعية هي منصة تعليمية احترافية تهدف إلى تقديم العلم الشرعي بأسلوب منهجي وميسر، يربط بين فقه الدليل والتطبيق السلوكي. نقدم محتوى غني ومتنوع يشمل الفيديوهات التعليمية والمذكرات والامتحانات والصوتيات.</p>
+                    <div class="platform-features">
+                        <div class="feature-item">
+                            <div class="feature-icon">📚</div>
+                            <h4>محتوى شرعي أصيل</h4>
+                            <p>فيديوهات ومذكرات وامتحانات في العلوم الشرعية</p>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">💡</div>
+                            <h4>شرح مبسط وواضح</h4>
+                            <p>طرق شرح حديثة تعتمد على الخرائط الذهنية والتشجير</p>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🎯</div>
+                            <h4>نظام اشتراكات مرن</h4>
+                            <p>اشتراك شهري بأسعار مناسبة</p>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">📱</div>
+                            <h4>تجربة مستخدم سلسة</h4>
+                            <p>تصميم متجاوب يعمل على جميع الأجهزة</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <div class="logo-text">الباسط</div>
+                    <p>منصة تعليمية احترافية للطلاب</p>
+                </div>
+                <div class="footer-links">
+                    <h3>روابط سريعة</h3>
+                    <ul>
+                        <li><a href="index.html">الرئيسية</a></li>
+                        <li><a href="about.html">نبذة عنا</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h3>تواصل معنا</h3>
+                    <div class="social-links">
+                        <a href="https://wa.me/201127025715" class="social-link" target="_blank">واتساب: 01127025715</a>
+                        <a href="https://wa.me/201102958780" class="social-link" target="_blank">الدعم الفني: 01102958780</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>من تطوير <strong>م/أحمد زكي</strong></p>
+                <p>&copy; 2026 منصة الباسط. جميع الحقوق محفوظة.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('loginModal')">&times;</span>
+            <h2 class="modal-title">تسجيل الدخول</h2>
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="loginPhone">رقم الهاتف</label>
+                    <input type="tel" id="loginPhone" name="phone" required placeholder="أدخل رقم هاتفك">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">كلمة المرور</label>
+                    <input type="password" id="loginPassword" name="password" required placeholder="أدخل كلمة المرور">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">دخول</button>
+            </form>
+            <p class="modal-footer-text">ليس لديك حساب؟ <a href="#" onclick="closeModal('loginModal'); showRegisterModal();">إنشاء حساب</a></p>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal" id="registerModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('registerModal')">&times;</span>
+            <h2 class="modal-title">إنشاء حساب جديد</h2>
+            <form id="registerForm" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label for="registerName">الاسم الكامل</label>
+                    <input type="text" id="registerName" name="name" required placeholder="أدخل اسمك الكامل">
+                </div>
+                <div class="form-group">
+                    <label for="registerPhone">رقم الهاتف</label>
+                    <input type="tel" id="registerPhone" name="phone" required placeholder="أدخل رقم هاتفك">
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">كلمة المرور</label>
+                    <input type="password" id="registerPassword" name="password" required placeholder="أدخل كلمة المرور">
+                </div>
+                <div class="form-group">
+                    <label for="registerDivision">الشعبة</label>
+                    <select id="registerDivision" name="division" required>
+                        <option value="">اختر الشعبة</option>
+                        <option value="علمي">علمي</option>
+                        <option value="أدبي">أدبي</option>
+                        <option value="إعدادي">إعدادي</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">إنشاء الحساب</button>
+            </form>
+            <p class="modal-footer-text">لديك حساب بالفعل؟ <a href="#" onclick="closeModal('registerModal'); showLoginModal();">تسجيل الدخول</a></p>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

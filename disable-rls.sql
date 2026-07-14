@@ -1,0 +1,35 @@
+-- Disable RLS and add policies to allow public access
+-- Run this in Supabase SQL Editor
+
+-- Disable RLS on all tables
+ALTER TABLE users DISABLE ROW LEVEL SECURITY;
+ALTER TABLE grades DISABLE ROW LEVEL SECURITY;
+ALTER TABLE months DISABLE ROW LEVEL SECURITY;
+ALTER TABLE videos DISABLE ROW LEVEL SECURITY;
+ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
+ALTER TABLE audio DISABLE ROW LEVEL SECURITY;
+ALTER TABLE exams DISABLE ROW LEVEL SECURITY;
+ALTER TABLE subscriptions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE payments DISABLE ROW LEVEL SECURITY;
+ALTER TABLE teacher_settings DISABLE ROW LEVEL SECURITY;
+
+-- Disable RLS on courses tables
+ALTER TABLE courses DISABLE ROW LEVEL SECURITY;
+ALTER TABLE course_videos DISABLE ROW LEVEL SECURITY;
+ALTER TABLE course_purchases DISABLE ROW LEVEL SECURITY;
+
+-- Disable RLS on final reviews tables
+ALTER TABLE final_reviews DISABLE ROW LEVEL SECURITY;
+ALTER TABLE final_review_content DISABLE ROW LEVEL SECURITY;
+ALTER TABLE final_review_purchases DISABLE ROW LEVEL SECURITY;
+
+-- Disable RLS on manual payment tables
+ALTER TABLE payment_requests DISABLE ROW LEVEL SECURITY;
+ALTER TABLE payment_settings DISABLE ROW LEVEL SECURITY;
+
+-- Disable RLS on authentication tables
+ALTER TABLE login_logs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE reset_codes DISABLE ROW LEVEL SECURITY;
+
+-- Success message
+SELECT 'RLS disabled successfully!' AS status;

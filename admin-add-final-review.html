@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إضافة مراجعة نهائية - لوحة المدرس</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/admin-forms.css">
+    <link rel="stylesheet" href="css/final-reviews.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap">
+    <script src="https://cdn.jsdelivr.net/npm/tus-js-client@3.1.3/dist/tus.min.js"></script>
+    <style>
+        .q-options { display: grid; gap: 8px; margin-bottom: 12px; }
+        .section-header-inline { display: flex; justify-content: space-between; align-items: center; margin: 24px 0 16px; }
+        .question-block { border: 1px solid #e0e0e0; padding: 16px; border-radius: 8px; margin-bottom: 16px; background-color: #fcfcfc; }
+    </style>
+</head>
+<body>
+    <!-- Load Supabase library first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <header class="admin-header">
+        <div class="container">
+            <div class="admin-header-content">
+                <div class="logo">
+                    <a href="admin.html" class="logo-text">الباسط</a>
+                    <span class="admin-badge">إضافة مراجعة نهائية</span>
+                </div>
+                <a href="admin.html" class="btn btn-outline btn-light">← العودة</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="form-page">
+        <div class="container">
+            <form id="finalReviewForm" class="admin-form-card">
+                <h1 class="form-page-title">إضافة مراجعة نهائية جديدة</h1>
+
+                <!-- Basic Information -->
+                <div class="section-divider">
+                    <h3>المعلومات الأساسية</h3>
+                </div>
+
+                <div class="form-group">
+                    <label for="reviewGrade">الصف الدراسي</label>
+                    <select id="reviewGrade" required></select>
+                </div>
+
+                <div class="form-group">
+                    <label for="reviewTitle">عنوان المراجعة</label>
+                    <input type="text" id="reviewTitle" required placeholder="مثال: مراجعة نهائية - الفصل الأول">
+                </div>
+
+                <div class="form-group">
+                    <label for="reviewDescription">وصف المراجعة</label>
+                    <textarea id="reviewDescription" rows="4" placeholder="اكتب وصفاً تفصيلياً للمراجعة..."></textarea>
+                </div>
+
+                <div class="pricing-section">
+                    <div class="pricing-header">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="reviewFree" onchange="toggleReviewPrice()">
+                            <span>مجاني</span>
+                        </label>
+                        <span class="price-badge">تسعير</span>
+                    </div>
+                    <div class="price-input-group" id="reviewPriceGroup">
+                        <label for="reviewPrice">سعر المراجعة (ج.م)</label>
+                        <input type="number" id="reviewPrice" min="0" step="0.01" placeholder="مثال: 50">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>صورة الغلاف (اختياري)</label>
+                    <div class="drop-zone" id="thumbnailDropZone">
+                        <p>اسحب الصورة أو اضغط للرفع</p>
+                        <span>JPG / PNG - حتى 8 م.ب</span>
+                    </div>
+                    <input type="file" id="thumbnailInput" accept="image/*" style="display:none">
+                </div>
+
+                <!-- Content Types -->
+                <div class="section-divider">
+                    <h3>المحتوى</h3>
+                </div>
+
+                <div class="content-types-container">
+                    <!-- Videos Section -->
+                    <div class="content-type-section" data-type="video">
+                        <div class="content-type-header">
+                            <h4>📹 فيديوهات المراجعة</h4>
+                            <button type="button" class="btn btn-sm btn-outline" onclick="addContentItem('video')">+ إضافة فيديو</button>
+                        </div>
+                        <div id="videoContentItems" class="content-items-list"></div>
+                    </div>
+
+                    <!-- PDF Notes Section -->
+                    <div class="content-type-section" data-type="pdf">
+                        <div class="content-type-header">
+                            <h4>📄 مذكرات PDF</h4>
+                            <button type="button" class="btn btn-sm btn-outline" onclick="addContentItem('pdf')">+ إضافة مذكرة</button>
+                        </div>
+                        <div id="pdfContentItems" class="content-items-list"></div>
+                    </div>
+
+                    <!-- Audio Section -->
+                    <div class="content-type-section" data-type="audio">
+                        <div class="content-type-header">
+                            <h4>🎵 صوتيات MP3</h4>
+                            <button type="button" class="btn btn-sm btn-outline" onclick="addContentItem('audio')">+ إضافة صوتي</button>
+                        </div>
+                        <div id="audioContentItems" class="content-items-list"></div>
+                    </div>
+
+                    <!-- Exams Section -->
+                    <div class="content-type-section" data-type="exam">
+                        <div class="content-type-header">
+                            <h4>📝 امتحانات</h4>
+                            <button type="button" class="btn btn-sm btn-outline" onclick="addContentItem('exam')">+ إضافة امتحان</button>
+                        </div>
+                        <div id="examContentItems" class="content-items-list"></div>
+                    </div>
+                </div>
+
+                <div class="upload-progress" id="uploadProgress" hidden>
+                    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                    <span id="progressText">0%</span>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">حفظ المراجعة</button>
+                    <a href="admin.html" class="btn btn-outline">إلغاء</a>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="js/config.js?v=3"></script>
+    <script src="js/supabase.js?v=3"></script>
+    <script src="js/db.js?v=3"></script>
+    <script src="js/video-utils.js?v=3"></script>
+    <script src="js/cloudinary.js?v=3"></script>
+    <script src="js/auth.js?v=3"></script>
+    <script src="js/main.js?v=3"></script>
+    <script src="js/admin-add-final-review.js?v=3"></script>
+</body>
+</html>

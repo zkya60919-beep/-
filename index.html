@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- ===== SEO Primary Tags ===== -->
+    <title>منصة الباسط للعلوم الشرعية | شرح العلوم الشرعية للمراحل الإعدادية والثانوية</title>
+    <meta name="description" content="منصة الباسط للعلوم الشرعية - أفضل منصة تعليمية لشرح العلوم الشرعية للمراحل الإعدادية والثانوية. فيديوهات تعليمية، مذكرات PDF، امتحانات تفاعلية مع أ/ محمد عبد الباسط.">
+    <meta name="keywords" content="الباسط للعلوم الشرعية, منصة الباسط, الباسط التعليمية, الباسط للمواد الشرعية, شرح العلوم الشرعية, محمد عبد الباسط, علوم شرعية اعدادي, علوم شرعية ثانوي, دروس العلوم الشرعية, مذكرات العلوم الشرعية">
+    <meta name="author" content="أ/ محمد عبد الباسط">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <meta name="language" content="Arabic">
+    <link rel="canonical" href="https://albasit.vercel.app/">
+
+    <!-- ===== Open Graph / Facebook ===== -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://albasit.vercel.app/">
+    <meta property="og:title" content="منصة الباسط للعلوم الشرعية">
+    <meta property="og:description" content="منصة تعليمية احترافية لشرح العلوم الشرعية - فيديوهات، مذكرات، امتحانات">
+    <meta property="og:image" content="https://albasit.vercel.app/images/logo.jpg">
+    <meta property="og:image:alt" content="منصة الباسط للعلوم الشرعية">
+    <meta property="og:locale" content="ar_EG">
+    <meta property="og:site_name" content="منصة الباسط">
+
+    <!-- ===== Twitter Card ===== -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="منصة الباسط للعلوم الشرعية">
+    <meta name="twitter:description" content="منصة تعليمية احترافية لشرح العلوم الشرعية">
+    <meta name="twitter:image" content="https://albasit.vercel.app/images/logo.jpg">
+
+    <!-- ===== Structured Data Schema.org ===== -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "EducationalOrganization",
+      "name": "منصة الباسط للعلوم الشرعية",
+      "description": "منصة تعليمية احترافية توفر دروس العلوم الشرعية للمراحل الإعدادية والثانوية",
+      "url": "https://albasit.vercel.app",
+      "logo": "https://albasit.vercel.app/images/logo.jpg",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+201127025715",
+        "contactType": "customer service",
+        "availableLanguage": "Arabic"
+      },
+      "sameAs": [
+        "https://wa.me/201127025715"
+      ],
+      "founder": {
+        "@type": "Person",
+        "name": "محمد عبد الباسط",
+        "jobTitle": "مدرس العلوم الشرعية"
+      }
+    }
+    </script>
+
+    <!-- ===== Performance: Preconnect ===== -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://olnilgksaopmlzulnftw.supabase.co">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+
+    <!-- ===== Fonts ===== -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap">
+
+    <!-- ===== Stylesheets ===== -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Load Supabase library first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Header -->
+    <header class="header" role="banner">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="index.html" aria-label="الصفحة الرئيسية - منصة الباسط">
+                        <img src="images/logo.jpg" alt="شعار منصة الباسط للعلوم الشرعية" class="logo-img" width="60" height="60">
+                    </a>
+                </div>
+                <nav class="nav" role="navigation" aria-label="القائمة الرئيسية">
+                    <ul class="nav-list">
+                        <li><a href="index.html" class="nav-link active" aria-current="page">الرئيسية</a></li>
+                        <li><a href="about.html" class="nav-link">نبذة عنا</a></li>
+                        <li class="nav-theme-toggle">
+                            <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="تبديل الوضع الليلي">
+                                <svg class="theme-icon sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="5"></circle>
+                                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                                </svg>
+                                <svg class="theme-icon moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                                </svg>
+                            </button>
+                        </li>
+                        <li class="nav-divider"></li>
+                        <li class="nav-auth-btn"><button id="btnLogin" class="btn btn-outline" onclick="showLoginModal(); closeMobileMenu()">تسجيل الدخول</button></li>
+                        <li class="nav-auth-btn"><button id="btnRegister" class="btn btn-primary" onclick="showRegisterModal(); closeMobileMenu()">إنشاء حساب</button></li>
+                    </ul>
+                </nav>
+                <div class="auth-buttons" id="authButtons"></div>
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="فتح القائمة" aria-expanded="false" id="mobileMenuBtn">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+        <div class="nav-overlay" onclick="toggleMobileMenu()"></div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content">
+
+        <!-- ===== Hero Section ===== -->
+        <section class="hero" aria-label="الصفحة الترحيبية">
+            <!-- Animated background shapes -->
+            <div class="hero-shapes" aria-hidden="true">
+                <div class="shape shape-1"></div>
+                <div class="shape shape-2"></div>
+                <div class="shape shape-3"></div>
+                <div class="shape shape-4"></div>
+            </div>
+            <div class="container">
+                <div class="hero-content">
+                    <div class="hero-text">
+                        <div class="hero-badge">
+                            <span class="badge-dot"></span>
+                            منصة تعليمية متخصصة في العلوم الشرعية
+                        </div>
+                        <h1 class="hero-title">منصة <span class="hero-title-highlight">الباسط</span><br>للعلوم الشرعية</h1>
+                        <p class="hero-description">
+                            تعلّم العلوم الشرعية بأسلوب منهجي وميسّر مع أ/ محمد عبد الباسط.
+                            فيديوهات تعليمية، مذكرات PDF، وامتحانات تفاعلية لجميع المراحل.
+                        </p>
+                        <div class="hero-actions">
+                            <button class="btn btn-primary btn-large" id="heroCTA" onclick="showRegisterModal()">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+                                ابدأ التعلم الآن
+                            </button>
+                            <button class="btn btn-hero-outline" onclick="showLoginModal()">
+                                تسجيل الدخول
+                            </button>
+                        </div>
+                        <!-- Stats Row -->
+                        <div class="hero-stats">
+                            <div class="hero-stat">
+                                <span class="hero-stat-number" id="statsStudents">+500</span>
+                                <span class="hero-stat-label">طالب مسجل</span>
+                            </div>
+                            <div class="hero-stat-divider" aria-hidden="true"></div>
+                            <div class="hero-stat">
+                                <span class="hero-stat-number">+100</span>
+                                <span class="hero-stat-label">فيديو تعليمي</span>
+                            </div>
+                            <div class="hero-stat-divider" aria-hidden="true"></div>
+                            <div class="hero-stat">
+                                <span class="hero-stat-number">6</span>
+                                <span class="hero-stat-label">صفوف دراسية</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hero-visual">
+                        <div class="teacher-card">
+                            <div class="teacher-card-glow" aria-hidden="true"></div>
+                            <div class="teacher-avatar">
+                                <img src="images/teacher.jpeg" alt="أستاذ محمد عبد الباسط - مدرس العلوم الشرعية" width="280" height="280" loading="eager">
+                            </div>
+                            <div class="teacher-info">
+                                <div class="teacher-badge">👨‍🏫 معلم</div>
+                                <div class="teacher-name">أ/ محمد عبد الباسط</div>
+                                <div class="teacher-subject">العلوم الشرعية</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== Features Section ===== -->
+        <section class="features-section" aria-labelledby="featuresTitle">
+            <div class="container">
+                <h2 class="section-title" id="featuresTitle">لماذا منصة الباسط؟</h2>
+                <p class="section-subtitle">كل ما تحتاجه لتفوقك في العلوم الشرعية في مكان واحد</p>
+                <div class="features-grid">
+                    <div class="feature-card" data-aos="fade-up">
+                        <div class="feature-icon" aria-hidden="true">🎬</div>
+                        <h3 class="feature-title">فيديوهات تفاعلية</h3>
+                        <p class="feature-desc">شرح مرئي احترافي بجودة عالية مع إمكانية التحكم في السرعة والجودة</p>
+                    </div>
+                    <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
+                        <div class="feature-icon" aria-hidden="true">📚</div>
+                        <h3 class="feature-title">مذكرات PDF</h3>
+                        <p class="feature-desc">ملزمات ومذكرات شاملة قابلة للتحميل والمراجعة في أي وقت</p>
+                    </div>
+                    <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
+                        <div class="feature-icon" aria-hidden="true">📝</div>
+                        <h3 class="feature-title">امتحانات تفاعلية</h3>
+                        <p class="feature-desc">اختبر نفسك بامتحانات متنوعة وتابع نتائجك ومستواك أولاً بأول</p>
+                    </div>
+                    <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
+                        <div class="feature-icon" aria-hidden="true">🎵</div>
+                        <h3 class="feature-title">صوتيات تعليمية</h3>
+                        <p class="feature-desc">استمع للشرح في أي مكان مع مكتبة صوتيات غنية ومنظمة</p>
+                    </div>
+                    <div class="feature-card" data-aos="fade-up" data-aos-delay="400">
+                        <div class="feature-icon" aria-hidden="true">📱</div>
+                        <h3 class="feature-title">متوافق مع الهاتف</h3>
+                        <p class="feature-desc">تصفّح المحتوى بسهولة من هاتفك أو جهازك اللوحي أو الكمبيوتر</p>
+                    </div>
+                    <div class="feature-card" data-aos="fade-up" data-aos-delay="500">
+                        <div class="feature-icon" aria-hidden="true">🔒</div>
+                        <h3 class="feature-title">محتوى مؤمّن</h3>
+                        <p class="feature-desc">نظام اشتراك محمي يضمن وصولك المنفرد لمحتواك التعليمي</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== Grades Section ===== -->
+        <section class="grades-section" aria-labelledby="gradesTitle">
+            <div class="container">
+                <h2 class="section-title" id="gradesTitle">الصفوف الدراسية</h2>
+                <p class="section-subtitle">اختر صفك الدراسي وابدأ رحلتك التعليمية</p>
+                <div class="grades-grid" id="gradesGrid" role="list">
+                    <!-- Skeleton Loading -->
+                    <div class="grade-card skeleton-card" aria-hidden="true"><div class="skeleton skeleton-icon"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text-sm"></div></div>
+                    <div class="grade-card skeleton-card" aria-hidden="true"><div class="skeleton skeleton-icon"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text-sm"></div></div>
+                    <div class="grade-card skeleton-card" aria-hidden="true"><div class="skeleton skeleton-icon"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text-sm"></div></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== Latest Courses Section ===== -->
+        <section class="latest-courses-section" aria-labelledby="latestCoursesTitle">
+            <div class="container">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title" id="latestCoursesTitle">أحدث الكورسات</h2>
+                        <p class="section-subtitle">آخر الكورسات التي أضافها الأستاذ</p>
+                    </div>
+                </div>
+                <div class="courses-grid" id="latestCoursesGrid" role="list">
+                    <!-- Skeleton Loading -->
+                    <div class="course-card skeleton-card" aria-hidden="true"><div class="skeleton skeleton-thumbnail"></div><div class="skeleton skeleton-text" style="margin:16px;"></div><div class="skeleton skeleton-text-sm" style="margin:0 16px 16px;"></div></div>
+                    <div class="course-card skeleton-card" aria-hidden="true"><div class="skeleton skeleton-thumbnail"></div><div class="skeleton skeleton-text" style="margin:16px;"></div><div class="skeleton skeleton-text-sm" style="margin:0 16px 16px;"></div></div>
+                    <div class="course-card skeleton-card" aria-hidden="true"><div class="skeleton skeleton-thumbnail"></div><div class="skeleton skeleton-text" style="margin:16px;"></div><div class="skeleton skeleton-text-sm" style="margin:0 16px 16px;"></div></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== Reviews Section ===== -->
+        <section class="reviews-section" aria-labelledby="reviewsTitle">
+            <div class="container">
+                <h2 class="section-title" id="reviewsTitle">آراء الطلاب</h2>
+                <p class="section-subtitle">ماذا يقول طلابنا عن المنصة</p>
+                <div class="reviews-grid" id="reviewsGrid" role="list">
+                    <!-- يتم التحميل ديناميكياً -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== CTA Section ===== -->
+        <section class="cta-section" aria-label="دعوة للتسجيل">
+            <div class="container">
+                <div class="cta-card">
+                    <div class="cta-content">
+                        <h2 class="cta-title">ابدأ رحلتك التعليمية اليوم</h2>
+                        <p class="cta-desc">انضم لأكثر من 500 طالب يتعلمون العلوم الشرعية مع أ/ محمد عبد الباسط</p>
+                        <div class="cta-actions">
+                            <button class="btn btn-cta-primary" id="ctaRegisterBtn" onclick="showRegisterModal()">
+                                إنشاء حساب مجاني
+                            </button>
+                            <a href="about.html" class="btn btn-cta-outline">تعرف علينا أكثر</a>
+                        </div>
+                    </div>
+                    <div class="cta-visual" aria-hidden="true">📖</div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer" role="contentinfo">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <a href="index.html">
+                        <img src="images/logo.jpg" alt="منصة الباسط" class="footer-logo-img" width="70" height="70" loading="lazy">
+                    </a>
+                    <p class="footer-brand-desc">منصة تعليمية احترافية متخصصة في العلوم الشرعية للمراحل الإعدادية والثانوية</p>
+                    <div class="footer-social">
+                        <a href="https://wa.me/201127025715" class="footer-social-btn" target="_blank" rel="noopener noreferrer" aria-label="تواصل معنا على واتساب">
+                            <span>واتساب</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <h3 class="footer-links-title">روابط سريعة</h3>
+                    <ul>
+                        <li><a href="index.html">الرئيسية</a></li>
+                        <li><a href="about.html">نبذة عنا</a></li>
+                        <li><a href="dashboard.html">لوحة الطالب</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h3 class="footer-links-title">تواصل معنا</h3>
+                    <p class="footer-contact-info">
+                        <a href="https://wa.me/201127025715" target="_blank" rel="noopener noreferrer">
+                            📱 واتساب: 01127025715
+                        </a>
+                    </p>
+                    <p class="footer-contact-info">
+                        <a href="https://wa.me/201102958780" target="_blank" rel="noopener noreferrer">
+                            🛠️ الدعم الفني: 01102958780
+                        </a>
+                    </p>
+                    <p class="footer-seo-text">منصة الباسط للعلوم الشرعية — شرح احترافي للعلوم الشرعية للمرحلة الإعدادية والثانوية في مصر</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>من تطوير <strong>م/أحمد زكي</strong></p>
+                <p>© 2026 منصة الباسط للعلوم الشرعية. جميع الحقوق محفوظة.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal('loginModal')" aria-label="إغلاق">&times;</button>
+            <div class="modal-logo">
+                <img src="images/logo.jpg" alt="الباسط" width="60" height="60">
+            </div>
+            <h2 class="modal-title" id="loginModalTitle">تسجيل الدخول</h2>
+            <form id="loginForm" onsubmit="handleLogin(event)" novalidate>
+                <div class="form-group">
+                    <label for="loginPhone">رقم الهاتف</label>
+                    <input type="tel" id="loginPhone" name="phone" required placeholder="01xxxxxxxxx" autocomplete="tel">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">كلمة المرور</label>
+                    <div class="input-with-toggle">
+                        <input type="password" id="loginPassword" name="password" required placeholder="كلمة المرور" autocomplete="current-password">
+                        <button type="button" class="input-toggle-btn" onclick="togglePasswordVisibility('loginPassword', this)" aria-label="إظهار كلمة المرور">👁️</button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full" id="loginSubmitBtn">دخول</button>
+            </form>
+            <p class="modal-footer-text">ليس لديك حساب؟ <a href="#" onclick="closeModal('loginModal'); showRegisterModal();">إنشاء حساب</a></p>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal" id="registerModal" role="dialog" aria-modal="true" aria-labelledby="registerModalTitle">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal('registerModal')" aria-label="إغلاق">&times;</button>
+            <div class="modal-logo">
+                <img src="images/logo.jpg" alt="الباسط" width="60" height="60">
+            </div>
+            <h2 class="modal-title" id="registerModalTitle">إنشاء حساب جديد</h2>
+            <form id="registerForm" onsubmit="handleRegister(event)" novalidate>
+                <div class="form-group">
+                    <label for="registerName">الاسم الكامل</label>
+                    <input type="text" id="registerName" name="name" required placeholder="أدخل اسمك الكامل" autocomplete="name">
+                </div>
+                <div class="form-group">
+                    <label for="registerPhone">رقم الهاتف</label>
+                    <input type="tel" id="registerPhone" name="phone" required placeholder="01xxxxxxxxx" autocomplete="tel">
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">كلمة المرور</label>
+                    <div class="input-with-toggle">
+                        <input type="password" id="registerPassword" name="password" required placeholder="6 أحرف على الأقل" autocomplete="new-password">
+                        <button type="button" class="input-toggle-btn" onclick="togglePasswordVisibility('registerPassword', this)" aria-label="إظهار كلمة المرور">👁️</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="registerDivision">الشعبة</label>
+                    <select id="registerDivision" name="division" required>
+                        <option value="">اختر الشعبة</option>
+                        <option value="علمي">علمي</option>
+                        <option value="أدبي">أدبي</option>
+                        <option value="إعدادي">إعدادي</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full" id="registerSubmitBtn">إنشاء الحساب</button>
+            </form>
+            <p class="modal-footer-text">لديك حساب؟ <a href="#" onclick="closeModal('registerModal'); showLoginModal();">تسجيل الدخول</a></p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js?v=3"></script>
+    <script src="js/supabase.js?v=3"></script>
+    <script src="js/db.js?v=3"></script>
+    <script src="js/auth.js?v=3"></script>
+    <script src="js/grades.js?v=3"></script>
+    <script src="js/main.js?v=3"></script>
+</body>
+</html>

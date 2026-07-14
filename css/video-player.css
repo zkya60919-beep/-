@@ -1,0 +1,460 @@
+/**
+ * Professional HLS Video Player Styles
+ * تنسيقات مشغل الفيديو الاحترافي
+ */
+
+.premium-video-player {
+    position: relative;
+    width: 100%;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    font-family: 'Cairo', sans-serif;
+}
+
+.player-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+}
+
+.video-element {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Overlay */
+.player-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.3);
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.player-container:hover .player-overlay {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.play-button-overlay {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-play-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+.btn-play-large:hover {
+    transform: scale(1.1);
+    background: #fff;
+}
+
+.btn-play-large svg {
+    width: 40px;
+    height: 40px;
+    fill: #000;
+    margin-right: -4px;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Controls */
+.player-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
+    padding: 20px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.player-container:hover .player-controls {
+    opacity: 1;
+}
+
+/* Progress Bar */
+.progress-bar-container {
+    margin-bottom: 12px;
+}
+
+.progress-bar {
+    position: relative;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.progress-buffered {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 3px;
+    transition: width 0.2s ease;
+}
+
+.progress-played {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    border-radius: 3px;
+    transition: width 0.1s linear;
+}
+
+.progress-thumb {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background: #fff;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.progress-thumb:hover {
+    transform: translate(-50%, -50%) scale(1.2);
+}
+
+/* Time Display */
+.time-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 13px;
+    color: #fff;
+}
+
+.time-separator {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Controls Row */
+.controls-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.controls-left,
+.controls-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Control Buttons */
+.control-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.control-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.control-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* Volume Slider */
+.volume-slider-container {
+    width: 100px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 8px;
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    margin-bottom: 8px;
+}
+
+.volume-slider {
+    width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    outline: none;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    background: #fff;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    background: #fff;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
+/* Time Divider */
+.time-divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Speed Button */
+.btn-speed {
+    min-width: 50px;
+}
+
+.speed-label {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* Speed Menu */
+.speed-menu {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    background: rgba(0, 0, 0, 0.95);
+    border-radius: 8px;
+    padding: 8px;
+    margin-bottom: 8px;
+    min-width: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.speed-option {
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    color: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 13px;
+    transition: background 0.2s ease;
+}
+
+.speed-option:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Quality Button */
+.btn-quality {
+    min-width: 70px;
+}
+
+.quality-label {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* Quality Menu */
+.quality-menu {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    background: rgba(0, 0, 0, 0.95);
+    border-radius: 8px;
+    padding: 8px;
+    margin-bottom: 8px;
+    min-width: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.quality-option {
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    color: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 13px;
+    transition: background 0.2s ease;
+}
+
+.quality-option:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Fullscreen */
+.premium-video-player:fullscreen {
+    background: #000;
+    border-radius: 0;
+}
+
+.premium-video-player:fullscreen .player-container {
+    max-height: 100vh;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .premium-video-player {
+        border-radius: 8px;
+    }
+
+    .controls-row {
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+
+    .control-btn {
+        width: 34px;
+        height: 34px;
+    }
+
+    .control-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .time-display {
+        font-size: 10px;
+    }
+
+    .btn-speed,
+    .btn-quality {
+        min-width: auto;
+    }
+
+    .speed-label,
+    .quality-label {
+        font-size: 10px;
+    }
+
+    .controls-left {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .controls-right {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .volume-slider-container {
+        width: 60px;
+    }
+}
+
+@media (max-width: 480px) {
+    .premium-video-player {
+        border-radius: 6px;
+    }
+
+    .controls-row {
+        gap: 2px;
+    }
+
+    .control-btn {
+        width: 30px;
+        height: 30px;
+    }
+
+    .control-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .time-display {
+        font-size: 9px;
+    }
+
+    .speed-label,
+    .quality-label {
+        font-size: 9px;
+    }
+
+    .volume-slider-container {
+        width: 40px;
+    }
+
+    .progress-bar-container {
+        height: 4px;
+    }
+}
+
+@media (max-width: 360px) {
+    .premium-video-player { border-radius: 4px; }
+    .controls-row { gap: 1px; }
+    .control-btn { width: 26px; height: 26px; }
+    .control-btn svg { width: 14px; height: 14px; }
+    .time-display { font-size: 8px; }
+    .speed-label,
+    .quality-label { font-size: 8px; }
+    .volume-slider-container { width: 30px; }
+    .progress-bar-container { height: 3px; }
+}

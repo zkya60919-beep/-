@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- ===== SEO Primary Tags ===== -->
+    <title>تسجيل الدخول | منصة الباسط للعلوم الشرعية</title>
+    <meta name="description" content="تسجيل الدخول إلى حسابك في منصة الباسط لمتابعة شروحات ومذكرات وامتحانات العلوم الشرعية. أكثر من 100 درس ومذكرة تفاعلية.">
+    <meta name="keywords" content="تسجيل دخول الباسط, دخول منصة الباسط, Albasit login, منصة الباسط التعليمية, علوم شرعية اونلاين">
+    <meta name="author" content="أ/ محمد عبد الباسط">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <link rel="canonical" href="https://albasit.vercel.app/login.html">
+
+    <!-- ===== Open Graph / Facebook ===== -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://albasit.vercel.app/login.html">
+    <meta property="og:title" content="تسجيل الدخول | منصة الباسط للعلوم الشرعية">
+    <meta property="og:description" content="تسجيل الدخول لحسابك ومتابعة دروس العلوم الشرعية مع الأستاذ محمد عبد الباسط.">
+    <meta property="og:image" content="https://albasit.vercel.app/images/logo.jpg">
+    <meta property="og:image:alt" content="منصة الباسط للعلوم الشرعية - تسجيل الدخول">
+    <meta property="og:locale" content="ar_EG">
+    <meta property="og:site_name" content="منصة الباسط">
+
+    <!-- ===== Twitter Card ===== -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="تسجيل الدخول | منصة الباسط للعلوم الشرعية">
+    <meta name="twitter:description" content="سجل دخولك لمتابعة الدروس والامتحانات على منصة الباسط.">
+    <meta name="twitter:image" content="https://albasit.vercel.app/images/logo.jpg">
+
+    <!-- ===== Performance: Preconnect ===== -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://supabase.co">
+    <link rel="preconnect" href="https://supabase.co">
+
+    <!-- ===== Styles ===== -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap">
+</head>
+<body>
+    <!-- Load Supabase library first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Header with Logo -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <img src="images/logo.jpg" alt="الباسط" class="logo-img">
+                </div>
+                <nav class="nav">
+                    <ul class="nav-list">
+                        <li><a href="index.html" class="nav-link">الرئيسية</a></li>
+                        <li><a href="about.html" class="nav-link">نبذة عنا</a></li>
+                        <li class="nav-divider"></li>
+                        <li><a href="register.html" class="btn btn-primary btn-mobile">إنشاء حساب</a></li>
+                        <li><button class="btn btn-outline btn-mobile" onclick="window.location.href='index.html'">العودة</button></li>
+                    </ul>
+                </nav>
+                <div class="auth-buttons" id="authButtons">
+                    <a href="register.html" class="btn btn-primary">إنشاء حساب</a>
+                </div>
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="القائمة">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+        <div class="nav-overlay" onclick="toggleMobileMenu()"></div>
+    </header>
+
+    <!-- Login Section -->
+    <section class="auth-section">
+        <div class="container">
+            <div class="auth-container">
+                <div class="auth-card">
+                    <div class="auth-header" style="text-align: center;">
+                        <img src="images/logo.jpg" alt="الباسط" style="height: 80px; border-radius: 12px; margin-bottom: 16px; object-fit: contain;">
+                        <h1 class="auth-title">تسجيل الدخول</h1>
+                        <p class="auth-subtitle">أهلاً بك مجدداً في منصة الباسط</p>
+                    </div>
+
+                    <!-- رسائل التنبيه -->
+                    <div id="loginMessages" style="margin-bottom: 20px;"></div>
+                    
+                    <!-- Login Form -->
+                    <form class="auth-form" id="loginForm" autocomplete="on">
+                        <div class="form-group">
+                            <label for="loginPhone">رقم الهاتف</label>
+                            <input type="tel" id="loginPhone" name="phone" placeholder="أدخل رقم هاتفك" required autocomplete="tel">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="loginPassword">كلمة المرور</label>
+                            <div class="password-wrapper">
+                                <input type="password" id="loginPassword" name="password" placeholder="أدخل كلمة المرور" required autocomplete="current-password">
+                                <button type="button" class="password-toggle" onclick="toggleFieldVisibility('loginPassword', this)" tabindex="-1" aria-label="إظهار/إخفاء كلمة المرور">👁</button>
+                            </div>
+                        </div>
+
+                        <div class="forgot-password">
+                            <a onclick="showForgotPassword()">نسيت كلمة المرور؟</a>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-full btn-large">تسجيل الدخول</button>
+                    </form>
+
+                    <!-- Forgot Password Form -->
+                    <form class="auth-form" id="forgotForm" style="display:none;">
+                        <div class="form-group">
+                            <label for="forgotPhone">رقم الهاتف المسجل</label>
+                            <input type="tel" id="forgotPhone" name="phone" placeholder="أدخل رقم هاتفك المسجل" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full btn-large">إرسال رمز التحقق</button>
+                        <button type="button" class="btn btn-outline btn-full" style="margin-top:10px;" onclick="hideForgotPassword()">رجوع</button>
+                    </form>
+
+                    <!-- Verify Code Form -->
+                    <form class="auth-form" id="verifyForm" style="display:none;">
+                        <div class="form-group">
+                            <label for="verifyCode">رمز التحقق</label>
+                            <input type="text" id="verifyCode" name="code" placeholder="أدخل الرمز المكون من 6 أرقام" inputmode="numeric" style="direction:ltr;text-align:center;font-size:24px;letter-spacing:8px" required>
+                            <p style="font-size:13px; color:var(--gray-500); margin-top:6px;">تم إرسال رمز التحقق إلى رقم هاتفك</p>
+                            <p id="codeDebug" style="font-size:13px; color:var(--primary); margin-top:4px; font-weight:600; display:none;"></p>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full btn-large">تسجيل الدخول</button>
+                        <button type="button" class="btn btn-outline btn-full" style="margin-top:10px;" onclick="showForgotPassword()">إعادة إرسال الرمز</button>
+                    </form>
+                    
+                    <div class="auth-footer">
+                        <p class="auth-footer-text">ليس لديك حساب؟ <a href="register.html">إنشاء حساب جديد</a></p>
+                        <p class="auth-footer-text"><a href="index.html">العودة للصفحة الرئيسية</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="js/config.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', handleLogin);
+        document.getElementById('forgotForm').addEventListener('submit', handleForgotPassword);
+        document.getElementById('verifyForm').addEventListener('submit', handleVerifyCode);
+    </script>
+</body>
+</html>

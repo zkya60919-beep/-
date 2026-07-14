@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>????? ????? - ???? ??????</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/admin-forms.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap">
+</head>
+<body>
+    <!-- Load Supabase library first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js?v=3"></script>
+    <script src="js/supabase.js?v=3"></script>
+    <header class="admin-header">
+        <div class="container">
+            <div class="admin-header-content">
+                <div class="logo"><a href="admin.html" class="logo-text">??????</a><span class="admin-badge">????? ?????</span></div>
+                <a href="admin.html" class="btn btn-outline btn-light">? ??????</a>
+            </div>
+        </div>
+    </header>
+    <main class="form-page">
+        <div class="container">
+            <form id="noteForm" class="admin-form-card">
+                <h1 class="form-page-title">????? ????? PDF</h1>
+                <div class="form-row">
+                    <div class="form-group"><label for="noteGrade">????</label><select id="noteGrade" required></select></div>
+                    <div class="form-group"><label for="noteMonth">?????</label><select id="noteMonth" required></select></div>
+                </div>
+                <div class="form-group"><label for="noteTitle">???????</label><input type="text" id="noteTitle" required></div>
+                <div class="form-group"><label for="noteDescription">?????</label><textarea id="noteDescription" rows="3"></textarea></div>
+                <div class="form-group">
+                    <label>??? PDF</label>
+                    <div class="drop-zone" id="pdfDropZone"><p>???? PDF ?? ???? ?????</p></div>
+                    <input type="file" id="pdfInput" accept=".pdf,application/pdf" style="display:none">
+                </div>
+                <div class="pricing-section">
+                    <div class="pricing-header">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="noteFree" onchange="toggleNotePrice()">
+                            <span>?????</span>
+                        </label>
+                        <span class="price-badge">?????</span>
+                    </div>
+                    <div class="price-input-group" id="notePriceGroup">
+                        <label for="notePrice">??? ??????? (?.?)</label>
+                        <input type="number" id="notePrice" min="0" step="0.01" placeholder="????: 50">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-lg">??? ???????</button>
+                    <a href="admin.html" class="btn btn-outline">?????</a>
+                </div>
+            </form>
+        </div>
+    </main>
+    <script src="js/db.js?v=3"></script>
+    <script src="js/cloudinary.js?v=3"></script>
+    <script src="js/auth.js?v=3"></script>
+    <script src="js/main.js?v=3"></script>
+    <script>
+        function setupDropZone(zoneId, inputId, onSelect) {
+            const zone = document.getElementById(zoneId);
+            const input = document.getElementById(inputId);
+            zone.addEventListener('click', () => input.click());
+            zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
+            zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+                const file = e.dataTransfer.files?.[0];
+                if (file) onSelect(file, zone);
+            });
+            input.addEventListener('change', () => {
+                const file = input.files?.[0];
+                if (file) onSelect(file, zone);
+            });
+        }
+        function showFilePreview(zone, file, label) {
+            const p = zone.querySelector('p');
+            if (p) p.textContent = label || `? ${file.name}`;
+            zone.classList.add('has-file');
+        }
+        let pdfFile = null;
+        function toggleNotePrice() {
+            const isFree = document.getElementById('noteFree').checked;
+            const group = document.getElementById('notePriceGroup');
+            group.classList.toggle('hidden', isFree);
+            if (isFree) document.getElementById('notePrice').value = '';
+        }
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!await requireAdmin()) return;
+            toggleNotePrice();
+            const grades = await db.getGrades();
+            const g = document.getElementById('noteGrade');
+            g.innerHTML = grades.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
+            async function months() {
+                const id = parseInt(g.value);
+                await db.ensureNineMonths(id);
+                const m = await db.getMonths(id);
+                document.getElementById('noteMonth').innerHTML = m.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
+            }
+            g.onchange = months;
+            await months();
+            setupDropZone('pdfDropZone', 'pdfInput', (f, z) => { pdfFile = f; showFilePreview(z, f); });
+            document.getElementById('noteForm').onsubmit = async (e) => {
+                e.preventDefault();
+                if (!pdfFile) { showAlert('???? ??? PDF', 'error'); return; }
+                const isFree = document.getElementById('noteFree').checked;
+                const priceInput = document.getElementById('notePrice').value;
+                const price = isFree ? 0 : (priceInput ? parseFloat(priceInput) : null);
+                if (!isFree && (price === null || isNaN(price))) { showAlert('??? ??? ??????? ?? ?????? ??????', 'error'); return; }
+                try {
+                    const url = (await uploadPDF(pdfFile, 'notes')).secure_url;
+                    await db.createNote({
+                        grade_id: parseInt(g.value),
+                        month_id: parseInt(document.getElementById('noteMonth').value),
+                        title: document.getElementById('noteTitle').value,
+                        description: document.getElementById('noteDescription').value,
+                        file_url: url,
+                        is_free: isFree
+                    });
+                    showAlert('?? ?????', 'success');
+                    setTimeout(() => location.href = 'admin.html', 1000);
+                } catch (err) { console.error('Note save error:', err); showAlert('???: ' + err.message, 'error'); }
+            };
+        });
+    </script>
+</body>
+</html>
