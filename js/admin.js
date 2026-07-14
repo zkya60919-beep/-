@@ -1727,6 +1727,7 @@ async function loadStudents() {
             const safeName = escapeHtml(user.name);
             const safePhone = escapeHtml(user.phone);
             const safeDivision = escapeHtml(user.division || '-');
+            const safeNameJs = safeName.replace(/'/g, "\\'");
             return `
                 <tr>
                     <td>${safeName}</td>
@@ -1739,7 +1740,7 @@ async function loadStudents() {
                         <div class="action-buttons">
                             <button class="action-btn edit" onclick="viewStudent(${user.id})">عرض</button>
                             ${!user.grade_id ? `<button class="action-btn edit" onclick="assignGrade(${user.id})">تحديد صف</button>` : ''}
-                            <button class="action-btn delete" onclick="deleteStudent(${user.id}, '${safeName}')">حذف</button>
+                            <button class="action-btn delete" onclick="deleteStudent(${user.id}, '${safeNameJs}')">حذف</button>
                         </div>
                     </td>
                 </tr>
@@ -2584,6 +2585,7 @@ window.deleteProject = deleteProject;
 window.viewSubmissions = viewSubmissions;
 window.gradeSubmission = gradeSubmission;
 window.viewStudent = viewStudent;
+window.deleteStudent = deleteStudent;
 window.showStudentDetail = showStudentDetail;
 window.assignGrade = assignGrade;
 window.toggleAdminMobileMenu = toggleAdminMobileMenu;
