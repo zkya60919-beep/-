@@ -668,7 +668,7 @@ const db = {
     },
 
     async getPaymentRequest(id) {
-        const { data, error } = await supabase.from('payment_requests').select('*').eq('id', id).single();
+        const { data, error } = await supabase.from('payment_requests').select('*').eq('id', id).maybeSingle();
         if (error) throw error;
         return data;
     },
@@ -697,9 +697,9 @@ const db = {
     },
 
     async updatePaymentRequest(id, updates) {
-        const { data, error } = await supabase.from('payment_requests').update(updates).eq('id', id).select().single();
+        const { data, error } = await supabase.from('payment_requests').update(updates).eq('id', id).select();
         if (error) throw error;
-        return data;
+        return data?.[0] || null;
     },
 
     async deletePaymentRequest(id) {

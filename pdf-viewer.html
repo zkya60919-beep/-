@@ -7,58 +7,88 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #f5f5f5; font-family: 'Cairo', sans-serif; display: flex; flex-direction: column; height: 100vh; }
-        .toolbar { background: #1e293b; color: #fff; padding: 12px 20px; display: flex; align-items: center; gap: 16px; }
+        .toolbar { background: #1e293b; color: #fff; padding: 12px 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
         .toolbar h1 { font-size: 18px; font-weight: 700; }
         .toolbar .back-btn { background: #334155; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; }
         .toolbar .back-btn:hover { background: #475569; }
-        .viewer-container { flex: 1; padding: 20px; display: flex; align-items: center; justify-content: center; }
-        .viewer-container embed, .viewer-container iframe { width: 100%; height: 100%; border: none; border-radius: 8px; background: #fff; }
-        .error-state { text-align: center; padding: 40px; color: #64748b; }
+        .toolbar .dl-btn { background: #059669; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; text-decoration: none; }
+        .toolbar .dl-btn:hover { background: #047857; }
+        .viewer-container { flex: 1; padding: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .viewer-container iframe { width: 100%; height: 100%; border: none; }
+        .error-state { text-align: center; padding: 40px; color: #64748b; display: none; }
         .error-state h2 { font-size: 24px; margin-bottom: 12px; color: #ef4444; }
-        .error-state p { font-size: 16px; }
-        @media (max-width: 768px) { .viewer-container { padding: 8px; } }
+        .error-state p { font-size: 16px; margin-bottom: 16px; }
+        .error-state .retry-btn { background: #3b82f6; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        @media (max-width: 768px) { .toolbar { padding: 8px 12px; } .toolbar h1 { font-size: 15px; } }
     </style>
 </head>
 <body>
     <div class="toolbar">
         <button class="back-btn" onclick="goBack()">← العودة</button>
         <h1>عرض الملف</h1>
+        <a class="dl-btn" id="downloadLink" href="#" download target="_blank">تحميل الملف</a>
     </div>
     <div class="viewer-container" id="viewerContainer">
         <div class="error-state" id="errorState">
             <h2>تعذر تحميل الملف</h2>
-            <p>يرجى المحاولة مرة أخرى أو التواصل مع الدعم الفني</p>
+            <p id="errorMessage">يرجى المحاولة مرة أخرى أو تحميل الملف مباشرة</p>
+            <button class="retry-btn" onclick="retryLoad()">إعادة المحاولة</button>
         </div>
     </div>
     <script>
+        let currentUrl = '';
         function goBack() {
             if (document.referrer) { window.location.href = document.referrer; }
             else { window.history.back(); }
         }
         function getQueryParam(name) {
-            const params = new URLSearchParams(window.location.search);
-            return params.get(name);
+            return new URLSearchParams(window.location.search).get(name);
+        }
+        function showError(msg) {
+            document.getElementById('errorState').style.display = 'block';
+            document.getElementById('errorMessage').textContent = msg || 'يرجى المحاولة مرة أخرى أو تحميل الملف مباشرة';
+        }
+        function retryLoad() {
+            if (currentUrl) loadPdf(currentUrl);
+        }
+        function loadPdf(url) {
+            currentUrl = url;
+            const container = document.getElementById('viewerContainer');
+            document.getElementById('errorState').style.display = 'none';
+            document.getElementById('downloadLink').href = url;
+            container.innerHTML = '';
+
+            const iframe = document.createElement('iframe');
+            iframe.src = url;
+            iframe.setAttribute('allowfullscreen', 'true');
+            iframe.onerror = function() { showError('فشل تحميل الملف عبر iframe'); };
+            iframe.onload = function() {
+                try {
+                    const doc = iframe.contentDocument || iframe.contentWindow.document;
+                    if (doc && doc.body.innerHTML.trim() === '') {
+                        showError('الملف فارغ أو لا يمكن عرضه');
+                    } else {
+                        document.getElementById('errorState').style.display = 'none';
+                    }
+                } catch(e) {
+                    document.getElementById('errorState').style.display = 'none';
+                }
+            };
+            container.appendChild(iframe);
+            setTimeout(() => {
+                try {
+                    const doc = iframe.contentDocument || iframe.contentWindow.document;
+                    if (doc && doc.body && doc.body.innerHTML.trim() === '' && !doc.querySelector('embed, object')) {
+                        showError('تعذر عرض الملف - قد تحتاج إلى تحميله بدلاً من ذلك');
+                    }
+                } catch(e) {}
+            }, 3000);
         }
         const pdfUrl = getQueryParam('url');
         if (pdfUrl) {
-            const container = document.getElementById('viewerContainer');
             const decodedUrl = decodeURIComponent(pdfUrl);
-            const embed = document.createElement('embed');
-            embed.src = decodedUrl;
-            embed.type = 'application/pdf';
-            embed.setAttribute('width', '100%');
-            embed.setAttribute('height', '100%');
-            embed.onerror = function() {
-                document.getElementById('errorState').style.display = 'block';
-                embed.style.display = 'none';
-            };
-            embed.onload = function() {
-                document.getElementById('errorState').style.display = 'none';
-            };
-            container.innerHTML = '';
-            container.appendChild(embed);
+            loadPdf(decodedUrl);
         }
     </script>
 </body>
 </html>
-
