@@ -2453,7 +2453,6 @@ async function approvePaymentReq(id) {
                     month_id: request.month_id,
                     start_date: startDate.toISOString(),
                     end_date: endDate.toISOString(),
-                    payment_id: null,
                     status: 'active'
                 });
             } catch (e) { errors.push('الاشتراك الشهري: ' + e.message); }
@@ -2464,7 +2463,6 @@ async function approvePaymentReq(id) {
                 await supabase.from('course_purchases').insert({
                     user_id: request.student_id,
                     course_id: request.course_id,
-                    payment_id: request.id,
                     status: 'active'
                 });
             } catch (e) { errors.push('شراء الكورس: ' + e.message); }
