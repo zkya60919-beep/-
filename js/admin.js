@@ -1727,7 +1727,7 @@ async function loadStudents() {
             const safeName = escapeHtml(user.name);
             const safePhone = escapeHtml(user.phone);
             const safeDivision = escapeHtml(user.division || '-');
-            const safeNameJs = safeName.replace(/'/g, "\\'");
+            const gradeBtn = !user.grade_id ? `<button class="action-btn edit" data-action="assignGrade" data-id="${user.id}">تحديد صف</button>` : '';
             return `
                 <tr>
                     <td>${safeName}</td>
@@ -1738,14 +1738,23 @@ async function loadStudents() {
                     <td>${formatDate(user.created_at)}</td>
                     <td>
                         <div class="action-buttons">
-                            <button class="action-btn edit" onclick="viewStudent(${user.id})">عرض</button>
-                            ${!user.grade_id ? `<button class="action-btn edit" onclick="assignGrade(${user.id})">تحديد صف</button>` : ''}
-                            <button class="action-btn delete" onclick="deleteStudent(${user.id}, '${safeNameJs}')">حذف</button>
+                            <button class="action-btn edit" data-action="viewStudent" data-id="${user.id}">عرض</button>
+                            ${gradeBtn}
+                            <button class="action-btn delete" data-action="deleteStudent" data-id="${user.id}" data-name="${safeName}">حذف</button>
                         </div>
                     </td>
                 </tr>
             `;
         }).join('');
+        tbody._listener = tbody._listener || (tbody.addEventListener('click', e => {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            const action = btn.dataset.action;
+            const id = parseInt(btn.dataset.id);
+            if (action === 'viewStudent') viewStudent(id);
+            else if (action === 'deleteStudent') deleteStudent(id, btn.dataset.name);
+            else if (action === 'assignGrade') assignGrade(id);
+        }));
 
     } catch (error) {
         console.error('Error loading students:', error);
