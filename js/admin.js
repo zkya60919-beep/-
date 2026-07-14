@@ -1750,7 +1750,7 @@ async function loadStudents() {
             const btn = e.target.closest('[data-action]');
             if (!btn) return;
             const action = btn.dataset.action;
-            const id = parseInt(btn.dataset.id);
+            const id = btn.dataset.id;
             if (action === 'viewStudent') viewStudent(id);
             else if (action === 'deleteStudent') deleteStudent(id, btn.dataset.name);
             else if (action === 'assignGrade') assignGrade(id);
@@ -1770,103 +1770,88 @@ function debounceSearch() {
 }
 
 async function showStudentDetail(userId) {
+    const modal = document.getElementById('studentDetailModal');
+    const container = document.getElementById('studentDetailContainer');
+    if (!modal || !container) return;
+    modal.classList.add('active');
+    container.innerHTML = '<div class="spinner"></div>';
+
+    let user, subs = [], grade = null, allMonths = [];
     try {
-        document.getElementById('studentDetailModal').classList.add('active');
-        const container = document.getElementById('studentDetailContainer');
-        container.innerHTML = '<div class="spinner"></div>';
+        const { data: u, error: ue } = await supabase.from('users').select('*').eq('id', userId).maybeSingle();
+        if (ue || !u) { container.innerHTML = '<p class="text-center" style="padding:40px">الطالب غير موجود</p>'; return; }
+        user = u;
+    } catch { container.innerHTML = '<p class="text-center" style="padding:40px">خطأ في تحميل بيانات الطالب</p>'; return; }
 
-        const { data: user } = await supabase.from('users').select('*').eq('id', userId).single();
-        if (!user) {
-            container.innerHTML = '<p class="text-center" style="padding:40px">الطالب غير موجود</p>';
-            return;
-        }
+    try {
+        const { data: s } = await supabase.from('subscriptions').select('*, months(name)').eq('user_id', userId).order('end_date', { ascending: false });
+        if (s) subs = s;
+    } catch {}
 
-        const subs = await db.getUserSubscriptions(userId);
-        const now = new Date();
-        let grade = null;
-        if (user.grade_id) {
-            const { data: g } = await supabase.from('grades').select('name').eq('id', user.grade_id).single();
-            grade = g;
-        }
-        const { data: allMonths } = await supabase.from('months').select('*');
-
-        const safeUserName = escapeHtml(user.name);
-        const safeUserPhone = escapeHtml(user.phone);
-        const safeUserDivision = escapeHtml(user.division || '-');
-        container.innerHTML = `
-            <div class="student-detail-grid">
-                <div class="detail-field">
-                    <div class="field-label">الاسم</div>
-                    <div class="field-value">${safeUserName}</div>
-                </div>
-                <div class="detail-field">
-                    <div class="field-label">رقم الهاتف</div>
-                    <div class="field-value" dir="ltr" style="text-align:right">${safeUserPhone}</div>
-                </div>
-                <div class="detail-field">
-                    <div class="field-label">الصف</div>
-                    <div class="field-value">${grade?.name || 'غير محدد'}</div>
-                </div>
-                <div class="detail-field">
-                    <div class="field-label">الشعبة</div>
-                    <div class="field-value">${safeUserDivision}</div>
-                </div>
-                <div class="detail-field">
-                    <div class="field-label">تاريخ التسجيل</div>
-                    <div class="field-value">${formatDate(user.created_at)}</div>
-                </div>
-                <div class="detail-field">
-                    <div class="field-label">الاشتراكات النشطة</div>
-                    <div class="field-value" style="color:${subs.filter(s => new Date(s.end_date) > now && s.status === 'active').length ? '#4caf50' : '#f44336'}">
-                        ${subs.filter(s => new Date(s.end_date) > now && s.status === 'active').length}
-                    </div>
-                </div>
-            </div>
-            <h3 style="font-size:18px;font-weight:800;margin-bottom:16px">الاشتراكات</h3>
-            <div class="student-subscriptions-list">
-                ${subs.length ? subs.map(sub => {
-                    const mName = allMonths?.find(m => m.id === sub.month_id)?.name || sub.months?.name || 'شهر';
-                    return `
-                    <div class="sub-item">
-                        <div>
-                            <span class="sub-name">${mName}</span>
-                            <span style="font-size:13px;color:var(--gray-500);margin-right:12px">${formatDate(sub.start_date)} - ${formatDate(sub.end_date)}</span>
-                        </div>
-                        <span class="sub-status" style="color:${new Date(sub.end_date) > now && sub.status === 'active' ? '#4caf50' : '#f44336'}">
-                            ${new Date(sub.end_date) > now && sub.status === 'active' ? 'نشط' : 'منتهي'}
-                        </span>
-                    </div>`;
-                }).join('') : '<p style="color:var(--gray-500);text-align:center;padding:20px">لا توجد اشتراكات</p>'}
-            </div>
-            <div style="text-align:center;margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-                <button class="btn btn-outline" onclick="closeModal('studentDetailModal')">إغلاق</button>
-                <button class="btn btn-danger" onclick="resetStudentDevice('${user.id}')">🔄 إعادة تعيين الجهاز</button>
-            </div>
-        `;
-
-        // Check if student has a registered device
-        const { data: deviceReg } = await supabase
-            .from('device_registrations')
-            .select('*')
-            .eq('user_id', userId)
-            .eq('is_active', true)
-            .maybeSingle();
-
-        if (deviceReg) {
-            const detailContainer = container.querySelector('.student-detail-grid');
-            if (detailContainer) {
-                detailContainer.innerHTML += `
-                    <div class="detail-field">
-                        <div class="field-label">الجهاز المسجل</div>
-                        <div class="field-value" style="font-size:13px">${deviceReg.device_name || deviceReg.device_type || 'جهاز'}<br>
-                        <span style="font-size:12px;color:var(--gray-500)">آخر ظهور: ${formatDate(deviceReg.last_seen_at)}</span></div>
-                    </div>
-                `;
-            }
-        }
-    } catch (error) {
-        console.error('Error showing student detail:', error);
+    const now = new Date();
+    if (user.grade_id) {
+        try {
+            const { data: g } = await supabase.from('grades').select('name').eq('id', user.grade_id).maybeSingle();
+            if (g) grade = g;
+        } catch {}
     }
+    try {
+        const { data: m } = await supabase.from('months').select('*');
+        if (m) allMonths = m;
+    } catch {}
+
+    const safeUserName = escapeHtml(user.name);
+    const safeUserPhone = escapeHtml(user.phone);
+    const safeUserDivision = escapeHtml(user.division || '-');
+    container.innerHTML = `
+        <div class="student-detail-grid">
+            <div class="detail-field">
+                <div class="field-label">الاسم</div>
+                <div class="field-value">${safeUserName}</div>
+            </div>
+            <div class="detail-field">
+                <div class="field-label">رقم الهاتف</div>
+                <div class="field-value" dir="ltr" style="text-align:right">${safeUserPhone}</div>
+            </div>
+            <div class="detail-field">
+                <div class="field-label">الصف</div>
+                <div class="field-value">${grade?.name || 'غير محدد'}</div>
+            </div>
+            <div class="detail-field">
+                <div class="field-label">الشعبة</div>
+                <div class="field-value">${safeUserDivision}</div>
+            </div>
+            <div class="detail-field">
+                <div class="field-label">تاريخ التسجيل</div>
+                <div class="field-value">${formatDate(user.created_at)}</div>
+            </div>
+            <div class="detail-field">
+                <div class="field-label">الاشتراكات النشطة</div>
+                <div class="field-value" style="color:${subs.filter(s => new Date(s.end_date) > now && s.status === 'active').length ? '#4caf50' : '#f44336'}">
+                    ${subs.filter(s => new Date(s.end_date) > now && s.status === 'active').length}
+                </div>
+            </div>
+        </div>
+        <h3 style="font-size:18px;font-weight:800;margin-bottom:16px">الاشتراكات</h3>
+        <div class="student-subscriptions-list">
+            ${subs.length ? subs.map(sub => {
+                const mName = allMonths?.find(m => m.id === sub.month_id)?.name || sub.months?.name || 'شهر';
+                return `
+                <div class="sub-item">
+                    <div>
+                        <span class="sub-name">${mName}</span>
+                        <span style="font-size:13px;color:var(--gray-500);margin-right:12px">${formatDate(sub.start_date)} - ${formatDate(sub.end_date)}</span>
+                    </div>
+                    <span class="sub-status" style="color:${new Date(sub.end_date) > now && sub.status === 'active' ? '#4caf50' : '#f44336'}">
+                        ${new Date(sub.end_date) > now && sub.status === 'active' ? 'نشط' : 'منتهي'}
+                    </span>
+                </div>`;
+            }).join('') : '<p style="color:var(--gray-500);text-align:center;padding:20px">لا توجد اشتراكات</p>'}
+        </div>
+        <div style="text-align:center;margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+            <button class="btn btn-outline" onclick="closeModal('studentDetailModal')">إغلاق</button>
+        </div>
+    `;
 }
 
 async function resetStudentDevice(userId) {
