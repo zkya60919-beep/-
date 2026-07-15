@@ -228,16 +228,7 @@ function openExam(examId) {
 
 function openReviewNote(url) {
     if (!url) { alert('رابط الملف غير متاح'); return; }
-    var isCloudinary = url.indexOf('res.cloudinary.com') !== -1;
-    var isPdf = url.toLowerCase().indexOf('.pdf') !== -1;
-    if (isPdf && isCloudinary) {
-        var proxyUrl = CONFIG.SUPABASE.URL + '/functions/v1/file-proxy?url=' + encodeURIComponent(url);
-        var pubIdMatch = url.match(/\/raw\/upload\/(?:v\d+\/)?(.+?)(?:\.[^.]+)?$/);
-        if (pubIdMatch) proxyUrl += '&public_id=' + encodeURIComponent(pubIdMatch[1]);
-        window.open(proxyUrl, '_blank');
-    } else {
-        window.open(url, '_blank');
-    }
+    window.open(url, '_blank');
 }
 
 function parseYouTubeId(url) {
