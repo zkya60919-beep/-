@@ -118,7 +118,7 @@ function renderReviewContent() {
                             <div class="pdf-icon">📄</div>
                             <h3 class="content-item-title">${item.title || `مذكرة ${index + 1}`}</h3>
                             ${item.description ? `<p class="content-item-desc">${item.description}</p>` : ''}
-                            <button type="button" onclick="openContentUrl(${JSON.stringify(item.file_url)})" class="btn btn-primary">
+                            <button type="button" onclick='openReviewNote(${JSON.stringify(item.file_url)})' class="btn btn-primary">
                                 👁 عرض المذكرة
                             </button>
                         </div>
@@ -174,7 +174,7 @@ function renderReviewContent() {
                                     <div class="pdf-icon">📄</div>
                                     <h3 class="content-item-title">${item.title || `امتحان ${index + 1}`}</h3>
                                     ${item.description ? `<p class="content-item-desc">${item.description}</p>` : ''}
-                                    <button type="button" onclick='openContentUrl(${JSON.stringify(item.file_url)})' class="btn btn-primary">
+                                    <button type="button" onclick='openReviewNote(${JSON.stringify(item.file_url)})' class="btn btn-primary">
                                         👁 عرض الامتحان
                                     </button>
                                 </div>
@@ -224,6 +224,20 @@ function renderVideoPlayer(item) {
 
 function openExam(examId) {
     window.location.href = `exam.html?exam_id=${examId}`;
+}
+
+function openReviewNote(url) {
+    if (!url) { alert('رابط الملف غير متاح'); return; }
+    var isCloudinary = url.indexOf('res.cloudinary.com') !== -1;
+    var isPdf = url.toLowerCase().indexOf('.pdf') !== -1;
+    if (isPdf && isCloudinary) {
+        var proxyUrl = CONFIG.SUPABASE.URL + '/functions/v1/file-proxy?url=' + encodeURIComponent(url);
+        var pubIdMatch = url.match(/\/raw\/upload\/(?:v\d+\/)?(.+?)(?:\.[^.]+)?$/);
+        if (pubIdMatch) proxyUrl += '&public_id=' + encodeURIComponent(pubIdMatch[1]);
+        window.open(proxyUrl, '_blank');
+    } else {
+        window.open(url, '_blank');
+    }
 }
 
 function parseYouTubeId(url) {
