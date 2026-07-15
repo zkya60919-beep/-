@@ -386,7 +386,7 @@ async function loadNotes(monthId) {
             const price = note.price || 0;
 
             const openAction = hasAccess
-                ? `window.open(${JSON.stringify(note.file_url)}, '_blank')`
+                ? `location.href=${JSON.stringify(note.file_url)}`
                 : `purchaseContent('note', ${note.id}, ${price})`;
 
             return `
