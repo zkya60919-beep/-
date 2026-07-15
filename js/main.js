@@ -293,6 +293,30 @@ async function resolveFileUrl(rawUrl) {
     return trimmed;
 }
 
+function getPublicIdFromCloudinaryUrl(url) {
+    try {
+        const u = new URL(url);
+        const segs = u.pathname.split('/').filter(Boolean);
+        if (segs.length < 4) return null;
+        const rest = segs.slice(3);
+        const first = rest[0] || '';
+        const isVersion = first.startsWith('v') && /^\d+$/.test(first.substring(1));
+        return (isVersion ? rest.slice(1) : rest).join('/');
+    } catch { return null; }
+}
+
+async function getSignedCloudinaryUrl(url) {
+    const publicId = getPublicIdFromCloudinaryUrl(url);
+    if (!publicId) return url;
+    const sigUrl = CONFIG.SUPABASE.URL + '/functions/v1/cloudinary-signature?public_id=' + encodeURIComponent(publicId) + '&resource_type=raw';
+    const res = await fetch(sigUrl, {
+        headers: { apikey: CONFIG.SUPABASE.ANON_KEY, Authorization: 'Bearer ' + CONFIG.SUPABASE.ANON_KEY }
+    });
+    if (!res.ok) return url;
+    const data = await res.json();
+    return data.signed_url || url;
+}
+
 async function openContentUrl(rawUrl) {
     try {
         const resolvedUrl = await resolveFileUrl(rawUrl);
@@ -300,7 +324,8 @@ async function openContentUrl(rawUrl) {
 
         const isPdf = resolvedUrl.toLowerCase().includes('.pdf') || rawUrl.toLowerCase().includes('.pdf');
         if (isPdf) {
-            window.open(resolvedUrl, '_blank');
+            const signedUrl = await getSignedCloudinaryUrl(resolvedUrl);
+            window.open(signedUrl, '_blank');
             return;
         }
 
