@@ -58,6 +58,11 @@ async function loadVideo() {
         // Render video player (with signed URL if possible)
         const videoWrapper = document.getElementById('videoWrapper');
         let playUrl = video.hls_url || video.playback_url || video.video_url;
+
+        if (!playUrl) {
+            videoWrapper.innerHTML = `<div style="text-align:center;padding:60px 20px;background:#fff;border-radius:12px;margin:20px 0"><p style="font-size:48px;margin-bottom:16px">🎬</p><p style="font-size:18px;font-weight:700;color:#333;margin-bottom:8px">هذا الفيديو لا يحتوي على رابط تشغيل</p><p style="font-size:14px;color:#888">يرجى التواصل مع المدرس لتوفير رابط الفيديو</p></div>`;
+            return;
+        }
         
         // Try to get a signed URL for protected videos
         if (hasAccess && !video.is_free) {
