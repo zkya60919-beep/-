@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>عرض الملف - الباسط</title>
+    <script src="js/config.js?v=3"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #f5f5f5; font-family: 'Cairo', sans-serif; display: flex; flex-direction: column; height: 100vh; }
@@ -53,41 +54,39 @@
         }
         function loadPdf(url) {
             currentUrl = url;
-            const container = document.getElementById('viewerContainer');
             document.getElementById('errorState').style.display = 'none';
+            const container = document.getElementById('viewerContainer');
+            container.innerHTML = '<div style="padding:40px;text-align:center;color:#64748b;">جاري تحميل الملف...</div>';
+
             document.getElementById('downloadLink').href = url;
-            container.innerHTML = '';
 
             const iframe = document.createElement('iframe');
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = 'none';
+            iframe.style.background = '#fff';
             iframe.src = url;
-            iframe.setAttribute('allowfullscreen', 'true');
-            iframe.onerror = function() { showError('فشل تحميل الملف عبر iframe'); };
-            iframe.onload = function() {
-                try {
-                    const doc = iframe.contentDocument || iframe.contentWindow.document;
-                    if (doc && doc.body.innerHTML.trim() === '') {
-                        showError('الملف فارغ أو لا يمكن عرضه');
-                    } else {
-                        document.getElementById('errorState').style.display = 'none';
-                    }
-                } catch(e) {
-                    document.getElementById('errorState').style.display = 'none';
-                }
+
+            let loadFired = false;
+            iframe.onload = function () {
+                loadFired = true;
             };
+            iframe.onerror = function () {
+                showError('تعذر تحميل الملف. يرجى المحاولة مرة أخرى أو تحميل الملف مباشرة.');
+            };
+
+            container.innerHTML = '';
             container.appendChild(iframe);
-            setTimeout(() => {
-                try {
-                    const doc = iframe.contentDocument || iframe.contentWindow.document;
-                    if (doc && doc.body && doc.body.innerHTML.trim() === '' && !doc.querySelector('embed, object')) {
-                        showError('تعذر عرض الملف - قد تحتاج إلى تحميله بدلاً من ذلك');
-                    }
-                } catch(e) {}
-            }, 3000);
+
+            setTimeout(function () {
+                if (!loadFired) {
+                    showError('استغرق تحميل الملف وقتاً طويلاً. يرجى المحاولة مرة أخرى أو تحميل الملف مباشرة.');
+                }
+            }, 15000);
         }
         const pdfUrl = getQueryParam('url');
         if (pdfUrl) {
-            const decodedUrl = decodeURIComponent(pdfUrl);
-            loadPdf(decodedUrl);
+            loadPdf(pdfUrl);
         }
     </script>
 </body>
