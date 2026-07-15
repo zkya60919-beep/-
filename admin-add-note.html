@@ -91,19 +91,20 @@
             if (isFree) document.getElementById('notePrice').value = '';
         }
         document.addEventListener('DOMContentLoaded', async () => {
-            if (!await requireAdmin()) return;
-            toggleNotePrice();
             const grades = await db.getGrades();
             const g = document.getElementById('noteGrade');
             g.innerHTML = grades.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
             async function months() {
                 const id = parseInt(g.value);
+                if (!id) return;
                 await db.ensureNineMonths(id);
                 const m = await db.getMonths(id);
                 document.getElementById('noteMonth').innerHTML = m.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
             }
             g.onchange = months;
             await months();
+            toggleNotePrice();
+            if (!await requireAdmin()) return;
             setupDropZone('pdfDropZone', 'pdfInput', (f, z) => { pdfFile = f; showFilePreview(z, f); });
             document.getElementById('noteForm').onsubmit = async (e) => {
                 e.preventDefault();
