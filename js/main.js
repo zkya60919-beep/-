@@ -302,7 +302,7 @@ function getPublicIdFromCloudinaryUrl(url) {
         const first = rest[0] || '';
         const isVersion = first.startsWith('v') && /^\d+$/.test(first.substring(1));
         return (isVersion ? rest.slice(1) : rest).join('/');
-    } catch { return null; }
+    } catch (e) { return null; }
 }
 
 function getFileProxyUrl(url) {
