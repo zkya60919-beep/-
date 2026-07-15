@@ -85,16 +85,22 @@ async function loadVideo() {
         }
         
         const sourceType = getVideoSourceType(playUrl);
-        const fallbackUrl = (video.video_url || video.playback_url || '');
-        const willTransformToHls = !!(video.hls_url || playUrl.includes('.m3u8') || playUrl.includes('sp_hd,') || (playUrl.includes('res.cloudinary.com') && !playUrl.endsWith('.m3u8')));
-        videoWrapper.innerHTML = renderVideoPlayerHtml(playUrl, {
-            locked: !hasAccess,
-            hlsUrl: video.hls_url,
-            originalUrl: (willTransformToHls && fallbackUrl && !fallbackUrl.includes('.m3u8')) ? fallbackUrl : ''
-        });
         
-        if (hasAccess && (sourceType === 'direct' || sourceType === 'external' || sourceType === 'unknown')) {
-            try { initPremiumPlayer(video.id); } catch (e) { console.error('initPremiumPlayer error:', e); }
+        if (!hasAccess) {
+            videoWrapper.innerHTML = `<div style="text-align:center;padding:60px 20px;background:#fff;border-radius:12px;margin:20px 0"><p style="font-size:48px;margin-bottom:16px">🔒</p><p style="font-size:18px;font-weight:700;color:#333;margin-bottom:8px">هذا الفيديو متاح للمشتركين فقط</p></div>`;
+        } else if (sourceType === 'youtube' || sourceType === 'vimeo') {
+            const fallbackUrl = (video.video_url || video.playback_url || '');
+            const willTransformToHls = !!(video.hls_url || playUrl.includes('.m3u8') || playUrl.includes('sp_hd,') || (playUrl.includes('res.cloudinary.com') && !playUrl.endsWith('.m3u8')));
+            videoWrapper.innerHTML = renderVideoPlayerHtml(playUrl, {
+                locked: false,
+                hlsUrl: video.hls_url,
+                originalUrl: (willTransformToHls && fallbackUrl && !fallbackUrl.includes('.m3u8')) ? fallbackUrl : ''
+            });
+            if (video.hls_url || playUrl.includes('.m3u8')) {
+                try { initPremiumPlayer(video.id); } catch (e) { console.error('initPremiumPlayer error:', e); }
+            }
+        } else {
+            videoWrapper.innerHTML = `<video controls style="width:100%;max-height:70vh;border-radius:12px;background:#000" src="${playUrl}"></video>`;
         }
         
     } catch (error) {

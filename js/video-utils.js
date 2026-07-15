@@ -84,7 +84,7 @@ function buildVideoPlayerHtml(url, options = {}) {
     // Premium Protected custom HTML5 and HLS video player markup
     return `
         <div class="premium-player-container" id="premiumPlayer" data-url="${url}"${options.originalUrl ? ` data-original-url="${options.originalUrl}"` : ''}>
-            <video id="premiumVideo" class="premium-video" controls playsinline preload="metadata" oncontextmenu="return false;" disablePictureInPicture controlsList="nodownload noremoteplayback" src="${url}">
+            <video id="premiumVideo" class="premium-video" playsinline preload="metadata" oncontextmenu="return false;" disablePictureInPicture controlsList="nodownload noremoteplayback" src="${url}">
             
             <!-- Dynamic Security Watermarks (multiple to prevent cropping) -->
             <div class="premium-watermark" id="playerWatermark">حقوق الطبع محفوظة لمنصة الباسط التعليمية</div>
