@@ -26,8 +26,8 @@
             <form id="noteForm" class="admin-form-card">
                 <h1 class="form-page-title">إضافة مذكرة PDF</h1>
                 <div class="form-row">
-                    <div class="form-group"><label for="noteGrade">الصف</label><select id="noteGrade" required></select></div>
-                    <div class="form-group"><label for="noteMonth">الشهر</label><select id="noteMonth" required></select></div>
+                    <div class="form-group"><label for="noteGrade">الصف</label><select id="noteGrade" required style="appearance:auto;-webkit-appearance:auto;pointer-events:auto;"></select></div>
+                    <div class="form-group"><label for="noteMonth">الشهر</label><select id="noteMonth" required style="appearance:auto;-webkit-appearance:auto;pointer-events:auto;"></select></div>
                 </div>
                 <div class="form-group"><label for="noteTitle">العنوان</label><input type="text" id="noteTitle" required></div>
                 <div class="form-group"><label for="noteDescription">الوصف</label><textarea id="noteDescription" rows="3"></textarea></div>
@@ -56,65 +56,73 @@
             </form>
         </div>
     </main>
-    <script src="js/db.js?v=3"></script>
-    <script src="js/cloudinary.js?v=3"></script>
-    <script src="js/auth.js?v=3"></script>
-    <script src="js/main.js?v=3"></script>
+    <script src="js/db.js?v=4"></script>
+    <script src="js/cloudinary.js?v=4"></script>
+    <script src="js/auth.js?v=4"></script>
+    <script src="js/main.js?v=4"></script>
     <script>
+        (async function() {
+            var g = document.getElementById('noteGrade');
+            try {
+                var grades = await db.getGrades();
+                g.innerHTML = grades.map(function(x) { return '<option value="' + x.id + '">' + x.name + '</option>'; }).join('');
+                var id = parseInt(g.value);
+                if (id) {
+                    await db.ensureNineMonths(id);
+                    var m = await db.getMonths(id);
+                    document.getElementById('noteMonth').innerHTML = m.map(function(x) { return '<option value="' + x.id + '">' + x.name + '</option>'; }).join('');
+                }
+            } catch(e) { console.error('Grade load error:', e); }
+            g.onchange = async function() {
+                var id = parseInt(g.value);
+                if (!id) return;
+                await db.ensureNineMonths(id);
+                var m = await db.getMonths(id);
+                document.getElementById('noteMonth').innerHTML = m.map(function(x) { return '<option value="' + x.id + '">' + x.name + '</option>'; }).join('');
+            };
+        })();
         function setupDropZone(zoneId, inputId, onSelect) {
-            const zone = document.getElementById(zoneId);
-            const input = document.getElementById(inputId);
-            zone.addEventListener('click', () => input.click());
-            zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
-            zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
-            zone.addEventListener('drop', (e) => {
+            var zone = document.getElementById(zoneId);
+            var input = document.getElementById(inputId);
+            zone.addEventListener('click', function() { input.click(); });
+            zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('dragover'); });
+            zone.addEventListener('dragleave', function() { zone.classList.remove('dragover'); });
+            zone.addEventListener('drop', function(e) {
                 e.preventDefault();
                 zone.classList.remove('dragover');
-                const file = e.dataTransfer.files?.[0];
+                var file = e.dataTransfer.files && e.dataTransfer.files[0];
                 if (file) onSelect(file, zone);
             });
-            input.addEventListener('change', () => {
-                const file = input.files?.[0];
+            input.addEventListener('change', function() {
+                var file = input.files && input.files[0];
                 if (file) onSelect(file, zone);
             });
         }
         function showFilePreview(zone, file, label) {
-            const p = zone.querySelector('p');
-            if (p) p.textContent = label || `✓ ${file.name}`;
+            var p = zone.querySelector('p');
+            if (p) p.textContent = label || '\u2713 ' + file.name;
             zone.classList.add('has-file');
         }
-        let pdfFile = null;
+        var pdfFile = null;
         function toggleNotePrice() {
-            const isFree = document.getElementById('noteFree').checked;
-            const group = document.getElementById('notePriceGroup');
+            var isFree = document.getElementById('noteFree').checked;
+            var group = document.getElementById('notePriceGroup');
             group.classList.toggle('hidden', isFree);
             if (isFree) document.getElementById('notePrice').value = '';
         }
-        document.addEventListener('DOMContentLoaded', async () => {
-            const grades = await db.getGrades();
-            const g = document.getElementById('noteGrade');
-            g.innerHTML = grades.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
-            async function months() {
-                const id = parseInt(g.value);
-                if (!id) return;
-                await db.ensureNineMonths(id);
-                const m = await db.getMonths(id);
-                document.getElementById('noteMonth').innerHTML = m.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
-            }
-            g.onchange = months;
-            await months();
+        document.getElementById('noteFree').onchange = toggleNotePrice;
+        document.addEventListener('DOMContentLoaded', async function() {
             toggleNotePrice();
-            if (!await requireAdmin()) return;
-            setupDropZone('pdfDropZone', 'pdfInput', (f, z) => { pdfFile = f; showFilePreview(z, f); });
-            document.getElementById('noteForm').onsubmit = async (e) => {
+            setupDropZone('pdfDropZone', 'pdfInput', function(f, z) { pdfFile = f; showFilePreview(z, f); });
+            document.getElementById('noteForm').onsubmit = async function(e) {
                 e.preventDefault();
                 if (!pdfFile) { showAlert('يرجى اختيار ملف PDF', 'error'); return; }
-                const isFree = document.getElementById('noteFree').checked;
-                const priceInput = document.getElementById('notePrice').value;
-                const price = isFree ? 0 : (priceInput ? parseFloat(priceInput) : null);
+                var isFree = document.getElementById('noteFree').checked;
+                var priceInput = document.getElementById('notePrice').value;
+                var price = isFree ? 0 : (priceInput ? parseFloat(priceInput) : null);
                 if (!isFree && (price === null || isNaN(price))) { showAlert('يرجى إدخال سعر صحيح', 'error'); return; }
                 try {
-                    const url = (await uploadPDF(pdfFile, 'notes')).secure_url;
+                    var url = (await uploadPDF(pdfFile, 'notes')).secure_url;
                     await db.createNote({
                         grade_id: parseInt(g.value),
                         month_id: parseInt(document.getElementById('noteMonth').value),
@@ -124,7 +132,7 @@
                         is_free: isFree
                     });
                     showAlert('تم الحفظ', 'success');
-                    setTimeout(() => location.href = 'admin.html', 1000);
+                    setTimeout(function() { location.href = 'admin.html'; }, 1000);
                 } catch (err) { console.error('Note save error:', err); showAlert('خطأ: ' + err.message, 'error'); }
             };
         });
