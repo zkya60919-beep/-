@@ -66,6 +66,7 @@ function resourceType(file) {
   const t = file.type || '';
   if (t.startsWith('video/')) return 'video';
   if (t.startsWith('image/')) return 'image';
+  if (t === 'application/pdf') return 'image';
   return 'raw';
 }
 

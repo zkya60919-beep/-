@@ -350,6 +350,11 @@ async function loadVideos(monthId) {
     }
 }
 
+function openNoteUrl(url) {
+    if (!url) { showAlert('رابط الملف غير متاح', 'error'); return; }
+    window.open(url, '_blank');
+}
+
 async function loadNotes(monthId) {
     const container = document.getElementById('notesContainer');
     if (!container) return;
@@ -386,7 +391,7 @@ async function loadNotes(monthId) {
             const price = note.price || 0;
 
             const openAction = hasAccess
-                ? `location.href=${JSON.stringify(note.file_url)}`
+                ? `openNoteUrl(${JSON.stringify(note.file_url)})`
                 : `purchaseContent('note', ${note.id}, ${price})`;
 
             return `
