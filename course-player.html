@@ -2,9 +2,11 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>مشاهدة الكورس | الباسط</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/video.css">
     <link rel="stylesheet" href="css/video-player.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap">
 </head>
@@ -30,10 +32,13 @@
         <div class="nav-overlay" onclick="toggleMobileMenu()"></div>
     </header>
 
-    <section style="padding: 60px 0;">
+    <section class="cp-section">
         <div class="container">
-            <div id="playerContainer" class="text-center" style="padding: 60px;">
-                <p>جاري تحميل مشغل الكورس...</p>
+            <div id="cpWrapper" class="cp-wrapper">
+                <div class="cp-loading">
+                    <div class="spinner"></div>
+                    <p>جاري تحميل مشغل الكورس...</p>
+                </div>
             </div>
         </div>
     </section>
@@ -49,6 +54,7 @@
     <script>
         let currentCourse = null;
         let currentCourseVideos = [];
+        let activeVideoId = null;
 
         document.addEventListener('DOMContentLoaded', async () => {
             await checkAuth();
@@ -56,7 +62,6 @@
             const courseId = params.get('id');
             if (!courseId) { window.location.href = 'index.html'; return; }
 
-            const container = document.getElementById('playerContainer');
             try {
                 const { data: course } = await supabase
                     .from('courses')
@@ -67,44 +72,99 @@
                 if (!course) throw new Error('Not found');
 
                 currentCourse = course;
-                currentCourseVideos = course.course_videos || [];
-
-                // Check if user has access (purchased or free)
+                currentCourseVideos = (course.course_videos || []).sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
                 const hasAccess = await checkCourseAccess(courseId);
 
-                container.innerHTML = `
-                    <h1 style="margin-bottom:24px;font-size:22px">${escapeHtml(course.title)}</h1>
-                    <div style="max-width:800px;margin:0 auto">
-                        ${currentCourseVideos.length > 0 ? currentCourseVideos.map((v, i) => `
-                            <div class="course-video-row" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--white);border-radius:12px;margin-bottom:8px;box-shadow:var(--shadow-sm);${hasAccess ? '' : 'opacity:0.6'}">
-                                <span style="background:var(--gradient-primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">${i+1}</span>
-                                <div style="flex:1;text-align:right">
-                                    <strong>${escapeHtml(v.title)}</strong>
-                                    <span style="font-size:13px;color:var(--gray-500);margin-right:8px">${formatDuration(v.duration)}</span>
-                                </div>
-                                ${hasAccess
-                                    ? `<button onclick="playCourseVideo(${v.id})" class="btn btn-primary btn-sm">مشاهدة</button>`
-                                    : '<span style="color:var(--gray-400);font-size:13px">🔒 مقفل</span>'}
-                            </div>
-                        `).join('') : '<p style="text-align:center;color:var(--gray-500);padding:20px">لا توجد فيديوهات في هذا الكورس</p>'}
-                    </div>
-                    <div style="text-align:center;margin-top:24px">
-                        <button class="btn btn-outline" onclick="window.location.href='course-details.html?id=${courseId}'">← العودة للتفاصيل</button>
-                    </div>
-                `;
+                renderCoursePage(course, hasAccess);
             } catch (e) {
-                container.innerHTML = `
-                    <div style="text-align:center;padding:60px">
-                        <p style="color:var(--gray-500);font-size:18px">تعذر تحميل الكورس</p>
-                        <button class="btn btn-outline" onclick="window.location.href='index.html'" style="margin-top:16px">العودة للرئيسية</button>
-                    </div>
-                `;
+                document.getElementById('cpWrapper').innerHTML = `
+                    <div class="cp-error">
+                        <div class="cp-error-icon">⚠️</div>
+                        <h2>تعذر تحميل الكورس</h2>
+                        <p>${e.message || 'حدث خطأ غير متوقع'}</p>
+                        <button class="btn btn-primary" onclick="window.location.href='index.html'">العودة للرئيسية</button>
+                    </div>`;
             }
         });
 
+        function renderCoursePage(course, hasAccess) {
+            const wrapper = document.getElementById('cpWrapper');
+            const thumbnail = course.thumbnail || 'images/logo.jpg';
+            const priceText = course.price === 0 ? 'مجاني' : formatCurrency(course.price);
+            const videoCount = currentCourseVideos.length;
+
+            wrapper.innerHTML = `
+                <div class="cp-back">
+                    <button class="btn btn-outline btn-sm" onclick="window.location.href='course-details.html?id=${course.id}'">← العودة لتفاصيل الكورس</button>
+                </div>
+
+                <div class="cp-player-area" id="cpPlayerArea">
+                    <div class="cp-player-placeholder" id="cpPlaceholder">
+                        <img src="${escapeHtml(thumbnail)}" alt="${escapeHtml(course.title)}" class="cp-hero-img">
+                        <div class="cp-hero-overlay">
+                            <div class="cp-hero-info">
+                                <h1>${escapeHtml(course.title)}</h1>
+                                <p>${escapeHtml(course.description || '')}</p>
+                                <div class="cp-hero-meta">
+                                    <span class="badge ${course.price === 0 ? 'badge-free' : 'badge-paid'}">${priceText}</span>
+                                    <span class="badge badge-info">${videoCount} فيديو</span>
+                                </div>
+                            </div>
+                            ${hasAccess && videoCount > 0 ? `<button class="cp-play-hero" onclick="playCourseVideo(${currentCourseVideos[0].id})">▶</button>` : ''}
+                            ${!hasAccess ? '<div class="cp-lock-hero"><span>🔒</span><p>محتوى مدفوع</p></div>' : ''}
+                        </div>
+                    </div>
+                    <div id="cpActivePlayer" style="display:none"></div>
+                </div>
+
+                <div class="cp-content">
+                    <div class="cp-info-card">
+                        <div class="cp-info-header">
+                            <img src="${escapeHtml(thumbnail)}" alt="" class="cp-info-thumb">
+                            <div>
+                                <h2>${escapeHtml(course.title)}</h2>
+                                <p class="cp-info-desc">${escapeHtml(course.description || 'لا يوجد وصف')}</p>
+                            </div>
+                        </div>
+                        <div class="cp-info-stats">
+                            <div class="cp-stat">
+                                <span class="cp-stat-icon">🎬</span>
+                                <span>${videoCount} فيديو</span>
+                            </div>
+                            <div class="cp-stat">
+                                <span class="cp-stat-icon">💰</span>
+                                <span>${priceText}</span>
+                            </div>
+                            <div class="cp-stat">
+                                <span class="cp-stat-icon">${hasAccess ? '✅' : '🔒'}</span>
+                                <span>${hasAccess ? 'مملوك' : 'غير مملوك'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cp-videos-card">
+                        <h3 class="cp-videos-title">محتوى الكورس</h3>
+                        <div class="cp-videos-list">
+                            ${currentCourseVideos.length > 0 ? currentCourseVideos.map((v, i) => `
+                                <div class="cp-video-item ${hasAccess ? '' : 'locked'}" id="cpVideoItem${v.id}">
+                                    <div class="cp-video-num">${i + 1}</div>
+                                    <div class="cp-video-info">
+                                        <h4 class="cp-video-name">${escapeHtml(v.title)}</h4>
+                                        <span class="cp-video-dur">${formatDuration(v.duration)}</span>
+                                    </div>
+                                    ${hasAccess
+                                        ? `<button class="cp-video-play" onclick="playCourseVideo(${v.id})" aria-label="تشغيل">▶</button>`
+                                        : '<span class="cp-video-lock">🔒</span>'}
+                                </div>
+                            `).join('') : '<p class="cp-empty">لا توجد فيديوهات في هذا الكورس</p>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
         async function checkCourseAccess(courseId) {
             if (!currentUser) return false;
-            // Free course
             if (currentCourse && currentCourse.price === 0) return true;
             try {
                 const { data: purchase } = await supabase
@@ -121,132 +181,257 @@
         }
 
         async function playCourseVideo(courseVideoId) {
-            if (!currentUser) {
-                showAlert('الرجاء تسجيل الدخول أولاً', 'error');
-                return;
-            }
+            if (!currentUser) { showAlert('الرجاء تسجيل الدخول أولاً', 'error'); return; }
 
             const video = currentCourseVideos.find(v => v.id === courseVideoId);
-            if (!video) {
-                showAlert('الفيديو غير موجود', 'error');
-                return;
-            }
+            if (!video) { showAlert('الفيديو غير موجود', 'error'); return; }
 
-            const container = document.getElementById('playerContainer');
-            container.innerHTML = `
-                <div style="max-width:900px;margin:0 auto">
-                    <div id="courseVideoPlayer" style="width:100%;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;position:relative"></div>
-                    <div style="text-align:center;margin-top:12px">
-                        <button class="btn btn-outline" onclick="location.reload()">← العودة لقائمة الفيديوهات</button>
-                    </div>
-                </div>
-            `;
+            activeVideoId = courseVideoId;
+            document.querySelectorAll('.cp-video-item').forEach(el => el.classList.remove('playing'));
+            const activeEl = document.getElementById('cpVideoItem' + courseVideoId);
+            if (activeEl) activeEl.classList.add('playing');
 
-            try {
-                const playerEl = document.getElementById('courseVideoPlayer');
-                let playUrl = video.video_url;
-
-                // Try to get a signed URL (secure), fall back to direct URL
-                try {
-                    const session = await supabase.auth.getSession();
-                    const token = session.data.session?.access_token;
-                    if (token) {
-                        const signedRes = await fetch(`${CONFIG.SUPABASE.URL}/functions/v1/signed-url`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                            body: JSON.stringify({ course_video_id: courseVideoId, user_id: currentUser.id })
-                        });
-                        if (signedRes.ok) {
-                            const signedData = await signedRes.json();
-                            if (signedData.success && signedData.signed_url) {
-                                playUrl = signedData.signed_url;
-                            }
-                        }
-                    }
-                } catch (e) {
-                    // Signed URL EF unavailable, use direct URL
-                }
-
-                // Load HLS.js if needed
-                if (!window.Hls) {
-                    await new Promise((resolve, reject) => {
-                        const s = document.createElement('script');
-                        s.src = 'https://cdn.jsdelivr.net/npm/hls.js@1';
-                        s.onload = resolve;
-                        s.onerror = reject;
-                        document.head.appendChild(s);
-                    });
-                }
-
-                // Use ProfessionalVideoPlayer if available, else build inline
-                if (window.ProfessionalVideoPlayer) {
-                    const player = new ProfessionalVideoPlayer(playerEl, {
-                        autoplay: true,
-                        id: `course-${courseVideoId}`
-                    });
-                    const sourceType = playUrl.includes('.m3u8') ? 'hls' : 'direct';
-                    player.loadSource(playUrl, sourceType, `course-${courseVideoId}`);
-                } else {
-                    // Build premium player inline with watermark and security
-                    buildCoursePlayer(playerEl, playUrl);
-                }
-
-            } catch (e) {
-                container.innerHTML = `
-                    <div style="max-width:600px;margin:0 auto;padding:40px;background:var(--white);border-radius:12px;box-shadow:var(--shadow-md);text-align:center">
-                        <h2 style="color:var(--danger);font-size:20px">عذراً، لا يمكن تشغيل الفيديو</h2>
-                        <p style="margin:12px 0;color:var(--gray-500)">${e.message || 'حدث خطأ أثناء تحميل الفيديو'}</p>
-                        <button class="btn btn-primary" onclick="location.reload()" style="margin-top:8px">العودة للمقاطع</button>
+            const placeholder = document.getElementById('cpPlaceholder');
+            const playerArea = document.getElementById('cpActivePlayer');
+            if (placeholder) placeholder.style.display = 'none';
+            if (playerArea) {
+                playerArea.style.display = 'block';
+                playerArea.innerHTML = `
+                    <div class="course-video-container" id="cpVideoContainer">
+                        <video id="courseVideo" class="course-video-element" playsinline disablePictureInPicture controlsList="nodownload noremoteplayback" oncontextmenu="return false;">
+                            <source src="">
+                        </video>
+                        <div class="premium-watermark" id="courseWatermark">حقوق الطبع محفوظة لمنصة الباسط التعليمية</div>
+                        <div class="player-spinner" id="courseSpinner"><div class="spinner-ring"></div></div>
+                        <div class="center-play-btn" id="courseCenterPlayBtn">▶</div>
+                        <div class="player-controls" id="courseControls">
+                            <div class="progress-bar-container" id="cpProgressWrap">
+                                <div class="progress-bar" id="cpProgressBar">
+                                    <div class="progress-buffered" id="cpBuffered"></div>
+                                    <div class="progress-played" id="cpPlayed"></div>
+                                    <div class="progress-thumb" id="cpThumb"></div>
+                                </div>
+                                <div class="time-display">
+                                    <span id="cpCurrentTime">0:00</span>
+                                    <span class="time-separator">/</span>
+                                    <span id="cpDuration">0:00</span>
+                                </div>
+                            </div>
+                            <div class="controls-row">
+                                <div class="controls-left">
+                                    <button class="control-btn btn-play" id="cpPlayBtn" aria-label="تشغيل/إيقاف">
+                                        <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                        <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                                    </button>
+                                    <button class="control-btn" id="cpVolumeBtn" aria-label="الصوت">
+                                        <svg class="icon-vol" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                                        <svg class="icon-vol-mute" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+                                    </button>
+                                    <div class="volume-slider-wrap" id="cpVolWrap" style="display:none">
+                                        <input type="range" class="volume-slider" id="cpVolSlider" min="0" max="1" step="0.1" value="1">
+                                    </div>
+                                    <div class="time-divider"></div>
+                                    <button class="control-btn btn-speed" id="cpSpeedBtn" aria-label="السرعة">
+                                        <span id="cpSpeedLabel">1x</span>
+                                    </button>
+                                    <div class="speed-menu" id="cpSpeedMenu">
+                                        <button class="speed-option" data-rate="0.5">0.5x</button>
+                                        <button class="speed-option" data-rate="0.75">0.75x</button>
+                                        <button class="speed-option active" data-rate="1">1x</button>
+                                        <button class="speed-option" data-rate="1.25">1.25x</button>
+                                        <button class="speed-option" data-rate="1.5">1.5x</button>
+                                        <button class="speed-option" data-rate="2">2x</button>
+                                    </div>
+                                </div>
+                                <div class="controls-right">
+                                    <button class="control-btn" id="cpFullscreenBtn" aria-label="ملء الشاشة">
+                                        <svg class="icon-fs-enter" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+                                        <svg class="icon-fs-exit" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 `;
+                initCoursePlayer(video);
             }
+
+            playerArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        function buildCoursePlayer(container, videoUrl) {
-            container.innerHTML = `
-                <video id="courseVideo" class="premium-video" playsinline disablePictureInPicture controlsList="nodownload noremoteplayback" oncontextmenu="return false;" style="width:100%;height:100%;object-fit:contain;background:#000">
-                    <source src="${escapeHtml(videoUrl)}">
-                </video>
-                <div class="premium-watermark" id="courseWatermark">حقوق الطبع محفوظة لمنصة الباسط التعليمية</div>
-                <div class="player-spinner" id="courseSpinner">
-                    <div class="spinner-ring"></div>
-                </div>
-                <div class="center-play-btn" id="courseCenterPlayBtn">▶</div>
-            `;
-
+        function initCoursePlayer(videoData) {
             const video = document.getElementById('courseVideo');
-            const watermark = document.getElementById('courseWatermark');
             const spinner = document.getElementById('courseSpinner');
-            const centerPlayBtn = document.getElementById('courseCenterPlayBtn');
+            const centerPlay = document.getElementById('courseCenterPlayBtn');
+            const watermark = document.getElementById('courseWatermark');
+            const playBtn = document.getElementById('cpPlayBtn');
+            const volumeBtn = document.getElementById('cpVolumeBtn');
+            const volWrap = document.getElementById('cpVolWrap');
+            const volSlider = document.getElementById('cpVolSlider');
+            const speedBtn = document.getElementById('cpSpeedBtn');
+            const speedMenu = document.getElementById('cpSpeedMenu');
+            const speedLabel = document.getElementById('cpSpeedLabel');
+            const fsBtn = document.getElementById('cpFullscreenBtn');
+            const barWrap = document.getElementById('cpProgressWrap');
+            const bar = document.getElementById('cpProgressBar');
+            const played = document.getElementById('cpPlayed');
+            const thumb = document.getElementById('cpThumb');
+            const buffered = document.getElementById('cpBuffered');
+            const timeCur = document.getElementById('cpCurrentTime');
+            const timeDur = document.getElementById('cpDuration');
 
-            // Watermark with user info
-            if (currentUser) {
-                watermark.textContent = `مُسجل للطالب: ${currentUser.name} (${currentUser.phone})`;
-                function moveWatermark() {
-                    const rect = container.getBoundingClientRect();
-                    const maxT = Math.max(20, rect.height - 80);
-                    const maxL = Math.max(20, rect.width - 280);
-                    watermark.style.top = `${Math.max(20, Math.random() * maxT)}px`;
-                    watermark.style.left = `${Math.max(20, Math.random() * maxL)}px`;
+            let playUrl = videoData.video_url;
+            try {
+                const session = JSON.parse(sessionStorage.getItem('albasit_user_cache') || '{}');
+                const token = session?.access_token;
+                if (token) {
+                    fetch(`${CONFIG.SUPABASE.URL}/functions/v1/signed-url`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ course_video_id: videoData.id, user_id: currentUser.id })
+                    }).then(r => r.json()).then(d => {
+                        if (d.success && d.signed_url) video.querySelector('source').src = d.signed_url;
+                    }).catch(() => {});
                 }
-                setTimeout(moveWatermark, 1000);
-                setInterval(moveWatermark, 6000);
+            } catch (e) {}
+
+            video.querySelector('source').src = playUrl;
+            video.load();
+
+            if (currentUser && watermark) {
+                watermark.textContent = `${currentUser.name} | ${currentUser.phone}`;
+                let wmTimer;
+                function moveWm() {
+                    const c = document.getElementById('cpVideoContainer');
+                    if (!c) return;
+                    const r = c.getBoundingClientRect();
+                    watermark.style.top = Math.max(10, Math.random() * (r.height - 60)) + 'px';
+                    watermark.style.left = Math.max(10, Math.random() * (r.width - 220)) + 'px';
+                }
+                setTimeout(moveWm, 800);
+                wmTimer = setInterval(moveWm, 5000);
+                video.addEventListener('pause', () => clearInterval(wmTimer));
+                video.addEventListener('play', () => { wmTimer = setInterval(moveWm, 5000); });
             }
 
-            video.addEventListener('loadedmetadata', () => { spinner.style.display = 'none'; centerPlayBtn.classList.add('hide'); });
-            video.addEventListener('error', () => { spinner.style.display = 'none'; });
+            function fmt(s) { if (!isFinite(s) || s < 0) return '0:00'; const m = Math.floor(s / 60); return m + ':' + Math.floor(s % 60).toString().padStart(2, '0'); }
+
+            video.addEventListener('loadedmetadata', () => {
+                if (spinner) spinner.style.display = 'none';
+                centerPlay.classList.add('hide');
+                timeDur.textContent = fmt(video.duration);
+            });
+            video.addEventListener('error', () => { if (spinner) spinner.style.display = 'none'; showAlert('خطأ في تحميل الفيديو', 'error'); });
             video.addEventListener('click', () => { if (video.paused) video.play(); else video.pause(); });
 
-            // Keyboard shortcuts
-            document.addEventListener('keydown', (e) => {
-                if (e.key === ' ' || e.key === 'k') { e.preventDefault(); if (video.paused) video.play(); else video.pause(); }
-                if (e.key === 'f' || e.key === 'F') { e.preventDefault(); if (!document.fullscreenElement) container.requestFullscreen(); else document.exitFullscreen(); }
+            function togglePlay() { if (video.paused) video.play(); else video.pause(); }
+            playBtn.addEventListener('click', togglePlay);
+            centerPlay.addEventListener('click', togglePlay);
+            video.addEventListener('play', () => {
+                playBtn.querySelector('.icon-play').style.display = 'none';
+                playBtn.querySelector('.icon-pause').style.display = 'block';
+                centerPlay.classList.add('hide');
+            });
+            video.addEventListener('pause', () => {
+                playBtn.querySelector('.icon-play').style.display = 'block';
+                playBtn.querySelector('.icon-pause').style.display = 'none';
+                centerPlay.classList.remove('hide');
             });
 
-            // Tab switch pause
+            video.addEventListener('timeupdate', () => {
+                if (!video.duration) return;
+                const pct = (video.currentTime / video.duration) * 100;
+                played.style.width = pct + '%';
+                thumb.style.left = pct + '%';
+                timeCur.textContent = fmt(video.currentTime);
+                showBar();
+            });
+            video.addEventListener('durationchange', () => { timeDur.textContent = fmt(video.duration); });
+            video.addEventListener('progress', () => {
+                if (video.buffered.length > 0) {
+                    buffered.style.width = ((video.buffered.end(video.buffered.length - 1) / video.duration) * 100) + '%';
+                }
+            });
+
+            let seeking = false;
+            function doSeek(e) {
+                const rect = bar.getBoundingClientRect();
+                const x = e.touches ? e.touches[0].clientX : e.clientX;
+                const pct = Math.min(Math.max((x - rect.left) / rect.width, 0), 1);
+                if (!isFinite(video.duration) || video.duration <= 0) return;
+                played.style.width = (pct * 100) + '%';
+                thumb.style.left = (pct * 100) + '%';
+                video.currentTime = pct * video.duration;
+            }
+            bar.addEventListener('mousedown', (e) => { seeking = true; doSeek(e); });
+            document.addEventListener('mousemove', (e) => { if (seeking) doSeek(e); });
+            document.addEventListener('mouseup', () => { seeking = false; });
+            bar.addEventListener('touchstart', (e) => { seeking = true; doSeek(e); }, { passive: true });
+            bar.addEventListener('touchmove', (e) => { if (seeking) doSeek(e); }, { passive: true });
+            bar.addEventListener('touchend', () => { seeking = false; });
+
+            volumeBtn.addEventListener('click', (e) => { e.stopPropagation(); volWrap.style.display = volWrap.style.display === 'none' ? 'block' : 'none'; });
+            volSlider.addEventListener('input', (e) => { video.volume = e.target.value; video.muted = false; });
+            video.addEventListener('volumechange', () => {
+                volSlider.value = video.muted ? 0 : video.volume;
+                volumeBtn.querySelector('.icon-vol').style.display = (video.muted || video.volume === 0) ? 'none' : 'block';
+                volumeBtn.querySelector('.icon-vol-mute').style.display = (video.muted || video.volume === 0) ? 'block' : 'none';
+            });
+
+            speedBtn.addEventListener('click', (e) => { e.stopPropagation(); speedMenu.classList.toggle('show'); });
+            speedMenu.querySelectorAll('.speed-option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    speedMenu.querySelectorAll('.speed-option').forEach(o => o.classList.remove('active'));
+                    opt.classList.add('active');
+                    video.playbackRate = parseFloat(opt.dataset.rate);
+                    speedLabel.textContent = video.playbackRate + 'x';
+                    speedMenu.classList.remove('show');
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!speedMenu.contains(e.target) && e.target !== speedBtn) speedMenu.classList.remove('show');
+                if (!volWrap.contains(e.target) && e.target !== volumeBtn) volWrap.style.display = 'none';
+            });
+
+            fsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const c = document.getElementById('cpVideoContainer');
+                if (!document.fullscreenElement) {
+                    c.requestFullscreen().catch(() => {});
+                } else {
+                    document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen?.();
+                }
+            });
+            document.addEventListener('fullscreenchange', () => {
+                const isFull = !!document.fullscreenElement;
+                fsBtn.querySelector('.icon-fs-enter').style.display = isFull ? 'none' : 'block';
+                fsBtn.querySelector('.icon-fs-exit').style.display = isFull ? 'block' : 'none';
+                const c = document.getElementById('cpVideoContainer');
+                if (c) c.classList.toggle('course-player-fullscreen', isFull);
+            });
+
+            let barTimeout;
+            function showBar() {
+                barWrap.style.display = 'block';
+                clearTimeout(barTimeout);
+                barTimeout = setTimeout(() => { barWrap.style.display = 'none'; }, 3000);
+            }
+            ['click', 'touchstart', 'mousemove', 'keydown'].forEach(ev => document.addEventListener(ev, showBar, { passive: true }));
+
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' && document.activeElement !== volSlider) { e.preventDefault(); togglePlay(); }
+                if (e.code === 'ArrowLeft') { e.preventDefault(); video.currentTime = Math.max(video.currentTime - 5, 0); showBar(); }
+                if (e.code === 'ArrowRight') { e.preventDefault(); video.currentTime = Math.min(video.currentTime + 5, video.duration); showBar(); }
+                if (e.code === 'ArrowUp') { e.preventDefault(); video.volume = Math.min(video.volume + 0.1, 1); volSlider.value = video.volume; }
+                if (e.code === 'ArrowDown') { e.preventDefault(); video.volume = Math.max(video.volume - 0.1, 0); volSlider.value = video.volume; }
+                if (e.key === 'f' || e.key === 'F') { e.preventDefault(); fsBtn.click(); }
+                if (e.key === 'm' || e.key === 'M') { e.preventDefault(); video.muted = !video.muted; }
+            });
+
             document.addEventListener('visibilitychange', () => { if (document.hidden && !video.paused) video.pause(); });
 
-            video.play().then(() => { centerPlayBtn.classList.add('hide'); spinner.style.display = 'none'; }).catch(() => { spinner.style.display = 'none'; });
+            video.play().then(() => { centerPlay.classList.add('hide'); if (spinner) spinner.style.display = 'none'; }).catch(() => { if (spinner) spinner.style.display = 'none'; });
         }
 
         function escapeHtml(text) {
@@ -258,4 +443,3 @@
     </script>
 </body>
 </html>
-
