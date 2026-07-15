@@ -313,6 +313,7 @@ function getFileProxyUrl(url) {
 }
 
 async function openContentUrl(rawUrl) {
+    let tab = null;
     try {
         const resolvedUrl = await resolveFileUrl(rawUrl);
         if (!resolvedUrl) throw new Error('رابط الملف غير صالح');
@@ -321,15 +322,11 @@ async function openContentUrl(rawUrl) {
         const isPdf = resolvedUrl.toLowerCase().includes('.pdf') || rawUrl.toLowerCase().includes('.pdf');
 
         if (isPdf) {
-            if (isCloudinary) {
-                window.open(getFileProxyUrl(resolvedUrl), '_blank');
-            } else {
-                window.open(resolvedUrl, '_blank');
-            }
+            window.open(resolvedUrl, '_blank');
             return;
         }
 
-        const tab = window.open('', '_blank');
+        tab = window.open('', '_blank');
         if (!tab) {
             alert('الرجاء السماح بفتح النوافذ المنبثقة حتى يتم فتح الملف.');
             return;
@@ -337,7 +334,7 @@ async function openContentUrl(rawUrl) {
         tab.location.href = resolvedUrl;
     } catch (error) {
         console.error('Failed to open content URL:', error);
-        if (typeof tab !== 'undefined' && tab && tab.document) {
+        if (tab && tab.document) {
             tab.document.write('<div style="font-family:sans-serif;padding:24px;text-align:center;">تعذر فتح الملف. يرجى المحاولة مرة أخرى أو التواصل مع الدعم.</div>');
             tab.document.close();
         } else {

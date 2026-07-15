@@ -385,9 +385,8 @@ async function loadNotes(monthId) {
             const hasAccess = hasSub || note.is_free || hasIndividualPurchase;
             const price = note.price || 0;
 
-            // Open PDF using the safest available URL resolver.
             const openAction = hasAccess
-                ? `openContentUrl(${JSON.stringify(note.file_url)})`
+                ? `window.open(${JSON.stringify(note.file_url)}, '_blank')`
                 : `purchaseContent('note', ${note.id}, ${price})`;
 
             return `
@@ -628,6 +627,73 @@ async function subscribe(months) {
     await subscribeToMonth(selectedMonthId || gradeMonths[0]?.id, '');
 }
 
+// --- Courses ---
+async function loadCourses() {
+    const container = document.getElementById('coursesContainer');
+    if (!container) return;
+    container.innerHTML = '<div class="loading-grid"><div class="content-skeleton"><div class="skeleton skeleton-thumbnail"></div><div class="skeleton skeleton-text" style="margin:16px;width:70%;"></div><div class="skeleton skeleton-text-sm" style="margin:4px 16px 16px;width:50%;"></div></div><div class="content-skeleton"><div class="skeleton skeleton-thumbnail"></div><div class="skeleton skeleton-text" style="margin:16px;width:70%;"></div><div class="skeleton skeleton-text-sm" style="margin:4px 16px 16px;width:50%;"></div></div></div>';
+
+    try {
+        const [courses, purchased] = await Promise.all([
+            db.getCourses(currentUser.grade_id),
+            db.getUserCoursePurchases(currentUser.id)
+        ]);
+        const purchasedIds = new Set(purchased.map(p => p.course_id));
+
+        if (!courses.length) {
+            container.innerHTML = '<p class="empty-state">لا توجد كورسات متاحة لصفك الدراسي حالياً</p>';
+            return;
+        }
+
+        container.innerHTML = courses.map(course => {
+            const hasAccess = purchasedIds.has(course.id);
+            const thumbnail = course.thumbnail || 'images/logo.jpg';
+            const priceClass = course.price === 0 ? 'free' : '';
+            const priceText = course.price === 0 ? 'مجاني' : formatCurrency(course.price);
+
+            return '<div class="course-card">' +
+                '<div class="course-thumbnail">' +
+                '<img src="' + thumbnail + '" alt="' + escapeHtml(course.title) + '" loading="lazy">' +
+                (course.videos_count ? '<span style="position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.7);color:#fff;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;">' + course.videos_count + ' فيديو</span>' : '') +
+                '</div>' +
+                '<div class="course-content">' +
+                '<h3 class="course-title">' + escapeHtml(course.title) + '</h3>' +
+                (course.description ? '<p style="color:var(--gray-500);font-size:13px;margin:0 0 8px;line-height:1.5;">' + escapeHtml(course.description.substring(0, 100)) + (course.description.length > 100 ? '...' : '') + '</p>' : '') +
+                '<div class="course-price ' + priceClass + '">' + (hasAccess ? '✅ مملوك' : priceText) + '</div>' +
+                '<button class="course-btn" onclick="' + (hasAccess ? "window.location.href='course-details.html?id=" + course.id + "'" : "purchaseCourse(" + course.id + "," + course.price + ",'" + escapeHtml(course.title) + "')") + '">' +
+                (hasAccess ? 'عرض الكورس' : 'شراء الكورس') +
+                '</button>' +
+                '</div>' +
+                '</div>';
+        }).join('');
+    } catch (error) {
+        console.error('Error loading courses:', error);
+        container.innerHTML = '<p class="empty-state">تعذر تحميل الكورسات</p>';
+    }
+}
+
+async function purchaseCourse(courseId, price, title) {
+    if (!price || price <= 0) {
+        window.location.href = 'course-details.html?id=' + courseId;
+        return;
+    }
+    try {
+        const payment = await db.createPayment({
+            user_id: currentUser.id,
+            amount: price,
+            months: 1,
+            status: 'pending',
+            payment_method: null,
+            metadata: { type: 'course', course_id: courseId }
+        });
+        sessionStorage.setItem('pendingCourseId', courseId);
+        window.location.href = 'payment.html?payment_id=' + payment.id + '&course_id=' + courseId;
+    } catch (error) {
+        console.error('Error purchasing course:', error);
+        showAlert('حدث خطأ أثناء عملية الشراء', 'error');
+    }
+}
+
 function showCodeModal() {
     document.getElementById('codeModal')?.classList.add('active');
 }
@@ -752,6 +818,7 @@ function showSection(sectionId) {
     });
 
     if (sectionId === 'subscription' || sectionId === 'overview') loadSubscriptionSection();
+    if (sectionId === 'courses') loadCourses();
 }
 
 async function uploadAvatar(input) {
