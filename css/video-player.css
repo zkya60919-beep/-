@@ -560,6 +560,7 @@
 
 .cp-section {
     padding: max(60px, env(safe-area-inset-top, 60px)) 0 max(24px, env(safe-area-inset-bottom, 24px));
+    overflow-x: hidden;
 }
 
 .cp-wrapper {
@@ -930,22 +931,25 @@
 }
 
 /* --- Responsive --- */
+
+/* Tablet (≤768px) */
 @media (max-width: 768px) {
     .cp-section {
-        padding: max(20px, env(safe-area-inset-top, 20px)) 0 max(16px, env(safe-area-inset-bottom, 16px));
+        padding: max(16px, env(safe-area-inset-top, 16px)) 0 max(12px, env(safe-area-inset-bottom, 12px));
+    }
+
+    .cp-wrapper {
+        max-width: 100%;
+        padding: 0 12px;
     }
 
     .cp-content {
         grid-template-columns: 1fr;
+        gap: 16px;
     }
 
-    .cp-hero-info h1 {
-        font-size: 18px;
-    }
-
-    .cp-hero-info p {
-        font-size: 13px;
-    }
+    .cp-hero-info h1 { font-size: 18px; }
+    .cp-hero-info p { font-size: 13px; }
 
     .cp-play-hero {
         width: 60px;
@@ -955,21 +959,270 @@
 
     .cp-info-card,
     .cp-videos-card {
-        padding: 18px;
+        padding: 16px;
+        border-radius: 14px;
     }
 
+    .cp-info-header {
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .cp-info-thumb {
+        width: 52px;
+        height: 52px;
+        border-radius: 10px;
+    }
+
+    .cp-info-header h2 { font-size: 16px; }
+
     .cp-videos-list {
-        max-height: 320px;
+        max-height: 300px;
     }
 
     .cp-video-item {
         padding: 10px 12px;
+        gap: 10px;
+    }
+
+    .cp-video-num {
+        width: 28px;
+        height: 28px;
+        font-size: 11px;
+    }
+
+    .cp-video-name {
+        font-size: 13px;
+    }
+
+    .cp-video-play {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+    }
+
+    .cp-player-area {
+        border-radius: 14px;
+        margin-bottom: 18px;
+    }
+
+    .course-video-container {
+        border-radius: 14px;
     }
 }
 
-@media (max-width: 480px) {
+/* Mobile (≤540px) */
+@media (max-width: 540px) {
+    .cp-wrapper {
+        padding: 0 10px;
+    }
+
+    .cp-back {
+        margin-bottom: 14px;
+    }
+
+    .cp-back .btn {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+
     .cp-hero-info h1 { font-size: 16px; }
-    .cp-info-header { flex-direction: column; align-items: center; text-align: center; }
-    .cp-info-header h2 { font-size: 16px; }
-    .cp-videos-title { font-size: 15px; }
+    .cp-hero-info p { font-size: 12px; }
+
+    .cp-hero-meta { gap: 6px; }
+    .cp-hero-meta .badge { font-size: 11px; padding: 2px 8px; }
+
+    .cp-play-hero {
+        width: 54px;
+        height: 54px;
+        font-size: 22px;
+    }
+
+    .cp-lock-hero span { font-size: 40px; }
+    .cp-lock-hero p { font-size: 14px; }
+
+    .cp-info-card,
+    .cp-videos-card {
+        padding: 14px;
+        border-radius: 12px;
+    }
+
+    .cp-info-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .cp-info-header h2 { font-size: 15px; }
+
+    .cp-info-desc {
+        -webkit-line-clamp: 2;
+        font-size: 12px;
+    }
+
+    .cp-info-stats {
+        gap: 8px;
+    }
+
+    .cp-stat {
+        font-size: 13px;
+        gap: 8px;
+    }
+
+    .cp-videos-title {
+        font-size: 15px;
+        margin-bottom: 12px;
+    }
+
+    .cp-videos-list {
+        max-height: 260px;
+        gap: 6px;
+    }
+
+    .cp-video-item {
+        padding: 8px 10px;
+        gap: 8px;
+        border-radius: 10px;
+    }
+
+    .cp-video-num {
+        width: 26px;
+        height: 26px;
+        font-size: 10px;
+        border-radius: 50%;
+    }
+
+    .cp-video-name {
+        font-size: 12px;
+        white-space: normal;
+        -webkit-line-clamp: 2;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .cp-video-dur {
+        font-size: 11px;
+    }
+
+    .cp-video-play {
+        width: 30px;
+        height: 30px;
+        font-size: 11px;
+    }
+
+    .cp-video-lock { font-size: 16px; }
+
+    .course-video-container {
+        border-radius: 10px;
+        max-width: 100%;
+    }
+
+    .course-video-container .speed-menu {
+        min-width: 70px;
+        padding: 6px;
+    }
+
+    .course-video-container .speed-option {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+
+    .course-video-container .volume-slider-wrap {
+        width: 80px;
+    }
+
+    .controls-row {
+        gap: 4px;
+    }
+
+    .control-btn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .control-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .time-display {
+        font-size: 11px;
+    }
+
+    .progress-bar-container {
+        height: 4px;
+        margin-bottom: 8px;
+    }
+
+    .progress-thumb {
+        width: 12px;
+        height: 12px;
+    }
+}
+
+/* Small phones (≤380px) */
+@media (max-width: 380px) {
+    .cp-wrapper {
+        padding: 0 8px;
+    }
+
+    .cp-section {
+        padding-top: max(12px, env(safe-area-inset-top, 12px));
+    }
+
+    .cp-hero-info h1 { font-size: 14px; }
+    .cp-hero-info p { font-size: 11px; }
+
+    .cp-play-hero {
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+    }
+
+    .cp-info-card,
+    .cp-videos-card {
+        padding: 12px;
+    }
+
+    .cp-info-thumb {
+        width: 44px;
+        height: 44px;
+    }
+
+    .cp-info-header h2 { font-size: 14px; }
+
+    .cp-video-name {
+        font-size: 11px;
+    }
+
+    .cp-video-num {
+        width: 24px;
+        height: 24px;
+        font-size: 10px;
+    }
+
+    .cp-video-play {
+        width: 28px;
+        height: 28px;
+        font-size: 10px;
+    }
+
+    .control-btn {
+        width: 28px;
+        height: 28px;
+    }
+
+    .control-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .time-display {
+        font-size: 10px;
+    }
+
+    .btn-speed span {
+        font-size: 11px;
+    }
 }
