@@ -305,16 +305,11 @@ function getPublicIdFromCloudinaryUrl(url) {
     } catch { return null; }
 }
 
-async function getSignedCloudinaryUrl(url) {
+function getFileProxyUrl(url) {
+    let proxyUrl = CONFIG.SUPABASE.URL + '/functions/v1/file-proxy?url=' + encodeURIComponent(url);
     const publicId = getPublicIdFromCloudinaryUrl(url);
-    if (!publicId) return url;
-    const sigUrl = CONFIG.SUPABASE.URL + '/functions/v1/cloudinary-signature?public_id=' + encodeURIComponent(publicId) + '&resource_type=raw';
-    const res = await fetch(sigUrl, {
-        headers: { apikey: CONFIG.SUPABASE.ANON_KEY, Authorization: 'Bearer ' + CONFIG.SUPABASE.ANON_KEY }
-    });
-    if (!res.ok) return url;
-    const data = await res.json();
-    return data.signed_url || url;
+    if (publicId) proxyUrl += '&public_id=' + encodeURIComponent(publicId);
+    return proxyUrl;
 }
 
 async function openContentUrl(rawUrl) {
@@ -322,10 +317,15 @@ async function openContentUrl(rawUrl) {
         const resolvedUrl = await resolveFileUrl(rawUrl);
         if (!resolvedUrl) throw new Error('رابط الملف غير صالح');
 
+        const isCloudinary = resolvedUrl.includes('res.cloudinary.com');
         const isPdf = resolvedUrl.toLowerCase().includes('.pdf') || rawUrl.toLowerCase().includes('.pdf');
+
         if (isPdf) {
-            const signedUrl = await getSignedCloudinaryUrl(resolvedUrl);
-            window.open(signedUrl, '_blank');
+            if (isCloudinary) {
+                window.open(getFileProxyUrl(resolvedUrl), '_blank');
+            } else {
+                window.open(resolvedUrl, '_blank');
+            }
             return;
         }
 

@@ -58,14 +58,19 @@
             const container = document.getElementById('viewerContainer');
             container.innerHTML = '<div style="padding:40px;text-align:center;color:#64748b;">جاري تحميل الملف...</div>';
 
-            document.getElementById('downloadLink').href = url;
+            let displayUrl = url;
+            if (url.includes('res.cloudinary.com')) {
+                displayUrl = CONFIG.SUPABASE.URL + '/functions/v1/file-proxy?url=' + encodeURIComponent(url);
+            }
+
+            document.getElementById('downloadLink').href = displayUrl;
 
             const iframe = document.createElement('iframe');
             iframe.style.width = '100%';
             iframe.style.height = '100%';
             iframe.style.border = 'none';
             iframe.style.background = '#fff';
-            iframe.src = url;
+            iframe.src = displayUrl;
 
             let loadFired = false;
             iframe.onload = function () {
