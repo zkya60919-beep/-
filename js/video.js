@@ -87,7 +87,7 @@ async function loadVideo() {
             originalUrl: (willTransformToHls && fallbackUrl && !fallbackUrl.includes('.m3u8')) ? fallbackUrl : ''
         });
         
-        if (hasAccess && sourceType === 'direct') {
+        if (hasAccess && sourceType !== 'youtube' && sourceType !== 'vimeo') {
             initPremiumPlayer(video.id);
         }
         
