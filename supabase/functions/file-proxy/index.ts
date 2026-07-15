@@ -4,22 +4,102 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
 };
 
-function extractCloudinaryPublicId(url: string): string | null {
+function extractCloudinaryInfo(url: string): { publicId: string; resourceType: string; version: string; pathAfterUpload: string; extension: string } | null {
   try {
     const u = new URL(url);
     const segs = u.pathname.split('/').filter(Boolean);
     const uploadIdx = segs.indexOf('upload');
     if (uploadIdx === -1 || uploadIdx >= segs.length - 1) return null;
+    const resourceType = segs[uploadIdx - 1] || 'raw';
     const rest = segs.slice(uploadIdx + 1);
+    const pathAfterUpload = rest.join('/');
     const first = rest[0] || '';
     const isVersion = /^v\d+$/.test(first);
+    const version = isVersion ? first : '';
     const idParts = isVersion ? rest.slice(1) : rest;
     if (idParts.length === 0) return null;
-    const raw = idParts.join('/');
-    return raw.replace(/\.[^.]+$/, '');
+    const full = idParts.join('/');
+    const dotIdx = full.lastIndexOf('.');
+    const extension = dotIdx > 0 ? full.substring(dotIdx + 1) : 'pdf';
+    const publicId = dotIdx > 0 ? full.substring(0, dotIdx) : full;
+    return { publicId, resourceType, version, pathAfterUpload, extension };
   } catch {
     return null;
   }
+}
+
+function isCloudinaryUrl(url: string): boolean {
+  return url.indexOf('res.cloudinary.com') !== -1 || url.indexOf('cloudinary.com') !== -1;
+}
+
+async function sha1Hex(input: string): Promise<string> {
+  const bytes = new TextEncoder().encode(input);
+  const digest = await crypto.subtle.digest('SHA-1', bytes);
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function getCreds() {
+  return {
+    cloudName: Deno.env.get('CLOUDINARY_CLOUD_NAME') || '',
+    apiKey: Deno.env.get('CLOUDINARY_API_KEY') || '',
+    apiSecret: Deno.env.get('CLOUDINARY_API_SECRET') || '',
+  };
+}
+
+async function trySigQuerySignedUrl(info: { publicId: string; resourceType: string; extension: string }): Promise<Response | null> {
+  const { cloudName, apiSecret } = getCreds();
+  if (!cloudName || !apiSecret) return null;
+
+  const rawId = info.publicId;
+  const sig = await sha1Hex(rawId + '?' + apiSecret);
+  const url = `https://res.cloudinary.com/${cloudName}/${info.resourceType}/upload/${rawId}.${info.extension}?sig=${sig}`;
+  const r = await fetch(url, { method: 'GET' });
+  return (r.ok || r.status === 206) ? r : null;
+}
+
+async function trySignedPathUrl(info: { publicId: string; resourceType: string; pathAfterUpload: string }): Promise<Response | null> {
+  const { cloudName, apiSecret } = getCreds();
+  if (!cloudName || !apiSecret) return null;
+
+  const { pathAfterUpload } = info;
+  const toSign = pathAfterUpload + apiSecret;
+  const bytes = new TextEncoder().encode(toSign);
+  const digest = await crypto.subtle.digest('SHA-1', bytes);
+  const arr = Array.from(new Uint8Array(digest));
+  const binary = arr.map(b => String.fromCharCode(b)).join('');
+  const sig = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '').substring(0, 8);
+  const signedUrl = `https://res.cloudinary.com/${cloudName}/${info.resourceType}/upload/s--${sig}--/${pathAfterUpload}`;
+  const r = await fetch(signedUrl, { method: 'GET' });
+  return (r.ok || r.status === 206) ? r : null;
+}
+
+async function tryUploadApiDownload(publicId: string, resourceType: string): Promise<Response | null> {
+  const { cloudName, apiKey, apiSecret } = getCreds();
+  if (!cloudName || !apiKey || !apiSecret) return null;
+
+  const timestamp = Math.floor(Date.now() / 1000);
+  const sigStr = `public_id=${publicId}&timestamp=${timestamp}` + apiSecret;
+  const signature = await sha1Hex(sigStr);
+
+  const body = new URLSearchParams();
+  body.set('public_id', publicId);
+  body.set('timestamp', String(timestamp));
+  body.set('api_key', apiKey);
+  body.set('signature', signature);
+
+  const r = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/download`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body.toString(),
+  });
+  if (r.ok) {
+    const data = await r.json();
+    if (data.url) {
+      const fileR = await fetch(data.url);
+      if (fileR.ok) return fileR;
+    }
+  }
+  return null;
 }
 
 Deno.serve(async (req) => {
@@ -29,54 +109,40 @@ Deno.serve(async (req) => {
   try {
     const reqUrl = new URL(req.url);
     const fileUrl = reqUrl.searchParams.get('url');
-    const clientPublicId = reqUrl.searchParams.get('public_id') || '';
-
     if (!fileUrl) {
       return new Response('Missing url parameter', { status: 400, headers: corsHeaders });
     }
 
-    const publicId = clientPublicId || extractCloudinaryPublicId(fileUrl) || '';
+    let response = await fetch(fileUrl, { method: req.method });
 
-    const rangeHeaders = new Headers();
-    const range = req.headers.get('range');
-    if (range) rangeHeaders.set('range', range);
-
-    let response = await fetch(fileUrl, { method: req.method, headers: rangeHeaders });
-
-    if (!response.ok && (response.status === 401 || response.status === 403) && publicId) {
-      const apiKey = Deno.env.get('CLOUDINARY_API_KEY') || '';
-      const apiSecret = Deno.env.get('CLOUDINARY_API_SECRET') || '';
-      const cloudName = Deno.env.get('CLOUDINARY_CLOUD_NAME') || '';
-
-      if (apiKey && apiSecret && cloudName) {
-        const timestamp = Math.floor(Date.now() / 1000);
-        const auth = btoa(`${apiKey}:${apiSecret}`);
-        const dlHeaders = new Headers({ 'Authorization': `Basic ${auth}` });
-        if (range) dlHeaders.set('range', range);
-
-        const dlUrl = `https://api.cloudinary.com/v1_1/${cloudName}/raw/download?public_id=${encodeURIComponent(publicId)}&type=upload&ts=${timestamp}`;
-        const rDl = await fetch(dlUrl, { method: req.method, headers: dlHeaders });
-        if (rDl.ok || rDl.status === 206) response = rDl;
+    if (!response.ok && (response.status === 401 || response.status === 403) && isCloudinaryUrl(fileUrl)) {
+      const info = extractCloudinaryInfo(fileUrl);
+      if (info) {
+        let dl = await trySigQuerySignedUrl(info);
+        if (dl) { response = dl; }
+        else {
+          dl = await trySignedPathUrl(info);
+          if (dl) { response = dl; }
+          else {
+            dl = await tryUploadApiDownload(info.publicId, info.resourceType);
+            if (dl) { response = dl; }
+          }
+        }
       }
     }
 
     if (!response.ok && response.status !== 206) {
-      return new Response('Failed to fetch file: ' + response.status, { status: response.status, headers: corsHeaders });
+      return new Response('Failed: ' + response.status, { status: response.status, headers: corsHeaders });
     }
 
     const responseHeaders = new Headers(corsHeaders);
-    const headersToCopy = [
-      'content-type', 'content-length', 'content-range',
-      'accept-ranges', 'cache-control', 'etag', 'last-modified',
-      'content-disposition',
-    ];
-    for (const h of headersToCopy) {
+    for (const h of ['content-type', 'content-length', 'content-range', 'accept-ranges', 'cache-control', 'etag', 'last-modified', 'content-disposition']) {
       if (response.headers.has(h)) responseHeaders.set(h, response.headers.get(h));
     }
 
     if (!responseHeaders.has('content-type')) {
-      const ext = (publicId || fileUrl).split('.').pop()?.toLowerCase() || '';
-      const mime: Record<string, string> = { pdf: 'application/pdf', mp3: 'audio/mpeg', mp4: 'video/mp4', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', doc: 'application/msword', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', zip: 'application/zip' };
+      const ext = (fileUrl.split('.').pop() || '').toLowerCase();
+      const mime: Record<string, string> = { pdf: 'application/pdf', mp3: 'audio/mpeg', mp4: 'video/mp4', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif' };
       responseHeaders.set('content-type', mime[ext] || 'application/octet-stream');
     }
 
