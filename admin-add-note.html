@@ -62,7 +62,7 @@
     <script src="js/main.js?v=4"></script>
     <script>
         (async function() {
-            var g = document.getElementById('noteGrade');
+            var g = noteGradeSelect;
             try {
                 var grades = await db.getGrades();
                 g.innerHTML = grades.map(function(x) { return '<option value="' + x.id + '">' + x.name + '</option>'; }).join('');
@@ -104,6 +104,7 @@
             zone.classList.add('has-file');
         }
         var pdfFile = null;
+        var noteGradeSelect = document.getElementById('noteGrade');
         function toggleNotePrice() {
             var isFree = document.getElementById('noteFree').checked;
             var group = document.getElementById('notePriceGroup');
@@ -117,6 +118,7 @@
             document.getElementById('noteForm').onsubmit = async function(e) {
                 e.preventDefault();
                 if (!pdfFile) { showAlert('يرجى اختيار ملف PDF', 'error'); return; }
+                var g = noteGradeSelect || document.getElementById('noteGrade');
                 var isFree = document.getElementById('noteFree').checked;
                 var priceInput = document.getElementById('notePrice').value;
                 var price = isFree ? 0 : (priceInput ? parseFloat(priceInput) : null);
