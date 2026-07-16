@@ -81,8 +81,8 @@ async function loadVideo() {
             }
         } else {
             videoWrapper.innerHTML = `
-                <div class="course-video-container">
-                    <video id="courseVideo" class="course-video-element premium-video" playsinline controls disablePictureInPicture controlsList="nodownload noremoteplayback" oncontextmenu="return false;">
+                <div class="course-video-container" style="width:100%;height:100%;position:relative;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center;">
+                    <video id="courseVideo" class="course-video-element premium-video" style="width:100%;height:100%;object-fit:contain;background:#000;" playsinline controls disablePictureInPicture controlsList="nodownload noremoteplayback" oncontextmenu="return false;">
                         <source src="${playUrl}">
                     </video>
                     <div class="premium-watermark" id="courseWatermark">حقوق الطبع محفوظة لمنصة الباسط التعليمية</div>
