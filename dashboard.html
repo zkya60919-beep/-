@@ -110,6 +110,12 @@
                             </span>
                             <span>المراجعات النهائية</span>
                         </button>
+                        <button type="button" class="menu-item" data-section="courses" aria-label="الكورسات">
+                            <span class="menu-icon" aria-hidden="true">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/></svg>
+                            </span>
+                            <span>الكورسات</span>
+                        </button>
                         <button type="button" class="menu-item" data-section="subscription" aria-label="الاشتراكات">
                             <span class="menu-icon" aria-hidden="true">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
@@ -241,6 +247,18 @@
                         </div>
                         <div class="final-reviews-container content-grid" id="finalReviewsContainer" role="list">
                             <p class="empty-state">جاري التحميل...</p>
+                        </div>
+                    </section>
+
+                    <!-- Courses Section -->
+                    <section id="courses-section" class="dashboard-section" aria-labelledby="coursesTitle">
+                        <h2 class="section-title" id="coursesTitle">الكورسات</h2>
+                        <p class="section-hint">كورسات متاحة حسب صفك الدراسي — اختر الكورس وابدأ التعلم</p>
+                        <div class="courses-container content-grid" id="coursesContainer" role="list">
+                            <div class="loading-grid">
+                                <div class="content-skeleton"><div class="skeleton skeleton-thumbnail"></div><div class="skeleton skeleton-text" style="margin:16px;width:70%;"></div><div class="skeleton skeleton-text-sm" style="margin:4px 16px 16px;width:50%;"></div></div>
+                                <div class="content-skeleton"><div class="skeleton skeleton-thumbnail"></div><div class="skeleton skeleton-text" style="margin:16px;width:70%;"></div><div class="skeleton skeleton-text-sm" style="margin:4px 16px 16px;width:50%;"></div></div>
+                            </div>
                         </div>
                     </section>
 

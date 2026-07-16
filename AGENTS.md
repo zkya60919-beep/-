@@ -153,6 +153,12 @@ ALTER TABLE exams ADD COLUMN IF NOT EXISTS teacher_name VARCHAR(255);
 - **GitHub**: pushed to `zkya60919-beep/-`
 - **Vercel**: deployed to `albaist.vercel.app`
 
+### 14. إظهار كارت Paymob في صفحة الدفع
+- **الملف**: `js/payment.js`
+- **المشكلة**: `payment.js` كان يعمل `redirect` إلى `dashboard.html` فوراً لو مفيش `payment_id` في URL، فالصفحة مش بتظهر خالص
+- **الحل**: إزالة `window.location.href = 'dashboard.html'` من شرط عدم وجود `payment_id` (السطر 27-30)
+- **ملحوظة**: كارت Paymob نفسه مضاف بـ inline styles في `payment.html` من الجلسة السابقة
+
 ## Edge Functions المنشورة (على Supabase)
 - admin-auth, admin-validate, cloudinary-signature
 - video-upload, image-upload, pdf-upload, attachment-upload, delete-file

@@ -25,7 +25,6 @@ async function loadPaymentData() {
 
         if (getUrlParam('success') !== null) return;
         if (!paymentId) {
-            window.location.href = 'dashboard.html';
             return;
         }
 

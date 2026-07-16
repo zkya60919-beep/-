@@ -1,5 +1,10 @@
 /* Video Player Styles */
 
+html, body {
+    overflow-x: hidden;
+    width: 100%;
+}
+
 .video-player-section {
     padding: 60px 0;
 }
@@ -548,11 +553,66 @@
     .video-player-section {
         padding: 40px 0;
     }
+
     .video-info {
         padding: 32px;
     }
+
     .video-title {
         font-size: 30px;
+    }
+
+    .logo-text {
+        font-size: 20px;
+    }
+
+    .nav-link {
+        font-size: 12px;
+        padding: 4px 0;
+    }
+
+    .mobile-menu-btn {
+        display: flex;
+    }
+
+    .nav-list:not(.active) {
+        display: none;
+    }
+
+    .nav-list {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 280px;
+        height: 100vh;
+        background: var(--white);
+        flex-direction: column;
+        padding: 90px 20px 24px;
+        box-shadow: var(--shadow-2xl);
+        gap: 4px;
+        z-index: 999;
+        transition: right 0.3s ease;
+        overflow-y: auto;
+    }
+
+    .nav-list.active {
+        right: 0;
+        display: flex;
+    }
+
+    .nav-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 998;
+    }
+
+    .nav-overlay.active {
+        display: block;
     }
 }
 
@@ -564,6 +624,10 @@
     .video-wrapper {
         border-radius: 16px;
         margin-bottom: 20px;
+    }
+
+    .logo-text {
+        font-size: 18px;
     }
 
     .video-wrapper .locked-message {
@@ -663,6 +727,10 @@
         padding: 16px 0;
     }
 
+    .logo-text {
+        font-size: 16px;
+    }
+
     .video-wrapper {
         border-radius: 12px;
         margin-bottom: 16px;
@@ -748,8 +816,16 @@
     }
 }
 
+@media (max-width: 400px) {
+    .related-videos .videos-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 360px) {
     .video-player-section { padding: 8px 0; }
+    .logo-text { font-size: 14px; }
+    .video-wrapper { border-radius: 8px; }
     .video-info { padding: 12px; }
     .video-title { font-size: 16px; }
     .video-description { font-size: 13px; }

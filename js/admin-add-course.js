@@ -284,6 +284,7 @@ async function handleCourseSubmit(event) {
         // Upload videos to Cloudinary
         let uploadedCount = 0;
         let failedCount = 0;
+        let lastError = '';
         for (let i = 0; i < uploadedVideos.length; i++) {
             const video = uploadedVideos[i];
             try {
@@ -302,11 +303,12 @@ async function handleCourseSubmit(event) {
             } catch (videoErr) {
                 console.error(`فشل رفع الفيديو ${video.name}:`, videoErr);
                 failedCount++;
+                lastError = videoErr.message || videoErr.toString();
             }
         }
 
         const msg = failedCount > 0
-            ? `تم حفظ الكورس! رفع ${uploadedCount} فيديو، فشل ${failedCount} فيديو.`
+            ? `تم حفظ الكورس! رفع ${uploadedCount} فيديو، فشل ${failedCount} فيديو.\n\nسبب الفشل: ${lastError}`
             : `تم حفظ الكورس بنجاح مع ${uploadedCount} فيديو!`;
         alert(msg);
         window.location.href = 'admin.html';

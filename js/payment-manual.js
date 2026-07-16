@@ -53,6 +53,13 @@ async function loadManualPaymentSection() {
                     <p class="payment-method-desc" style="direction:ltr;text-align:center;font-family:monospace;font-size:18px;font-weight:700">${instapay}</p>
                     <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); copyToClipboard('${instapay}')" style="margin-top:8px">📋 نسخ ID</button>
                 </div>
+                <div class="payment-method-card" style="border:2px dashed #d1d5db;background:#f9fafb;cursor:not-allowed;pointer-events:none;" onclick="event.preventDefault()">
+                    <div style="position:absolute;top:10px;left:10px;font-size:22px;z-index:2;">🔒</div>
+                    <div class="payment-icon method-icon-paymob" style="font-size:48px;">💳</div>
+                    <h3>Paymob</h3>
+                    <p class="payment-method-desc">الدفع الإلكتروني عبر Paymob</p>
+                    <span style="display:inline-block;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:13px;font-weight:800;padding:6px 16px;border-radius:20px;margin-top:12px;box-shadow:0 2px 8px rgba(245,158,11,0.3);">سيتم تفعيلها قريباً</span>
+                </div>
             </div>
         </div>
         <div style="margin-top:24px;text-align:center">

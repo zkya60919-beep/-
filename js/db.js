@@ -453,6 +453,28 @@ const db = {
         };
     },
 
+    // --- Courses ---
+    async getCourses(gradeId) {
+        const { data, error } = await supabase
+            .from('courses')
+            .select('*')
+            .eq('grade_id', gradeId)
+            .eq('status', 'published')
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
+    },
+
+    async getUserCoursePurchases(userId) {
+        const { data, error } = await supabase
+            .from('course_purchases')
+            .select('course_id')
+            .eq('user_id', userId)
+            .eq('status', 'active');
+        if (error) throw error;
+        return data || [];
+    },
+
     // --- Final Reviews ---
     async getFinalReviews(gradeId = null) {
         let query = supabase.from('final_reviews').select('*');

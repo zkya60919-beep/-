@@ -322,7 +322,7 @@ async function openContentUrl(rawUrl) {
         const isPdf = resolvedUrl.toLowerCase().includes('.pdf') || rawUrl.toLowerCase().includes('.pdf');
 
         if (isPdf) {
-            window.open(resolvedUrl, '_blank');
+            window.open(isCloudinary ? getFileProxyUrl(resolvedUrl) : resolvedUrl, '_blank');
             return;
         }
 

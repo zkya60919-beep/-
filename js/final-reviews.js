@@ -29,7 +29,7 @@ function setupTabs() {
 async function loadFinalReviews() {
     try {
         // Load available reviews for user's grade
-        availableReviews = await db.getFinalReviews(currentUser.grade_id);
+        availableReviews = await db.getFinalReviews();
         
         // Load purchased reviews
         purchasedReviews = await db.getUserFinalReviewPurchases(currentUser.id);

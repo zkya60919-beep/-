@@ -1,5 +1,10 @@
 /* Payment Page Styles */
 
+html, body {
+    overflow-x: hidden;
+    width: 100%;
+}
+
 .payment-section {
     padding: 80px 0;
     min-height: calc(100vh - 200px);
@@ -99,6 +104,8 @@
     box-shadow: var(--shadow-lg);
 }
 
+
+
 .payment-icon {
     font-size: 56px;
     margin-bottom: 20px;
@@ -128,9 +135,68 @@
 }
 
 /* Responsive Design */
+@media (max-width: 1024px) {
+    .logo-text {
+        font-size: 20px;
+    }
+
+    .nav-link {
+        font-size: 12px;
+        padding: 4px 0;
+    }
+
+    .mobile-menu-btn {
+        display: flex;
+    }
+
+    .nav-list:not(.active) {
+        display: none;
+    }
+
+    .nav-list {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 280px;
+        height: 100vh;
+        background: var(--white);
+        flex-direction: column;
+        padding: 90px 20px 24px;
+        box-shadow: var(--shadow-2xl);
+        gap: 4px;
+        z-index: 999;
+        transition: right 0.3s ease;
+        overflow-y: auto;
+    }
+
+    .nav-list.active {
+        right: 0;
+        display: flex;
+    }
+
+    .nav-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 998;
+    }
+
+    .nav-overlay.active {
+        display: block;
+    }
+}
+
 @media (max-width: 768px) {
     .payment-section {
         padding: 30px 0;
+    }
+
+    .logo-text {
+        font-size: 18px;
     }
     
     .summary-card {
@@ -236,6 +302,10 @@
         padding: 20px 0;
     }
 
+    .logo-text {
+        font-size: 16px;
+    }
+
     .payment-methods-grid {
         grid-template-columns: 1fr;
         gap: 12px;
@@ -290,6 +360,7 @@
 
 @media (max-width: 360px) {
     .payment-section { padding: 12px 0; }
+    .logo-text { font-size: 14px; }
     .payment-methods-grid { gap: 8px; }
     .payment-method-card { padding: 14px 12px; }
     .payment-icon { font-size: 28px; }

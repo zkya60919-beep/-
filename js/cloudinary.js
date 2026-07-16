@@ -67,6 +67,7 @@ function resourceType(file) {
   if (t.startsWith('video/')) return 'video';
   if (t.startsWith('image/')) return 'image';
   if (t === 'application/pdf') return 'image';
+  if (t.startsWith('audio/')) return 'image';
   return 'raw';
 }
 
@@ -87,8 +88,8 @@ function uploadDirect(file, folder, onProgress) {
 
       // Validate file size with specific limits
       if (t.startsWith('video/')) {
-        if (file.size > 2000 * 1024 * 1024) throw new Error('حجم الفيديو يتجاوز 2 جيجابايت - استخدم ملفاً أصغر');
-        validateSize(file, 2000); // Increased limit due to chunked upload
+        if (file.size > 100 * 1024 * 1024) throw new Error('حجم الفيديو يتجاوز 100 ميجابايت - الخطة المجانية لـ Cloudinary لا تسمح بأكبر من ذلك');
+        validateSize(file, 100); // Cloudinary Free Plan limit for video
       } else if (t.startsWith('image/')) {
         validateSize(file, 20);
       } else if (t === 'application/pdf') {
@@ -98,7 +99,7 @@ function uploadDirect(file, folder, onProgress) {
       }
 
       const uploadFolder = folder || 'uploads';
-      const sig = await getSignature(uploadFolder);
+      const sig = await getSignature(uploadFolder, { nonce: `${Date.now()}_${Math.random().toString(36).substring(2,8)}` });
       const endpoint = `https://api.cloudinary.com/v1_1/${sig.cloud_name}/${resourceType(file)}/upload`;
       // Use chunked upload for files > 8MB (free plan limit is 10MB for direct upload)
       const CHUNK_SIZE = 8 * 1024 * 1024; // 8MB chunks

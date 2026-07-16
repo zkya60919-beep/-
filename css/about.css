@@ -1,5 +1,10 @@
 /* About Page Styles */
 
+html, body {
+    overflow-x: hidden;
+    width: 100%;
+}
+
 .page-header {
     background: var(--gradient-hero);
     padding: 100px 0;
@@ -435,11 +440,73 @@
     .page-header {
         padding: 70px 0;
     }
+
+    .logo-text {
+        font-size: 20px;
+    }
+
+    .nav-link {
+        font-size: 12px;
+        padding: 4px 0;
+    }
+
+    .nav-auth-btn .btn {
+        padding: 5px 10px;
+        font-size: 11px;
+    }
+
+    .mobile-menu-btn {
+        display: flex;
+    }
+
+    .nav-list:not(.active) {
+        display: none;
+    }
+
+    .nav-list {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 280px;
+        height: 100vh;
+        background: var(--white);
+        flex-direction: column;
+        padding: 90px 20px 24px;
+        box-shadow: var(--shadow-2xl);
+        gap: 4px;
+        z-index: 999;
+        transition: right 0.3s ease;
+        overflow-y: auto;
+    }
+
+    .nav-list.active {
+        right: 0;
+        display: flex;
+    }
+
+    .nav-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 998;
+    }
+
+    .nav-overlay.active {
+        display: block;
+    }
 }
 
 @media (max-width: 768px) {
     .page-header {
         padding: 50px 0;
+    }
+
+    .logo-text {
+        font-size: 18px;
     }
 
     .page-title {
@@ -548,6 +615,10 @@
         font-size: 14px;
     }
 
+    .logo-text {
+        font-size: 16px;
+    }
+
     .teacher-section,
     .designer-section,
     .platform-section {
@@ -645,6 +716,9 @@
     .page-header { padding: 24px 0; }
     .page-title { font-size: 18px; }
     .page-subtitle { font-size: 13px; }
+    .logo-text { font-size: 14px; }
+    .nav-link { font-size: 11px; }
+    .nav-auth-btn .btn { padding: 3px 6px; font-size: 10px; }
     .teacher-section,
     .designer-section,
     .platform-section { padding: 36px 0; }

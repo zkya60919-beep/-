@@ -55,33 +55,13 @@ async function loadVideo() {
         document.getElementById('videoGrade').textContent = grade ? grade.name : '-';
         document.getElementById('videoMonth').textContent = month ? month.name : '-';
         
-        // Render video player (with signed URL if possible)
+        // Render video player
         const videoWrapper = document.getElementById('videoWrapper');
         let playUrl = video.hls_url || video.playback_url || video.video_url;
 
         if (!playUrl) {
             videoWrapper.innerHTML = `<div style="text-align:center;padding:60px 20px;background:#fff;border-radius:12px;margin:20px 0"><p style="font-size:48px;margin-bottom:16px">🎬</p><p style="font-size:18px;font-weight:700;color:#333;margin-bottom:8px">هذا الفيديو لا يحتوي على رابط تشغيل</p><p style="font-size:14px;color:#888">يرجى التواصل مع المدرس لتوفير رابط الفيديو</p></div>`;
             return;
-        }
-        console.log('Video URL:', playUrl);
-        
-        // Try to get a signed URL for protected videos
-        if (hasAccess && !video.is_free) {
-            try {
-                const signedRes = await fetch(`${CONFIG.SUPABASE.URL}/functions/v1/signed-url`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', apikey: CONFIG.SUPABASE.ANON_KEY, Authorization: `Bearer ${CONFIG.SUPABASE.ANON_KEY}` },
-                    body: JSON.stringify({ video_id: parseInt(videoId), user_id: currentUser.id })
-                });
-                if (signedRes.ok) {
-                    const signedData = await signedRes.json();
-                    if (signedData.success && signedData.signed_url) {
-                        playUrl = signedData.signed_url;
-                    }
-                }
-            } catch (e) {
-                console.warn('Signed URL fetch failed, using original URL:', e);
-            }
         }
         
         const sourceType = getVideoSourceType(playUrl);
@@ -100,7 +80,36 @@ async function loadVideo() {
                 try { initPremiumPlayer(video.id); } catch (e) { console.error('initPremiumPlayer error:', e); }
             }
         } else {
-            videoWrapper.innerHTML = `<video controls style="width:100%;max-height:70vh;border-radius:12px;background:#000" src="${playUrl}"></video>`;
+            videoWrapper.innerHTML = `
+                <div class="course-video-container">
+                    <video id="courseVideo" class="course-video-element premium-video" playsinline controls disablePictureInPicture controlsList="nodownload noremoteplayback" oncontextmenu="return false;">
+                        <source src="${playUrl}">
+                    </video>
+                    <div class="premium-watermark" id="courseWatermark">حقوق الطبع محفوظة لمنصة الباسط التعليمية</div>
+                    <div class="player-spinner" id="courseSpinner">
+                        <div class="spinner-ring"></div>
+                    </div>
+                    <div class="center-play-btn" id="courseCenterPlayBtn">▶</div>
+                    <div class="course-progress-bar-container">
+                        <div class="course-progress-fill"></div>
+                    </div>
+                    <button class="course-fullscreen-btn">📺</button>
+                </div>
+            `;
+            const cv = document.getElementById('courseVideo');
+            const cs = document.getElementById('courseSpinner');
+            let triedProxy = false;
+            cv.addEventListener('error', () => {
+                if (!triedProxy && playUrl.includes('res.cloudinary.com')) {
+                    triedProxy = true;
+                    cv.src = CONFIG.SUPABASE.URL + '/functions/v1/file-proxy?url=' + encodeURIComponent(playUrl);
+                    cv.load();
+                } else {
+                    if (cs) cs.style.display = 'none';
+                    showPlayerError('تعذر تحميل الفيديو. قد يكون الرابط غير صالح أو أن الفيديو محذوف.');
+                }
+            });
+            cv.addEventListener('loadedmetadata', () => { if (cs) cs.style.display = 'none'; });
         }
         
     } catch (error) {
