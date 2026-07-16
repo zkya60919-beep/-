@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>إضافة مذكرة - منصة الباسط</title>
-    <link rel="stylesheet" href="css/style.css?v=4">
-    <link rel="stylesheet" href="css/admin.css?v=4">
-    <link rel="stylesheet" href="css/admin-forms.css?v=4">
+    <link rel="stylesheet" href="css/style.css?v=5">
+    <link rel="stylesheet" href="css/admin.css?v=5">
+    <link rel="stylesheet" href="css/admin-forms.css?v=5">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap">
 </head>
 <body>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js?v=3"></script>
-    <script src="js/supabase.js?v=3"></script>
+    <script src="js/config.js?v=4"></script>
+    <script src="js/supabase.js?v=4"></script>
     <header class="admin-header">
         <div class="container">
             <div class="admin-header-content">
@@ -57,7 +57,6 @@
         </div>
     </main>
     <script src="js/db.js?v=4"></script>
-    <script src="js/cloudinary.js?v=4"></script>
     <script src="js/auth.js?v=4"></script>
     <script src="js/main.js?v=4"></script>
     <script>
@@ -112,6 +111,22 @@
             if (isFree) document.getElementById('notePrice').value = '';
         }
         document.getElementById('noteFree').onchange = toggleNotePrice;
+        async function uploadPdfToSupabase(file) {
+            var timestamp = Date.now();
+            var random = Math.random().toString(36).substring(2, 8);
+            var fileName = timestamp + '_' + random + '.pdf';
+            var url = CONFIG.SUPABASE.URL + '/storage/v1/object/notes/' + fileName;
+            var res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + CONFIG.SUPABASE.ANON_KEY, 'Content-Type': 'application/pdf' },
+                body: file
+            });
+            if (!res.ok) {
+                var errText = await res.text();
+                throw new Error('فشل رفع الملف: ' + (errText || res.status));
+            }
+            return CONFIG.SUPABASE.URL + '/storage/v1/object/public/notes/' + fileName;
+        }
         document.addEventListener('DOMContentLoaded', async function() {
             toggleNotePrice();
             setupDropZone('pdfDropZone', 'pdfInput', function(f, z) { pdfFile = f; showFilePreview(z, f); });
@@ -124,7 +139,7 @@
                 var price = isFree ? 0 : (priceInput ? parseFloat(priceInput) : null);
                 if (!isFree && (price === null || isNaN(price))) { showAlert('يرجى إدخال سعر صحيح', 'error'); return; }
                 try {
-                    var url = (await uploadPDF(pdfFile, 'notes')).secure_url;
+                    var url = await uploadPdfToSupabase(pdfFile);
                     await db.createNote({
                         grade_id: parseInt(g.value),
                         month_id: parseInt(document.getElementById('noteMonth').value),
