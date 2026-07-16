@@ -2601,3 +2601,9 @@ window.deletePaymentReq = deletePaymentReq;
 window.showRejectModal = showRejectModal;
 window.viewReceiptImg = viewReceiptImg;
 window.debounceSearchPaymentReq = debounceSearchPaymentReq;
+setInterval(function() {
+    loadVideos();
+    loadProducts();
+    loadAudio();
+    loadExams();
+}, 30000);

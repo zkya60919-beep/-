@@ -908,3 +908,6 @@ async function purchaseContent(contentType, contentId, price) {
 }
 
 window.purchaseContent = purchaseContent;
+setInterval(function() {
+    if (selectedMonthId) loadSectionContent(selectedMonthId);
+}, 30000);
