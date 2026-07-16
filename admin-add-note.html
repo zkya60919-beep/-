@@ -61,6 +61,7 @@
     <script src="js/auth.js?v=4"></script>
     <script src="js/main.js?v=4"></script>
     <script>
+        var noteGradeSelect = document.getElementById('noteGrade');
         (async function() {
             var g = noteGradeSelect;
             try {
@@ -104,7 +105,6 @@
             zone.classList.add('has-file');
         }
         var pdfFile = null;
-        var noteGradeSelect = document.getElementById('noteGrade');
         function toggleNotePrice() {
             var isFree = document.getElementById('noteFree').checked;
             var group = document.getElementById('notePriceGroup');
