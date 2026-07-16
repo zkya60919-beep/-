@@ -352,8 +352,12 @@ async function loadVideos(monthId) {
 
 function openNoteUrl(url) {
     if (!url) { showAlert('رابط الملف غير متاح', 'error'); return; }
-    var finalUrl = url.replace('/raw/upload/', '/image/upload/');
-    window.open(finalUrl, '_blank');
+    if (url.indexOf('res.cloudinary.com') !== -1) {
+        var proxyUrl = CONFIG.SUPABASE.URL + '/functions/v1/file-proxy?url=' + encodeURIComponent(url);
+        window.open(proxyUrl, '_blank');
+    } else {
+        window.open(url, '_blank');
+    }
 }
 
 async function loadNotes(monthId) {

@@ -46,31 +46,48 @@ function getCreds() {
   };
 }
 
-async function trySigQuerySignedUrl(info: { publicId: string; resourceType: string; extension: string }): Promise<Response | null> {
-  const { cloudName, apiSecret } = getCreds();
-  if (!cloudName || !apiSecret) return null;
-
-  const rawId = info.publicId;
-  const sig = await sha1Hex(rawId + '?' + apiSecret);
-  const url = `https://res.cloudinary.com/${cloudName}/${info.resourceType}/upload/${rawId}.${info.extension}?sig=${sig}`;
-  const r = await fetch(url, { method: 'GET' });
-  return (r.ok || r.status === 206) ? r : null;
+function toUrlSafeBase64(bytes: Uint8Array): string {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '').substring(0, 8);
 }
 
-async function trySignedPathUrl(info: { publicId: string; resourceType: string; pathAfterUpload: string }): Promise<Response | null> {
+async function trySignedDelivery(info: { publicId: string; resourceType: string; version: string; extension: string }): Promise<Response | null> {
   const { cloudName, apiSecret } = getCreds();
   if (!cloudName || !apiSecret) return null;
 
-  const { pathAfterUpload } = info;
-  const toSign = pathAfterUpload + apiSecret;
-  const bytes = new TextEncoder().encode(toSign);
-  const digest = await crypto.subtle.digest('SHA-1', bytes);
-  const arr = Array.from(new Uint8Array(digest));
-  const binary = arr.map(b => String.fromCharCode(b)).join('');
-  const sig = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '').substring(0, 8);
-  const signedUrl = `https://res.cloudinary.com/${cloudName}/${info.resourceType}/upload/s--${sig}--/${pathAfterUpload}`;
-  const r = await fetch(signedUrl, { method: 'GET' });
-  return (r.ok || r.status === 206) ? r : null;
+  const { publicId, resourceType, version, extension } = info;
+  const versionStr = version ? `?version=${version}` : '';
+
+  // Approach 1: s-- prefix signed URL (Cloudinary standard format)
+  const signStr1 = publicId + apiSecret;
+  const digest1 = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(signStr1));
+  const sig1 = toUrlSafeBase64(new Uint8Array(digest1));
+  const url1 = `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/s--${sig1}--/${version ? version + '/' : ''}${publicId}.${extension}`;
+  const r1 = await fetch(url1, { method: 'GET' });
+  if (r1.ok || r1.status === 206) return r1;
+
+  // Approach 2: s-- prefix with version
+  const signStr2 = publicId + versionStr + apiSecret;
+  const digest2 = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(signStr2));
+  const sig2 = toUrlSafeBase64(new Uint8Array(digest2));
+  const url2 = `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/s--${sig2}--/${version ? version + '/' : ''}${publicId}.${extension}`;
+  const r2 = await fetch(url2, { method: 'GET' });
+  if (r2.ok || r2.status === 206) return r2;
+
+  // Approach 3: Query param signature without version
+  const sig3 = await sha1Hex(publicId + apiSecret);
+  const url3 = `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/${version ? version + '/' : ''}${publicId}.${extension}?sig=${sig3}`;
+  const r3 = await fetch(url3, { method: 'GET' });
+  if (r3.ok || r3.status === 206) return r3;
+
+  // Approach 4: Query param signature with version
+  const sig4 = await sha1Hex(publicId + versionStr + apiSecret);
+  const url4 = `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/${version ? version + '/' : ''}${publicId}.${extension}?sig=${sig4}`;
+  const r4 = await fetch(url4, { method: 'GET' });
+  if (r4.ok || r4.status === 206) return r4;
+
+  return null;
 }
 
 async function tryUploadApiDownload(publicId: string, resourceType: string): Promise<Response | null> {
@@ -118,16 +135,11 @@ Deno.serve(async (req) => {
     if (!response.ok && (response.status === 401 || response.status === 403) && isCloudinaryUrl(fileUrl)) {
       const info = extractCloudinaryInfo(fileUrl);
       if (info) {
-        let dl = await trySigQuerySignedUrl(info);
-        if (dl) { response = dl; }
-        else {
-          dl = await trySignedPathUrl(info);
-          if (dl) { response = dl; }
-          else {
-            dl = await tryUploadApiDownload(info.publicId, info.resourceType);
-            if (dl) { response = dl; }
-          }
+        let dl = await trySignedDelivery(info);
+        if (!dl) {
+          dl = await tryUploadApiDownload(info.publicId, info.resourceType);
         }
+        if (dl) response = dl;
       }
     }
 
