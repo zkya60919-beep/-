@@ -379,7 +379,7 @@
 /* ===== Content Grids ===== */
 .content-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
     gap: 24px;
 }
 
@@ -754,6 +754,15 @@
     .subscription-months-panel { padding: 20px 16px; }
     .subscriptions-grid { grid-template-columns: 1fr 1fr; }
 
+    .note-card, .audio-card, .exam-card { padding: 16px; gap: 12px; }
+    .note-icon, .audio-icon, .exam-icon { font-size: 28px; }
+    .video-title, .note-title, .audio-title, .exam-title { font-size: 14px; margin-bottom: 8px; }
+    .content-desc { font-size: 12px; margin-bottom: 8px; }
+    .exam-meta { flex-wrap: wrap; gap: 8px; }
+    .exam-meta .badge { margin-bottom: 0; }
+    .exam-meta .btn { flex: 1; min-width: 0; text-align: center; }
+    .exam-score { font-size: 12px; }
+
     .code-cta { flex-direction: column; align-items: flex-start; }
 }
 
@@ -766,6 +775,15 @@
 
     .content-grid { grid-template-columns: 1fr; }
     .subscriptions-grid { grid-template-columns: 1fr; }
+
+    .note-card, .audio-card, .exam-card { padding: 14px; gap: 10px; }
+    .note-icon, .audio-icon, .exam-icon { font-size: 24px; }
+    .video-title, .note-title, .audio-title, .exam-title { font-size: 13px; margin-bottom: 6px; }
+    .content-desc { font-size: 11px; }
+    .exam-meta { flex-direction: column; align-items: stretch; gap: 6px; }
+    .exam-meta .badge { align-self: flex-start; }
+    .exam-meta .btn { width: 100%; text-align: center; }
+    .video-meta, .note-meta, .audio-meta, .exam-meta { font-size: 11px; }
 
     .settings-grid { grid-template-columns: 1fr; }
     .settings-card { padding: 20px 16px; }
