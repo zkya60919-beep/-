@@ -201,7 +201,6 @@
                         <video id="courseVideo" class="course-video-element" playsinline disablePictureInPicture controlsList="nodownload noremoteplayback" oncontextmenu="return false;">
                             <source src="">
                         </video>
-                        <div class="premium-watermark" id="courseWatermark">حقوق الطبع محفوظة لمنصة الباسط التعليمية</div>
                         <div class="player-spinner" id="courseSpinner"><div class="spinner-ring"></div></div>
                         <div class="center-play-btn" id="courseCenterPlayBtn">▶</div>
                         <div class="player-controls" id="courseControls">
@@ -231,16 +230,18 @@
                                         <input type="range" class="volume-slider" id="cpVolSlider" min="0" max="1" step="0.1" value="1">
                                     </div>
                                     <div class="time-divider"></div>
-                                    <button class="control-btn btn-speed" id="cpSpeedBtn" aria-label="السرعة">
-                                        <span id="cpSpeedLabel">1x</span>
-                                    </button>
-                                    <div class="speed-menu" id="cpSpeedMenu">
-                                        <button class="speed-option" data-rate="0.5">0.5x</button>
-                                        <button class="speed-option" data-rate="0.75">0.75x</button>
-                                        <button class="speed-option active" data-rate="1">1x</button>
-                                        <button class="speed-option" data-rate="1.25">1.25x</button>
-                                        <button class="speed-option" data-rate="1.5">1.5x</button>
-                                        <button class="speed-option" data-rate="2">2x</button>
+                                    <div class="speed-control-wrapper">
+                                        <button class="control-btn btn-speed" id="cpSpeedBtn" aria-label="السرعة">
+                                            <span id="cpSpeedLabel">1x</span>
+                                        </button>
+                                        <div class="speed-popup" id="cpSpeedMenu">
+                                            <button class="speed-option" data-rate="0.5">0.5x</button>
+                                            <button class="speed-option" data-rate="0.75">0.75x</button>
+                                            <button class="speed-option active" data-rate="1">1x</button>
+                                            <button class="speed-option" data-rate="1.25">1.25x</button>
+                                            <button class="speed-option" data-rate="1.5">1.5x</button>
+                                            <button class="speed-option" data-rate="2">2x</button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="controls-right">
@@ -263,7 +264,6 @@
             const video = document.getElementById('courseVideo');
             const spinner = document.getElementById('courseSpinner');
             const centerPlay = document.getElementById('courseCenterPlayBtn');
-            const watermark = document.getElementById('courseWatermark');
             const playBtn = document.getElementById('cpPlayBtn');
             const volumeBtn = document.getElementById('cpVolumeBtn');
             const volWrap = document.getElementById('cpVolWrap');
@@ -297,22 +297,6 @@
 
             video.querySelector('source').src = playUrl;
             video.load();
-
-            if (currentUser && watermark) {
-                watermark.textContent = `${currentUser.name} | ${currentUser.phone}`;
-                let wmTimer;
-                function moveWm() {
-                    const c = document.getElementById('cpVideoContainer');
-                    if (!c) return;
-                    const r = c.getBoundingClientRect();
-                    watermark.style.top = Math.max(10, Math.random() * (r.height - 60)) + 'px';
-                    watermark.style.left = Math.max(10, Math.random() * (r.width - 220)) + 'px';
-                }
-                setTimeout(moveWm, 800);
-                wmTimer = setInterval(moveWm, 5000);
-                video.addEventListener('pause', () => clearInterval(wmTimer));
-                video.addEventListener('play', () => { wmTimer = setInterval(moveWm, 5000); });
-            }
 
             function fmt(s) { if (!isFinite(s) || s < 0) return '0:00'; const m = Math.floor(s / 60); return m + ':' + Math.floor(s % 60).toString().padStart(2, '0'); }
 
@@ -378,19 +362,26 @@
                 volumeBtn.querySelector('.icon-vol-mute').style.display = (video.muted || video.volume === 0) ? 'block' : 'none';
             });
 
-            speedBtn.addEventListener('click', (e) => { e.stopPropagation(); speedMenu.classList.toggle('show'); });
+            let speedPopupOpen = false;
+            function closeSpeedPopup() { speedMenu.classList.remove('show'); speedPopupOpen = false; }
+            speedBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (speedPopupOpen) { closeSpeedPopup(); }
+                else { speedMenu.classList.add('show'); speedPopupOpen = true; }
+            });
             speedMenu.querySelectorAll('.speed-option').forEach(opt => {
-                opt.addEventListener('click', () => {
+                opt.addEventListener('click', (e) => {
+                    e.stopPropagation();
                     speedMenu.querySelectorAll('.speed-option').forEach(o => o.classList.remove('active'));
                     opt.classList.add('active');
                     video.playbackRate = parseFloat(opt.dataset.rate);
                     speedLabel.textContent = video.playbackRate + 'x';
-                    speedMenu.classList.remove('show');
+                    closeSpeedPopup();
                 });
             });
 
             document.addEventListener('click', (e) => {
-                if (!speedMenu.contains(e.target) && e.target !== speedBtn) speedMenu.classList.remove('show');
+                closeSpeedPopup();
                 if (!volWrap.contains(e.target) && e.target !== volumeBtn) volWrap.style.display = 'none';
             });
 
@@ -404,6 +395,7 @@
                 }
             });
             document.addEventListener('fullscreenchange', () => {
+                closeSpeedPopup();
                 const isFull = !!document.fullscreenElement;
                 fsBtn.querySelector('.icon-fs-enter').style.display = isFull ? 'none' : 'block';
                 fsBtn.querySelector('.icon-fs-exit').style.display = isFull ? 'block' : 'none';
@@ -427,6 +419,7 @@
                 if (e.code === 'ArrowDown') { e.preventDefault(); video.volume = Math.max(video.volume - 0.1, 0); volSlider.value = video.volume; }
                 if (e.key === 'f' || e.key === 'F') { e.preventDefault(); fsBtn.click(); }
                 if (e.key === 'm' || e.key === 'M') { e.preventDefault(); video.muted = !video.muted; }
+                if (e.key === 'Escape') { closeSpeedPopup(); }
             });
 
             document.addEventListener('visibilitychange', () => { if (document.hidden && !video.paused) video.pause(); });
