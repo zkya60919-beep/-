@@ -245,6 +245,7 @@
     .exam-section .container {
         padding: 0 16px;
         max-width: 100%;
+        width: 100%;
     }
 
     .page-back-bar {
@@ -349,8 +350,9 @@
     }
 
     .exam-section .container {
-        padding: 0 10px;
+        padding: 0 8px;
         max-width: 100%;
+        width: 100%;
     }
 
     .page-back-bar {
@@ -452,7 +454,9 @@
 /* ===== Small Mobile ===== */
 @media (max-width: 360px) {
     .exam-section .container {
-        padding: 0 6px;
+        padding: 0 4px;
+        max-width: 100%;
+        width: 100%;
     }
 
     .exam-header {
