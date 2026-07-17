@@ -2453,12 +2453,58 @@ async function approvePaymentReq(id) {
                     month_id: parseInt(request.month_id),
                     start_date: startDate.toISOString(),
                     end_date: endDate.toISOString(),
+                    amount: request.amount || 0,
                     status: 'active'
                 });
                 console.log('Subscription created:', sub);
             } catch (e) {
                 console.error('Subscription insert error:', e);
                 errors.push('الاشتراك الشهري: ' + e.message);
+            }
+        } else if (request.term) {
+            try {
+                const { data: student } = await supabase.from('users').select('grade_id').eq('id', request.student_id).single();
+                const studentId = request.student_id;
+                const gradeId = student ? student.grade_id : null;
+
+                let monthsToActivate = [];
+                if (gradeId) {
+                    const allMonths = await db.getMonths(gradeId);
+                    if (request.term === 1) {
+                        monthsToActivate = allMonths.filter(m => m.order >= 1 && m.order <= 4);
+                    } else if (request.term === 2) {
+                        monthsToActivate = allMonths.filter(m => m.order >= 5 && m.order <= 8);
+                    }
+                }
+
+                if (monthsToActivate.length === 0) {
+                    monthsToActivate = await db.getMonths(gradeId);
+                    if (request.term === 1) {
+                        monthsToActivate = monthsToActivate.slice(0, 4);
+                    } else if (request.term === 2) {
+                        monthsToActivate = monthsToActivate.slice(4, 8);
+                    }
+                }
+
+                for (const m of monthsToActivate) {
+                    try {
+                        await db.createSubscription({
+                            user_id: studentId,
+                            month_id: m.id,
+                            start_date: startDate.toISOString(),
+                            end_date: endDate.toISOString(),
+                            amount: (request.amount || 0) / monthsToActivate.length,
+                            status: 'active'
+                        });
+                    } catch (subErr) {
+                        console.error('Term sub insert error for month ' + m.id + ':', subErr);
+                        errors.push('اشتراك الشهر ' + m.name + ': ' + subErr.message);
+                    }
+                }
+                console.log('Term ' + request.term + ' subscriptions created for ' + monthsToActivate.length + ' months');
+            } catch (e) {
+                console.error('Term subscription error:', e);
+                errors.push('الاشتراك الفصلي: ' + e.message);
             }
         }
 
