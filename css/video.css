@@ -165,34 +165,6 @@ html, body {
     cursor: pointer;
 }
 
-/* Moving Security Watermark */
-.premium-watermark {
-    position: absolute;
-    font-size: 14px;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.28);
-    background: rgba(0, 0, 0, 0.35);
-    padding: 8px 16px;
-    border-radius: 8px;
-    z-index: 10;
-    pointer-events: none; /* Allows clicking video through it */
-    user-select: none;
-    direction: rtl;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(2px);
-    transition: top 1.5s cubic-bezier(0.25, 1, 0.5, 1), left 1.5s cubic-bezier(0.25, 1, 0.5, 1);
-}
-
-.premium-watermark-2 {
-    opacity: 0.22;
-    font-size: 13px;
-}
-
-.premium-watermark-3 {
-    opacity: 0.18;
-    font-size: 12px;
-}
-
 /* Loader Ring Spinner */
 .player-spinner {
     position: absolute;
@@ -214,37 +186,6 @@ html, body {
 
 @keyframes rotate-spin {
     to { transform: rotate(360deg); }
-}
-
-/* Big Center Play Button */
-.center-play-btn {
-    position: absolute;
-    width: 80px;
-    height: 80px;
-    background: rgba(99, 102, 241, 0.85);
-    backdrop-filter: blur(4px);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 30px;
-    cursor: pointer;
-    z-index: 11;
-    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
-    transition: all 0.3s ease;
-    user-select: none;
-}
-
-.center-play-btn:hover {
-    transform: scale(1.1);
-    background: #6366f1;
-}
-
-.center-play-btn.hide {
-    opacity: 0;
-    transform: scale(0.8);
-    pointer-events: none;
 }
 
 /* Custom Controls Bottom Sheet */
@@ -709,17 +650,6 @@ html, body {
     .progress-container:hover {
         height: 8px;
     }
-    
-    .center-play-btn {
-        width: 56px;
-        height: 56px;
-        font-size: 22px;
-    }
-
-    .premium-watermark {
-        font-size: 12px;
-        padding: 6px 12px;
-    }
 
     .watch-resume-toast {
         top: 15px;
@@ -799,17 +729,6 @@ html, body {
         font-size: 10px;
     }
 
-    .center-play-btn {
-        width: 48px;
-        height: 48px;
-        font-size: 20px;
-    }
-
-    .premium-watermark {
-        font-size: 10px;
-        padding: 4px 8px;
-    }
-
     .watch-resume-toast {
         top: 10px;
         right: 10px;
@@ -846,7 +765,6 @@ html, body {
     .related-video-card { padding: 12px; }
     .related-video-title { font-size: 13px; }
     .control-btn { font-size: 12px; padding: 2px; }
-    .center-play-btn { width: 40px; height: 40px; font-size: 16px; }
     .watch-resume-toast { padding: 8px 12px; }
     .resume-toast-text { font-size: 11px; }
     .toast-btns button { font-size: 11px; padding: 4px 8px; }

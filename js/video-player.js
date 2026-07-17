@@ -26,7 +26,6 @@ class ProfessionalVideoPlayer {
         this.currentQuality = 'auto';
         this.isFullscreen = false;
         this.volume = 1;
-        this.watermarkInterval = null;
 
         this.init();
     }
@@ -35,51 +34,6 @@ class ProfessionalVideoPlayer {
         this.createPlayer();
         this.setupEventListeners();
         this.loadSavedState();
-        this.setupWatermark();
-    }
-
-    setupWatermark() {
-        const wrapper = this.container.querySelector('.premium-video-player');
-        const watermark = document.createElement('div');
-        watermark.className = 'video-watermark';
-        watermark.style.cssText = 'position: absolute; color: rgba(255, 255, 255, 0.4); font-size: 14px; pointer-events: none; z-index: 100; font-family: monospace; white-space: nowrap; transition: all 1s linear; user-select: none; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);';
-        wrapper.appendChild(watermark);
-        this.watermarkElement = watermark;
-        this.updateWatermarkText();
-        
-        // Move watermark every 5 seconds
-        this.watermarkInterval = setInterval(() => {
-            this.updateWatermarkText();
-            this.moveWatermark();
-        }, 5000);
-    }
-
-    updateWatermarkText() {
-        const userStr = localStorage.getItem('user');
-        let userName = 'Student';
-        let userPhone = '';
-        if (userStr) {
-            try {
-                const user = JSON.parse(userStr);
-                userName = user.name || userName;
-                userPhone = user.phone || '';
-            } catch (e) {}
-        }
-        const now = new Date();
-        const dateStr = now.toLocaleDateString('en-GB');
-        const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
-        this.watermarkElement.textContent = `${userName} - ${userPhone} - ${dateStr} ${timeStr}`;
-    }
-
-    moveWatermark() {
-        if (!this.watermarkElement || !this.elements.wrapper) return;
-        const wrapperRect = this.elements.wrapper.getBoundingClientRect();
-        const maxX = Math.max(10, wrapperRect.width - 250);
-        const maxY = Math.max(10, wrapperRect.height - 50);
-        const randomX = Math.floor(Math.random() * maxX);
-        const randomY = Math.floor(Math.random() * maxY);
-        this.watermarkElement.style.left = `${randomX}px`;
-        this.watermarkElement.style.top = `${randomY}px`;
     }
 
     createPlayer() {
@@ -93,17 +47,8 @@ class ProfessionalVideoPlayer {
         wrapper.innerHTML = `
             <div class="player-container">
                 <video class="video-element" playsinline disablePictureInPicture controlsList="nodownload noplaybackrate"></video>
-                <div class="player-overlay">
-                    <div class="play-button-overlay">
-                        <button class="btn-play-large" aria-label="تشغيل">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M8 5v14l11-7z"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="loading-spinner" style="display: none;">
-                        <div class="spinner"></div>
-                    </div>
+                <div class="loading-spinner" style="display: none;">
+                    <div class="spinner"></div>
                 </div>
                 <div class="player-controls">
                     <div class="progress-bar-container">
@@ -188,7 +133,6 @@ class ProfessionalVideoPlayer {
         this.elements = {
             wrapper,
             video: wrapper.querySelector('.video-element'),
-            playButtonOverlay: wrapper.querySelector('.btn-play-large'),
             loadingSpinner: wrapper.querySelector('.loading-spinner'),
             playBtn: wrapper.querySelector('.btn-play'),
             volumeBtn: wrapper.querySelector('.btn-volume'),
@@ -217,7 +161,7 @@ class ProfessionalVideoPlayer {
     }
 
     setupEventListeners() {
-        const { video, playButtonOverlay, playBtn, volumeBtn, volumeSlider, speedBtn, qualityBtn, fullscreenBtn, progressBar } = this.elements;
+        const { video, playBtn, volumeBtn, volumeSlider, speedBtn, qualityBtn, fullscreenBtn, progressBar } = this.elements;
 
         // Video events
         video.addEventListener('play', () => this.onPlay());
@@ -231,7 +175,6 @@ class ProfessionalVideoPlayer {
         video.addEventListener('error', (e) => this.onError(e));
 
         // Control buttons
-        playButtonOverlay.addEventListener('click', () => this.togglePlay());
         playBtn.addEventListener('click', () => this.togglePlay());
         volumeBtn.addEventListener('click', () => this.toggleVolumeMenu());
         volumeSlider.addEventListener('input', (e) => this.setVolume(parseFloat(e.target.value)));
@@ -383,7 +326,6 @@ class ProfessionalVideoPlayer {
 
     onPlay() {
         this.isPlaying = true;
-        this.elements.playButtonOverlay.style.display = 'none';
         this.elements.iconPlay.style.display = 'none';
         this.elements.iconPause.style.display = 'block';
 
@@ -396,7 +338,6 @@ class ProfessionalVideoPlayer {
 
     onPause() {
         this.isPlaying = false;
-        this.elements.playButtonOverlay.style.display = 'flex';
         this.elements.iconPlay.style.display = 'block';
         this.elements.iconPause.style.display = 'none';
         this.saveState();
@@ -598,9 +539,6 @@ class ProfessionalVideoPlayer {
     }
 
     destroy() {
-        if (this.watermarkInterval) {
-            clearInterval(this.watermarkInterval);
-        }
         if (this.hlsInstance) {
             this.hlsInstance.destroy();
         }

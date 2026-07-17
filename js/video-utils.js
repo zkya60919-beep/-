@@ -85,19 +85,11 @@ function buildVideoPlayerHtml(url, options = {}) {
     return `
         <div class="premium-player-container" id="premiumPlayer" data-url="${url}"${options.originalUrl ? ` data-original-url="${options.originalUrl}"` : ''}>
             <video id="premiumVideo" class="premium-video" playsinline preload="metadata" oncontextmenu="return false;" disablePictureInPicture controlsList="nodownload noremoteplayback" src="${url}">
-            
-            <!-- Dynamic Security Watermarks (multiple to prevent cropping) -->
-            <div class="premium-watermark" id="playerWatermark">حقوق الطبع محفوظة لمنصة الباسط التعليمية</div>
-            <div class="premium-watermark premium-watermark-2" id="playerWatermark2">حقوق الطبع محفوظة لمنصة الباسط التعليمية</div>
-            <div class="premium-watermark premium-watermark-3" id="playerWatermark3">حقوق الطبع محفوظة لمنصة الباسط التعليمية</div>
 
             <!-- Loader Spinner -->
             <div class="player-spinner" id="playerSpinner">
                 <div class="spinner-ring"></div>
             </div>
-
-            <!-- Big Center Play Button Overlay -->
-            <div class="center-play-btn" id="centerPlayBtn">▶</div>
 
             <!-- Watch Resume toast inside player -->
             <div class="watch-resume-toast" id="watchResumeToast">

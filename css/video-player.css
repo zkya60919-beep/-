@@ -28,58 +28,6 @@
     display: block;
 }
 
-/* Overlay */
-.player-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.3);
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-}
-
-.player-container:hover .player-overlay {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.play-button-overlay {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-play-large {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.9);
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    padding: 0;
-}
-
-.btn-play-large:hover {
-    transform: scale(1.1);
-    background: #fff;
-}
-
-.btn-play-large svg {
-    width: 40px;
-    height: 40px;
-    fill: #000;
-    margin-right: -4px;
-}
-
 /* Loading Spinner */
 .loading-spinner {
     position: absolute;

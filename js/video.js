@@ -1,4 +1,4 @@
-// Premium Video Player Controller with HLS, Security Watermark, and Resume Watch capabilities
+// Premium Video Player Controller with HLS and Resume Watch capabilities
 
 document.addEventListener('DOMContentLoaded', async () => {
     await checkAuth();
@@ -85,11 +85,9 @@ async function loadVideo() {
                     <video id="courseVideo" class="course-video-element premium-video" style="width:100%;height:100%;object-fit:contain;background:#000;" playsinline controls disablePictureInPicture controlsList="nodownload noremoteplayback" oncontextmenu="return false;">
                         <source src="${playUrl}">
                     </video>
-                    <div class="premium-watermark" id="courseWatermark">حقوق الطبع محفوظة لمنصة الباسط التعليمية</div>
                     <div class="player-spinner" id="courseSpinner">
                         <div class="spinner-ring"></div>
                     </div>
-                    <div class="center-play-btn" id="courseCenterPlayBtn">▶</div>
                     <div class="course-progress-bar-container">
                         <div class="course-progress-fill"></div>
                     </div>
@@ -181,9 +179,7 @@ function initPremiumPlayer(videoId) {
     const playerContainer = document.getElementById('premiumPlayer');
     const video = document.getElementById('premiumVideo');
     const playPauseBtn = document.getElementById('playPauseBtn');
-    const centerPlayBtn = document.getElementById('centerPlayBtn');
     const spinner = document.getElementById('playerSpinner');
-    const watermark = document.getElementById('playerWatermark');
 
     // Controls panels
     const customControls = document.getElementById('customControls');
@@ -287,55 +283,7 @@ function initPremiumPlayer(videoId) {
         showPlayerError('حدث خطأ أثناء تحميل الفيديو. تأكد من اتصالك بالإنترنت أو أن رابط الفيديو صحيح.');
     });
 
-    /* --- 2. Security Watermark Implementation --- */
-    if (currentUser) {
-        const textContent = `مُسجل للطالب: ${currentUser.name} (${currentUser.phone})`;
-        watermark.textContent = textContent;
-        
-        const watermark2 = document.getElementById('playerWatermark2');
-        const watermark3 = document.getElementById('playerWatermark3');
-        if (watermark2) watermark2.textContent = textContent;
-        if (watermark3) watermark3.textContent = textContent;
-        
-        // Dynamic floating mechanism: shifts position every 6 seconds randomly
-        function moveWatermark() {
-            const containerWidth = playerContainer.offsetWidth;
-            const containerHeight = playerContainer.offsetHeight;
-            const watermarkWidth = watermark.offsetWidth || 250;
-            const watermarkHeight = watermark.offsetHeight || 30;
-
-            const maxTop = containerHeight - watermarkHeight - 60; // Keep space for controls
-            const maxLeft = containerWidth - watermarkWidth - 20;
-
-            const randomTop = Math.max(20, Math.floor(Math.random() * maxTop));
-            const randomLeft = Math.max(20, Math.floor(Math.random() * maxLeft));
-
-            watermark.style.top = `${randomTop}px`;
-            watermark.style.left = `${randomLeft}px`;
-
-            // Second watermark (different position)
-            if (watermark2) {
-                const maxTop2 = containerHeight - (watermark2.offsetHeight || 30) - 60;
-                const maxLeft2 = containerWidth - (watermark2.offsetWidth || 250) - 20;
-                watermark2.style.top = `${Math.max(20, Math.floor(Math.random() * maxTop2))}px`;
-                watermark2.style.left = `${Math.max(20, Math.floor(Math.random() * maxLeft2))}px`;
-            }
-
-            // Third watermark (different position)
-            if (watermark3) {
-                const maxTop3 = containerHeight - (watermark3.offsetHeight || 30) - 60;
-                const maxLeft3 = containerWidth - (watermark3.offsetWidth || 250) - 20;
-                watermark3.style.top = `${Math.max(20, Math.floor(Math.random() * maxTop3))}px`;
-                watermark3.style.left = `${Math.max(20, Math.floor(Math.random() * maxLeft3))}px`;
-            }
-        }
-
-        // Run immediately after rendering
-        setTimeout(moveWatermark, 1000);
-        setInterval(moveWatermark, 6000);
-    }
-
-    /* --- 3. Resume Watching Toast Trigger --- */
+    /* --- 2. Resume Watching Toast Trigger --- */
     const resumeToast = document.getElementById('watchResumeToast');
     const btnResumeYes = document.getElementById('btnResumeYes');
     const btnResumeNo = document.getElementById('btnResumeNo');
@@ -381,18 +329,15 @@ function initPremiumPlayer(videoId) {
         if (video.paused) {
             video.play();
             playPauseBtn.textContent = '⏸';
-            centerPlayBtn.classList.add('hide');
             hideControlsDelayed();
         } else {
             video.pause();
             playPauseBtn.textContent = '▶';
-            centerPlayBtn.classList.remove('hide');
             showControls();
         }
     }
 
     playPauseBtn.addEventListener('click', togglePlay);
-    centerPlayBtn.addEventListener('click', togglePlay);
     video.addEventListener('click', togglePlay);
 
     // Progress updates
@@ -606,7 +551,6 @@ function initPremiumPlayer(videoId) {
         if (document.hidden && !video.paused) {
             video.pause();
             playPauseBtn.textContent = '▶';
-            centerPlayBtn.classList.remove('hide');
             showControls();
         }
     });
