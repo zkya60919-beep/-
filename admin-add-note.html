@@ -35,6 +35,10 @@
                     <label>ملف PDF</label>
                     <div class="drop-zone" id="pdfDropZone"><p>اسحب ملف PDF أو اضغط للاختيار</p></div>
                     <input type="file" id="pdfInput" accept=".pdf,application/pdf" style="display:none">
+                    <div class="upload-progress" id="uploadProgress" style="display:none;">
+                        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                        <p style="font-size:13px;font-weight:700;color:var(--gray-600);margin:0;" id="progressText">جاري الرفع... 0%</p>
+                    </div>
                 </div>
                 <div class="pricing-section">
                     <div class="pricing-header">
@@ -111,21 +115,55 @@
             if (isFree) document.getElementById('notePrice').value = '';
         }
         document.getElementById('noteFree').onchange = toggleNotePrice;
-        async function uploadPdfToSupabase(file) {
-            var timestamp = Date.now();
-            var random = Math.random().toString(36).substring(2, 8);
-            var fileName = timestamp + '_' + random + '.pdf';
-            var url = CONFIG.SUPABASE.URL + '/storage/v1/object/notes/' + fileName;
-            var res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + CONFIG.SUPABASE.ANON_KEY, 'Content-Type': 'application/pdf' },
-                body: file
+        function uploadPdfToSupabase(file) {
+            return new Promise(function(resolve, reject) {
+                var timestamp = Date.now();
+                var random = Math.random().toString(36).substring(2, 8);
+                var fileName = timestamp + '_' + random + '.pdf';
+                var url = CONFIG.SUPABASE.URL + '/storage/v1/object/notes/' + fileName;
+
+                var progressEl = document.getElementById('uploadProgress');
+                var fillEl = document.getElementById('progressFill');
+                var textEl = document.getElementById('progressText');
+                progressEl.style.display = 'block';
+                fillEl.style.width = '0%';
+                textEl.textContent = 'جاري الرفع... 0%';
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', url, true);
+                xhr.setRequestHeader('Authorization', 'Bearer ' + CONFIG.SUPABASE.ANON_KEY);
+                xhr.setRequestHeader('Content-Type', 'application/pdf');
+
+                xhr.upload.onprogress = function(e) {
+                    if (e.lengthComputable) {
+                        var pct = Math.round((e.loaded / e.total) * 100);
+                        fillEl.style.width = pct + '%';
+                        var loadedMB = (e.loaded / (1024 * 1024)).toFixed(1);
+                        var totalMB = (e.total / (1024 * 1024)).toFixed(1);
+                        textEl.textContent = 'جاري الرفع... ' + pct + '% (' + loadedMB + ' / ' + totalMB + ' MB)';
+                    }
+                };
+
+                xhr.onload = function() {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        fillEl.style.width = '100%';
+                        textEl.textContent = 'تم الرفع بنجاح ✓';
+                        setTimeout(function() { progressEl.style.display = 'none'; }, 1500);
+                        resolve(CONFIG.SUPABASE.URL + '/storage/v1/object/public/notes/' + fileName);
+                    } else {
+                        progressEl.style.display = 'none';
+                        var errText = xhr.responseText || '';
+                        reject(new Error('فشل رفع الملف: ' + (errText || xhr.status)));
+                    }
+                };
+
+                xhr.onerror = function() {
+                    progressEl.style.display = 'none';
+                    reject(new Error('فشل الاتصال بالسيرفر'));
+                };
+
+                xhr.send(file);
             });
-            if (!res.ok) {
-                var errText = await res.text();
-                throw new Error('فشل رفع الملف: ' + (errText || res.status));
-            }
-            return CONFIG.SUPABASE.URL + '/storage/v1/object/public/notes/' + fileName;
         }
         document.addEventListener('DOMContentLoaded', async function() {
             toggleNotePrice();
@@ -138,8 +176,13 @@
                 var priceInput = document.getElementById('notePrice').value;
                 var price = isFree ? 0 : (priceInput ? parseFloat(priceInput) : null);
                 if (!isFree && (price === null || isNaN(price))) { showAlert('يرجى إدخال سعر صحيح', 'error'); return; }
+                var submitBtn = document.querySelector('#noteForm button[type="submit"]');
+                var origText = submitBtn.textContent;
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'جاري الرفع...';
                 try {
                     var url = await uploadPdfToSupabase(pdfFile);
+                    submitBtn.textContent = 'جاري الحفظ...';
                     await db.createNote({
                         grade_id: parseInt(g.value),
                         month_id: parseInt(document.getElementById('noteMonth').value),
@@ -150,7 +193,12 @@
                     });
                     showAlert('تم الحفظ', 'success');
                     setTimeout(function() { location.href = 'admin.html'; }, 1000);
-                } catch (err) { console.error('Note save error:', err); showAlert('خطأ: ' + err.message, 'error'); }
+                } catch (err) {
+                    console.error('Note save error:', err);
+                    showAlert('خطأ: ' + err.message, 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = origText;
+                }
             };
         });
     </script>
