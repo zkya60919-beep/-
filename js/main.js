@@ -24,9 +24,11 @@ document.addEventListener('DOMContentLoaded', () => {
 function toggleMobileMenu() {
     const navList = document.querySelector('.nav-list');
     const overlay = document.querySelector('.nav-overlay');
+    const btn = document.querySelector('.mobile-menu-btn');
     if (!navList) return;
     const isActive = navList.classList.toggle('active');
     if (overlay) overlay.classList.toggle('active', isActive);
+    if (btn) btn.classList.toggle('active', isActive);
     document.body.style.overflow = isActive ? 'hidden' : '';
 }
 
@@ -34,9 +36,11 @@ function toggleMobileMenu() {
 function closeMobileMenu() {
     const navList = document.querySelector('.nav-list');
     const overlay = document.querySelector('.nav-overlay');
+    const btn = document.querySelector('.mobile-menu-btn');
     if (!navList) return;
     navList.classList.remove('active');
     if (overlay) overlay.classList.remove('active');
+    if (btn) btn.classList.remove('active');
     document.body.style.overflow = '';
 }
 
