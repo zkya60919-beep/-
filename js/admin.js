@@ -1915,6 +1915,7 @@ function editMonth(monthId) {
 // ===== Course Management Functions =====
 
 let uploadedVideos = [];
+let deletedVideoIds = [];
 
 async function loadCourses() {
     try {
@@ -1978,6 +1979,7 @@ function showCourseModal() {
     document.getElementById('courseStatus').value = 'draft';
     document.getElementById('videoList').innerHTML = '';
     uploadedVideos = [];
+    deletedVideoIds = [];
     
     // Load grades
     loadCourseGrades();
@@ -2038,16 +2040,40 @@ function handleVideoFiles(files) {
         return;
     }
 
-    const filesToAdd = Array.from(files).slice(0, availableSlots);
+    const filesToAdd = Array.from(files).filter(f => f.type.startsWith('video/')).slice(0, availableSlots);
     
-    filesToAdd.forEach((file, index) => {
-        const video = {
+    filesToAdd.forEach((file) => {
+        const title = file.name.replace(/\.[^/.]+$/, '');
+        const videoUrl = URL.createObjectURL(file);
+
+        const isDuplicate = uploadedVideos.some(v => v.title === title || (v.file && v.file.name === file.name));
+        if (isDuplicate) return;
+
+        const videoObj = {
             file: file,
-            title: file.name.replace(/\.[^/.]+$/, ''),
+            title: title,
             size: formatFileSize(file.size),
-            duration: 'جاري الحساب...'
+            duration: 0,
+            durationText: 'جاري الحساب...',
+            videoUrl: videoUrl,
+            _isNew: true
         };
-        uploadedVideos.push(video);
+        uploadedVideos.push(videoObj);
+
+        const videoEl = document.createElement('video');
+        videoEl.preload = 'metadata';
+        videoEl.src = videoUrl;
+        videoEl.onloadedmetadata = function () {
+            videoObj.duration = Math.round(videoEl.duration);
+            videoObj.durationText = formatDuration(videoObj.duration);
+            renderVideoList();
+            URL.revokeObjectURL(videoUrl);
+        };
+        videoEl.onerror = function () {
+            videoObj.durationText = 'تعذر التحميل';
+            renderVideoList();
+            URL.revokeObjectURL(videoUrl);
+        };
     });
 
     renderVideoList();
@@ -2063,7 +2089,7 @@ function renderVideoList() {
                 <div class="video-item-name">${video.title}</div>
                 <div class="video-item-meta">
                     <span>الحجم: ${video.size}</span>
-                    <span>المدة: ${video.duration}</span>
+                    <span>المدة: ${video.durationText || formatDuration(video.duration) || '-'}</span>
                 </div>
             </div>
             <div class="video-item-actions">
@@ -2074,7 +2100,6 @@ function renderVideoList() {
         </div>
     `).join('');
 
-    // Add drag and drop for reordering
     initVideoReordering();
 }
 
@@ -2137,6 +2162,10 @@ function moveVideo(index, direction) {
 }
 
 function removeVideo(index) {
+    const removed = uploadedVideos[index];
+    if (removed && removed._dbId) {
+        deletedVideoIds.push(removed._dbId);
+    }
     uploadedVideos.splice(index, 1);
     renderVideoList();
 }
@@ -2196,18 +2225,33 @@ async function handleCourseSubmit(event) {
         if (uploadedVideos.length > 0) {
             for (let i = 0; i < uploadedVideos.length; i++) {
                 const video = uploadedVideos[i];
-                // Here you would upload the video file to your storage service
-                // For now, we'll just create a placeholder URL
-                const videoUrl = `https://example.com/videos/${savedCourse.id}/${i + 1}.mp4`;
-                
-                await supabase.from('course_videos').insert({
-                    course_id: savedCourse.id,
-                    title: video.title,
-                    video_url: videoUrl,
-                    duration: 0, // Would be calculated after upload
-                    order_number: i + 1
-                });
+
+                if (video._isNew) {
+                    if (!video.videoUrl || video.duration <= 0) {
+                        continue;
+                    }
+                    const videoUrl = `https://example.com/videos/${savedCourse.id}/${i + 1}.mp4`;
+                    
+                    await supabase.from('course_videos').insert({
+                        course_id: savedCourse.id,
+                        title: video.title,
+                        video_url: videoUrl,
+                        duration: video.duration,
+                        order_number: i + 1
+                    });
+                } else if (video._dbId) {
+                    await supabase.from('course_videos')
+                        .update({ order_number: i + 1 })
+                        .eq('id', video._dbId);
+                }
             }
+        }
+
+        // Delete removed videos
+        if (deletedVideoIds.length > 0) {
+            await supabase.from('course_videos')
+                .delete()
+                .in('id', deletedVideoIds);
         }
 
         showAlert('تم حفظ الكورس بنجاح', 'success');
@@ -2243,12 +2287,15 @@ async function editCourse(courseId) {
         
         // Load videos
         uploadedVideos = (course.course_videos || []).map(v => ({
-            id: v.id,
+            _dbId: v.id,
+            _isNew: false,
             title: v.title,
             videoUrl: v.video_url,
-            duration: formatDuration(v.duration),
+            duration: v.duration || 0,
+            durationText: formatDuration(v.duration),
             size: '-'
         }));
+        deletedVideoIds = [];
         
         renderVideoList();
         loadCourseGrades();
