@@ -96,7 +96,7 @@
 .admin-sidebar {
     background: var(--gray-800);
     color: var(--white);
-    padding: 80px 0 calc(24px + env(safe-area-inset-bottom, 0px));
+    padding: 80px 0 calc(64px + env(safe-area-inset-bottom, 0px));
     position: fixed;
     top: 0;
     right: 0;
