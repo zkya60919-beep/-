@@ -72,7 +72,7 @@
                 if (!course) throw new Error('Not found');
 
                 currentCourse = course;
-                currentCourseVideos = (course.course_videos || []).sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+                currentCourseVideos = (course.course_videos || []).sort((a, b) => (a.order_number || 0) - (b.order_number || 0));
                 const hasAccess = await checkCourseAccess(courseId);
 
                 renderCoursePage(course, hasAccess);
@@ -260,7 +260,7 @@
             playerArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        function initCoursePlayer(videoData) {
+        async function initCoursePlayer(videoData) {
             const video = document.getElementById('courseVideo');
             const spinner = document.getElementById('courseSpinner');
             const centerPlay = document.getElementById('courseCenterPlayBtn');
@@ -285,13 +285,13 @@
                 const session = JSON.parse(sessionStorage.getItem('albasit_user_cache') || '{}');
                 const token = session?.access_token;
                 if (token) {
-                    fetch(`${CONFIG.SUPABASE.URL}/functions/v1/signed-url`, {
+                    const resp = await fetch(`${CONFIG.SUPABASE.URL}/functions/v1/signed-url`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                         body: JSON.stringify({ course_video_id: videoData.id, user_id: currentUser.id })
-                    }).then(r => r.json()).then(d => {
-                        if (d.success && d.signed_url) video.querySelector('source').src = d.signed_url;
-                    }).catch(() => {});
+                    });
+                    const d = await resp.json();
+                    if (d.success && d.signed_url) playUrl = d.signed_url;
                 }
             } catch (e) {}
 

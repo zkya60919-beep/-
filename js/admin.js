@@ -2227,15 +2227,18 @@ async function handleCourseSubmit(event) {
                 const video = uploadedVideos[i];
 
                 if (video._isNew) {
-                    if (!video.videoUrl || video.duration <= 0) {
+                    if (!video.file || video.duration <= 0) {
                         continue;
                     }
-                    const videoUrl = `https://example.com/videos/${savedCourse.id}/${i + 1}.mp4`;
-                    
+                    btn.textContent = `رفع فيديو ${i + 1}/${uploadedVideos.length}...`;
+                    const result = await uploadVideo(video.file, `course-${savedCourse.id}`, (pct) => {
+                        btn.textContent = `رفع فيديو ${i + 1}/${uploadedVideos.length}: ${pct}%`;
+                    });
+
                     await supabase.from('course_videos').insert({
                         course_id: savedCourse.id,
                         title: video.title,
-                        video_url: videoUrl,
+                        video_url: result.secure_url,
                         duration: video.duration,
                         order_number: i + 1
                     });

@@ -107,7 +107,7 @@
                 const gradeName = course.grades?.name || '-';
                 const priceClass = course.price === 0 ? 'free' : '';
                 const priceText = course.price === 0 ? 'مجاني' : formatCurrency(course.price);
-                const videos = course.course_videos || [];
+                const videos = (course.course_videos || []).sort((a, b) => (a.order_number || 0) - (b.order_number || 0));
 
                 container.innerHTML = `
                     <div class="course-details-grid">
