@@ -252,7 +252,13 @@ async function handleLogin(event) {
             }
         }
 
+        // Clear ALL previous session data (admin or other user) before setting new user
         localStorage.removeItem('isAdmin');
+        localStorage.removeItem('admin_session');
+        localStorage.removeItem('admin_expires');
+        localStorage.removeItem('admin_sig');
+        sessionStorage.removeItem(SESSION_USER_KEY);
+
         localStorage.setItem('userId', user.phone);
         localStorage.setItem('loginTime', Date.now().toString());
         cacheUser(user);
@@ -626,9 +632,14 @@ async function handleVerifyCode(event) {
 
         if (userError || !user) throw userError || new Error('User not found');
 
+        localStorage.removeItem('isAdmin');
+        localStorage.removeItem('admin_session');
+        localStorage.removeItem('admin_expires');
+        localStorage.removeItem('admin_sig');
+        sessionStorage.removeItem(SESSION_USER_KEY);
+
         localStorage.setItem('userId', user.phone);
         localStorage.setItem('loginTime', Date.now().toString());
-        localStorage.removeItem('isAdmin');
         cacheUser(user);
 
         showAlert('✅ تم تسجيل الدخول بنجاح', 'success');
