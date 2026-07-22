@@ -5,12 +5,12 @@ let uploadedThumbnail = null;
 // Load grades on page load
 onDOMReady(async () => {
     if (!await requireAdmin()) return;
-    await loadGrades();
+    await loadCourseGradesDropdown();
     initVideoUpload();
 });
 
 // Load grades for dropdown
-async function loadGrades() {
+async function loadCourseGradesDropdown() {
     try {
         const grades = await db.getGrades();
 
