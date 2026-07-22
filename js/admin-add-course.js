@@ -281,7 +281,7 @@ async function handleCourseSubmit(event) {
 
         if (courseError) throw courseError;
 
-        // Upload videos to Cloudinary
+        // Upload videos to R2
         let uploadedCount = 0;
         let failedCount = 0;
         let lastError = '';
@@ -321,7 +321,7 @@ async function handleCourseSubmit(event) {
     }
 }
 
-// Upload thumbnail to Cloudinary
+    // Upload thumbnail to R2
 async function uploadThumbnail(file) {
     const result = await uploadImage(file, 'course-thumbnails');
     return result.secure_url;

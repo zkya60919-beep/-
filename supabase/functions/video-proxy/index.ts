@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
       return new Response("Invalid token payload", { status: 400, headers: corsHeaders });
     }
 
-    // Proxy the request to Cloudinary
+    // Proxy the request to the file storage
     const headers = new Headers();
     const range = req.headers.get("range");
     if (range) {

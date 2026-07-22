@@ -34,16 +34,17 @@ const CONFIG = {
         ENABLED: true // تفعيل/تعطيل BeMob
     },
     
-    // Cloudinary — النظام الرسمي للصور والفيديوهات والـ PDF والمرفقات
-    // الإعدادات الحساسة (API_SECRET) موجودة كـ Secrets في Supabase Edge Functions فقط
-    CLOUDINARY: {
+    // Cloudflare R2 — التخزين السحابي للصور والفيديوهات والـ PDF والمرفقات
+    // الإعدادات الحساسة موجودة كـ Secrets في Supabase Edge Functions فقط
+    R2: {
         ENABLED: true,
-        SIGNATURE_FN: 'cloudinary-signature',
-        VIDEO_FN: 'video-upload',
-        IMAGE_FN: 'image-upload',
-        PDF_FN: 'pdf-upload',
-        ATTACHMENT_FN: 'attachment-upload',
-        DELETE_FN: 'delete-file' },
+        SIGN_FN: 'r2-sign',
+        DELETE_FN: 'r2-delete',
+        VIDEO_FN: 'r2-sign',
+        IMAGE_FN: 'r2-sign',
+        PDF_FN: 'r2-sign',
+        ATTACHMENT_FN: 'r2-sign'
+    },
 
     // Platform Settings
     PLATFORM: {

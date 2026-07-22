@@ -28,15 +28,17 @@ try {
 const PORT = 3000;
 const ROOT = __dirname;
 
-// Cloudinary credentials (server-side only - loaded from env vars or .env)
-const CLOUDINARY = {
-    CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || 'mgqjgjer',
-    API_KEY: process.env.CLOUDINARY_API_KEY || '993147446468233',
-    API_SECRET: process.env.CLOUDINARY_API_SECRET || ''
+// Cloudflare R2 credentials (server-side only - loaded from env vars or .env)
+const R2 = {
+    ACCOUNT_ID: process.env.R2_ACCOUNT_ID || '',
+    ACCESS_KEY: process.env.R2_ACCESS_KEY_ID || '',
+    SECRET_KEY: process.env.R2_SECRET_ACCESS_KEY || '',
+    BUCKET: process.env.R2_BUCKET || '',
+    PUBLIC_URL: process.env.R2_PUBLIC_URL || ''
 };
 
-if (!CLOUDINARY.API_SECRET) {
-    console.warn('⚠️  تحذير: CLOUDINARY_API_SECRET غير مُحدد. وظيفة /api/proxy للـ Cloudinary ستتوقف.');
+if (!R2.SECRET_KEY) {
+    console.warn('⚠️  تحذير: R2_SECRET_ACCESS_KEY غير مُحدد. وظيفة /api/proxy للـ R2 ستتوقف.');
     console.warn('   الحل: انسخ ملف ".env.example" إلى ".env" وعدّل القيم.');
 }
 
@@ -79,9 +81,10 @@ http.createServer((req, res) => {
             'Content-Disposition': 'inline'
         };
 
-        // For Cloudinary URLs, use the Admin API download endpoint
-        if (targetUrl.includes('res.cloudinary.com')) {
-            proxyCloudinaryAsset(targetUrl, res, range, headers);
+        // For R2 public URLs, proxy directly
+        const isR2Url = R2.PUBLIC_URL && targetUrl.includes(R2.PUBLIC_URL);
+        if (isR2Url) {
+            proxyGenericFile(targetUrl, res, range, headers);
         } else {
             const proxyOptions = {
                 rejectUnauthorized: false,
@@ -137,58 +140,27 @@ http.createServer((req, res) => {
 });
 
 /**
- * Proxy a Cloudinary asset using the Admin API download endpoint.
- * This bypasses CDN-level access control (ACL/deny restrictions).
+ * Proxy a remote file asset (R2 or any URL) to the client.
  */
-function proxyCloudinaryAsset(cdnUrl, res, range, headers) {
-    const parsed = new URL(cdnUrl);
-    const pathParts = parsed.pathname.split('/').filter(Boolean);
+function proxyGenericFile(cdnUrl, res, range, headers) {
+    const proxyOptions = {
+        rejectUnauthorized: false,
+        headers: range ? { 'Range': range } : {}
+    };
 
-    // Find version index (e.g. v1783885504)
-    let versionIdx = -1;
-    for (let i = 0; i < pathParts.length; i++) {
-        if (/^v\d+$/.test(pathParts[i])) {
-            versionIdx = i;
-            break;
-        }
-    }
-    if (versionIdx === -1) {
-        res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' });
-        res.end('Invalid Cloudinary URL');
-        return;
-    }
-
-    const resourceType = pathParts[versionIdx - 2] || 'raw';
-    const deliveryType = pathParts[versionIdx - 1] || 'upload';
-    const publicId = pathParts.slice(versionIdx + 1).join('/');
-
-    const timestamp = Math.floor(Date.now() / 1000);
-    const signParams = { public_id: publicId, timestamp: timestamp, type: deliveryType };
-    const keys = Object.keys(signParams).sort();
-    const toSign = keys.map(k => k + '=' + signParams[k]).join('&');
-    const signature = crypto.createHash('sha1').update(toSign + CLOUDINARY.API_SECRET).digest('hex');
-    const qs = keys.map(k => k + '=' + encodeURIComponent(signParams[k])).join('&')
-        + '&api_key=' + CLOUDINARY.API_KEY + '&signature=' + signature;
-
-    const apiUrl = 'https://api.cloudinary.com/v1_1/' + CLOUDINARY.CLOUD_NAME + '/' + resourceType + '/download?' + qs;
-
-    const apiReq = https.get(apiUrl, { rejectUnauthorized: false }, (apiRes) => {
-        if (apiRes.statusCode === 200) {
-            headers['Content-Type'] = apiRes.headers['content-type'] || 'application/octet-stream';
-            headers['Content-Length'] = apiRes.headers['content-length'];
-            res.writeHead(200, headers);
-            apiRes.pipe(res);
+    https.get(cdnUrl, proxyOptions, (proxyRes) => {
+        if (range && proxyRes.statusCode === 206) {
+            headers['Content-Range'] = proxyRes.headers['content-range'];
+            headers['Content-Length'] = proxyRes.headers['content-length'];
+            res.writeHead(206, headers);
         } else {
-            let errBody = '';
-            apiRes.on('data', c => errBody += c);
-            apiRes.on('end', () => {
-                res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' });
-                res.end('Cloudinary download failed: ' + (apiRes.statusCode) + ' - ' + errBody);
-            });
+            headers['Content-Type'] = proxyRes.headers['content-type'] || 'application/octet-stream';
+            headers['Content-Length'] = proxyRes.headers['content-length'];
+            res.writeHead(proxyRes.statusCode, headers);
         }
-    });
-    apiReq.on('error', () => {
+        proxyRes.pipe(res);
+    }).on('error', () => {
         res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' });
-        res.end('Failed to fetch from Cloudinary API');
+        res.end('Failed to fetch remote file');
     });
 }

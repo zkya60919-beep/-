@@ -1,4 +1,4 @@
-import { deleteFile } from '../_shared/cloudinary.js';
+import { deleteFile } from '../_shared/cloudinary.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,20 +11,17 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405, headers: corsHeaders });
 
   try {
-    const cloudName = Deno.env.get('CLOUDINARY_CLOUD_NAME') || '';
-    const apiKey = Deno.env.get('CLOUDINARY_API_KEY') || '';
-    const apiSecret = Deno.env.get('CLOUDINARY_API_SECRET') || '';
-
-    if (!cloudName || !apiKey || !apiSecret) {
-      return Response.json({ error: 'Cloudinary not configured' }, { status: 500, headers: corsHeaders });
+    const accessKey = Deno.env.get('R2_ACCESS_KEY_ID') || '';
+    if (!accessKey) {
+      return Response.json({ error: 'R2 not configured' }, { status: 500, headers: corsHeaders });
     }
 
-    const { public_id, resource_type } = await req.json();
-    if (!public_id || !resource_type) {
-      return Response.json({ error: 'Missing public_id or resource_type' }, { status: 400, headers: corsHeaders });
+    const { url } = await req.json();
+    if (!url) {
+      return Response.json({ error: 'Missing url' }, { status: 400, headers: corsHeaders });
     }
 
-    const result = await deleteFile(public_id, resource_type, cloudName, apiKey, apiSecret);
+    const result = await deleteFile(url);
     return Response.json(result, { headers: corsHeaders });
 
   } catch (err) {

@@ -1,4 +1,4 @@
-// Admin Add Video Module - Cloudinary Upload
+// Admin Add Video Module - R2 Upload
 
 let thumbFile = null;
 let videoFile = null;

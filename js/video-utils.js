@@ -23,7 +23,7 @@ function getVideoSourceType(url) {
     if (!url) return 'unknown';
     if (parseYouTubeId(url)) return 'youtube';
     if (parseVimeoId(url)) return 'vimeo';
-    if (/\.(mp4|webm|m3u8)(\?|$)/i.test(url) || url.includes('supabase.co/storage') || url.includes('cloudinary.com')) return 'direct';
+    if (/\.(mp4|webm|m3u8)(\?|$)/i.test(url) || url.includes('supabase.co/storage') || url.includes('r2.dev') || url.includes('cloudflarestorage.com')) return 'direct';
     return 'external';
 }
 

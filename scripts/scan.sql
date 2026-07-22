@@ -1,0 +1,12 @@
+SELECT 'videos' as tbl, id, 'video_url' as col, video_url as url FROM videos WHERE video_url IS NOT NULL AND video_url != ''
+UNION ALL SELECT 'videos', id, 'playback_url', playback_url FROM videos WHERE playback_url IS NOT NULL AND playback_url != ''
+UNION ALL SELECT 'videos', id, 'thumbnail', thumbnail FROM videos WHERE thumbnail IS NOT NULL AND thumbnail != ''
+UNION ALL SELECT 'audio', id, 'audio_url', audio_url FROM audio WHERE audio_url IS NOT NULL AND audio_url != ''
+UNION ALL SELECT 'audio', id, 'thumbnail', thumbnail FROM audio WHERE thumbnail IS NOT NULL AND thumbnail != ''
+UNION ALL SELECT 'courses', id, 'thumbnail', thumbnail FROM courses WHERE thumbnail IS NOT NULL AND thumbnail != ''
+UNION ALL SELECT 'course_videos', id, 'video_url', video_url FROM course_videos WHERE video_url IS NOT NULL AND video_url != ''
+UNION ALL SELECT 'final_reviews', id, 'thumbnail', thumbnail FROM final_reviews WHERE thumbnail IS NOT NULL AND thumbnail != ''
+UNION ALL SELECT 'final_review_content', id, 'file_url', file_url FROM final_review_content WHERE file_url IS NOT NULL AND file_url != ''
+UNION ALL SELECT 'final_review_content', id, 'video_url', video_url FROM final_review_content WHERE video_url IS NOT NULL AND video_url != ''
+UNION ALL SELECT 'notes', id, 'file_url', file_url FROM notes WHERE file_url IS NOT NULL AND file_url != ''
+UNION ALL SELECT 'notes', id, 'thumbnail', thumbnail FROM notes WHERE thumbnail IS NOT NULL AND thumbnail != '';

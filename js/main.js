@@ -297,23 +297,8 @@ async function resolveFileUrl(rawUrl) {
     return trimmed;
 }
 
-function getPublicIdFromCloudinaryUrl(url) {
-    try {
-        const u = new URL(url);
-        const segs = u.pathname.split('/').filter(Boolean);
-        if (segs.length < 4) return null;
-        const rest = segs.slice(3);
-        const first = rest[0] || '';
-        const isVersion = first.startsWith('v') && /^\d+$/.test(first.substring(1));
-        return (isVersion ? rest.slice(1) : rest).join('/');
-    } catch (e) { return null; }
-}
-
 function getFileProxyUrl(url) {
-    let proxyUrl = CONFIG.SUPABASE.URL + '/functions/v1/file-proxy?url=' + encodeURIComponent(url);
-    const publicId = getPublicIdFromCloudinaryUrl(url);
-    if (publicId) proxyUrl += '&public_id=' + encodeURIComponent(publicId);
-    return proxyUrl;
+    return CONFIG.SUPABASE.URL + '/functions/v1/file-proxy?url=' + encodeURIComponent(url);
 }
 
 async function openContentUrl(rawUrl) {
@@ -322,11 +307,10 @@ async function openContentUrl(rawUrl) {
         const resolvedUrl = await resolveFileUrl(rawUrl);
         if (!resolvedUrl) throw new Error('رابط الملف غير صالح');
 
-        const isCloudinary = resolvedUrl.includes('res.cloudinary.com');
         const isPdf = resolvedUrl.toLowerCase().includes('.pdf') || rawUrl.toLowerCase().includes('.pdf');
 
         if (isPdf) {
-            window.open(isCloudinary ? getFileProxyUrl(resolvedUrl) : resolvedUrl, '_blank');
+            window.open(getFileProxyUrl(resolvedUrl), '_blank');
             return;
         }
 

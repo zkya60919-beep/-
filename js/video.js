@@ -70,7 +70,7 @@ async function loadVideo() {
             videoWrapper.innerHTML = `<div style="text-align:center;padding:60px 20px;background:#fff;border-radius:12px;margin:20px 0"><p style="font-size:48px;margin-bottom:16px">🔒</p><p style="font-size:18px;font-weight:700;color:#333;margin-bottom:8px">هذا الفيديو متاح للمشتركين فقط</p></div>`;
         } else if (sourceType === 'youtube' || sourceType === 'vimeo') {
             const fallbackUrl = (video.video_url || video.playback_url || '');
-            const willTransformToHls = !!(video.hls_url || playUrl.includes('.m3u8') || playUrl.includes('sp_hd,') || (playUrl.includes('res.cloudinary.com') && !playUrl.endsWith('.m3u8')));
+            const willTransformToHls = !!(video.hls_url || playUrl.includes('.m3u8'));
             videoWrapper.innerHTML = renderVideoPlayerHtml(playUrl, {
                 locked: false,
                 hlsUrl: video.hls_url,
@@ -98,7 +98,7 @@ async function loadVideo() {
             const cs = document.getElementById('courseSpinner');
             let triedProxy = false;
             cv.addEventListener('error', () => {
-                if (!triedProxy && playUrl.includes('res.cloudinary.com')) {
+                if (!triedProxy) {
                     triedProxy = true;
                     cv.src = CONFIG.SUPABASE.URL + '/functions/v1/file-proxy?url=' + encodeURIComponent(playUrl);
                     cv.load();

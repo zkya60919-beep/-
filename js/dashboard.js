@@ -352,7 +352,7 @@ async function loadVideos(monthId) {
 
 function openNoteUrl(url) {
     if (!url) { showAlert('رابط الملف غير متاح', 'error'); return; }
-    if (url.indexOf('res.cloudinary.com') !== -1) {
+    if (url.indexOf('r2.dev') !== -1 || url.indexOf('cloudflarestorage.com') !== -1) {
         var proxyUrl = CONFIG.SUPABASE.URL + '/functions/v1/file-proxy?url=' + encodeURIComponent(url);
         window.open(proxyUrl, '_blank');
     } else {
@@ -836,7 +836,7 @@ async function uploadAvatar(input) {
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) { showAlert('حجم الصورة يتجاوز 2 ميجابايت', 'error'); input.value = ''; return; }
     try {
-        const url = await uploadImageToCloudinary(file, 'avatars');
+        const url = await uploadImageToR2(file, 'avatars');
         if (!url) throw new Error('فشل رفع الصورة');
         const { error } = await supabase.from('users').update({ avatar_url: url }).eq('id', currentUser.id);
         if (error) throw error;
@@ -854,20 +854,10 @@ async function uploadAvatar(input) {
     input.value = '';
 }
 
-async function uploadImageToCloudinary(file, folder) {
-    const sigRes = await fetch(CONFIG.SUPABASE.URL + '/functions/v1/cloudinary-signature?folder=' + folder);
-    if (!sigRes.ok) throw new Error('فشل الحصول على توقيع الرفع');
-    const sigData = await sigRes.json();
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('api_key', sigData.api_key);
-    formData.append('timestamp', sigData.timestamp);
-    formData.append('signature', sigData.signature);
-    formData.append('folder', folder);
-    const uploadRes = await fetch('https://api.cloudinary.com/v1_1/' + sigData.cloud_name + '/image/upload', { method: 'POST', body: formData });
-    const uploadData = await uploadRes.json();
-    if (!uploadRes.ok) throw new Error(uploadData.error?.message || 'فشل الرفع');
-    return uploadData.secure_url;
+async function uploadImageToR2(file, folder) {
+    const result = await uploadImage(file, folder);
+    if (!result || !result.secure_url) throw new Error('فشل رفع الصورة');
+    return result.secure_url;
 }
 
 window.uploadAvatar = uploadAvatar;
