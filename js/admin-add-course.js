@@ -118,12 +118,24 @@ function addVideos(files) {
     files.forEach(file => {
         if (!file.type.startsWith('video/')) return;
         
-        uploadedVideos.push({
+        const videoObj = {
             file: file,
             name: file.name,
             size: formatFileSize(file.size),
-            id: Date.now() + Math.random()
-        });
+            id: Date.now() + Math.random(),
+            duration: 0
+        };
+
+        const videoEl = document.createElement('video');
+        videoEl.preload = 'metadata';
+        videoEl.onloadedmetadata = function() {
+            videoObj.duration = Math.round(videoEl.duration);
+            URL.revokeObjectURL(videoEl.src);
+            renderVideoList();
+        };
+        videoEl.src = URL.createObjectURL(file);
+
+        uploadedVideos.push(videoObj);
     });
 
     renderVideoList();
@@ -141,7 +153,7 @@ function renderVideoList() {
                 <input type="text" class="video-title-input" value="${escapeHtml(video.customTitle || video.name.replace(/\.[^/.]+$/, ''))}" 
                     onchange="updateVideoCustomTitle('${video.id}', this.value)" 
                     placeholder="اسم الفيديو">
-                <div class="video-item-meta">${video.size}</div>
+                <div class="video-item-meta">${video.size}${video.duration ? ' | ' + formatDuration(video.duration) : ''}</div>
             </div>
             <div class="video-item-actions">
                 <button type="button" class="video-item-btn delete" onclick="removeVideo('${video.id}')">حذف</button>
@@ -302,7 +314,7 @@ async function handleCourseSubmit(event) {
                     video_url: result.secure_url,
                     title: video.customTitle || video.name.replace(/\.[^/.]+$/, ''),
                     order_number: i + 1,
-                    duration: Math.round(result.duration || 0)
+                    duration: video.duration || 0
                 });
                 uploadedCount++;
             } catch (videoErr) {
