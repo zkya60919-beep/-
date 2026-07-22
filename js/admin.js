@@ -1990,16 +1990,13 @@ function showCourseModal() {
 
 async function loadCourseGrades() {
     try {
-        const { data: grades, error } = await supabase
-            .from('grades')
-            .select('*')
-            .order('order', { ascending: true });
-
-        if (error) throw error;
+        const grades = await db.getGrades();
 
         const select = document.getElementById('courseGrade');
-        select.innerHTML = '<option value="">اختر الصف</option>' +
-            grades.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+        if (select) {
+            select.innerHTML = '<option value="">اختر الصف</option>' +
+                grades.map(g => `<option value="${g.id}">${escapeHtml(g.name)}</option>`).join('');
+        }
     } catch (error) {
         console.error('Error loading grades:', error);
     }
@@ -2086,7 +2083,9 @@ function renderVideoList() {
         <div class="video-item" draggable="true" data-index="${index}">
             <div class="video-item-number">${index + 1}</div>
             <div class="video-item-info">
-                <div class="video-item-name">${video.title}</div>
+                <input type="text" class="video-title-input" value="${escapeHtml(video.title)}" 
+                    onchange="updateVideoTitle(${index}, this.value)" 
+                    placeholder="اسم الفيديو">
                 <div class="video-item-meta">
                     <span>الحجم: ${video.size}</span>
                     <span>المدة: ${video.durationText || formatDuration(video.duration) || '-'}</span>
@@ -2168,6 +2167,12 @@ function removeVideo(index) {
     }
     uploadedVideos.splice(index, 1);
     renderVideoList();
+}
+
+function updateVideoTitle(index, newTitle) {
+    if (uploadedVideos[index]) {
+        uploadedVideos[index].title = newTitle.trim() || uploadedVideos[index].title;
+    }
 }
 
 async function handleCourseSubmit(event) {

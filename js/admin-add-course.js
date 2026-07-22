@@ -12,17 +12,12 @@ onDOMReady(async () => {
 // Load grades for dropdown
 async function loadGrades() {
     try {
-        const { data: grades, error } = await supabase
-            .from('grades')
-            .select('*')
-            .order('order', { ascending: true });
-
-        if (error) throw error;
+        const grades = await db.getGrades();
 
         const select = document.getElementById('courseGrade');
         if (select) {
             select.innerHTML = '<option value="">اختر الصف الدراسي</option>' +
-                grades.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+                grades.map(g => `<option value="${g.id}">${escapeHtml(g.name)}</option>`).join('');
         }
     } catch (error) {
         console.error('Error loading grades:', error);
@@ -143,7 +138,9 @@ function renderVideoList() {
         <div class="video-item" draggable="true" data-id="${video.id}">
             <div class="video-item-number">${index + 1}</div>
             <div class="video-item-info">
-                <div class="video-item-name">${video.name}</div>
+                <input type="text" class="video-title-input" value="${escapeHtml(video.customTitle || video.name.replace(/\.[^/.]+$/, ''))}" 
+                    onchange="updateVideoCustomTitle('${video.id}', this.value)" 
+                    placeholder="اسم الفيديو">
                 <div class="video-item-meta">${video.size}</div>
             </div>
             <div class="video-item-actions">
@@ -160,6 +157,14 @@ function renderVideoList() {
 function removeVideo(id) {
     uploadedVideos = uploadedVideos.filter(v => v.id != id);
     renderVideoList();
+}
+
+// Update custom title for a video
+function updateVideoCustomTitle(id, newTitle) {
+    const video = uploadedVideos.find(v => v.id == id);
+    if (video) {
+        video.customTitle = newTitle.trim() || null;
+    }
 }
 
 // Format file size
@@ -295,7 +300,7 @@ async function handleCourseSubmit(event) {
                 await supabase.from('course_videos').insert({
                     course_id: course.id,
                     video_url: result.secure_url,
-                    title: video.name,
+                    title: video.customTitle || video.name.replace(/\.[^/.]+$/, ''),
                     order_number: i + 1,
                     duration: Math.round(result.duration || 0)
                 });
