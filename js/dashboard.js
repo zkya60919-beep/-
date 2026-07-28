@@ -499,7 +499,10 @@ async function loadExams(monthId) {
                         <div class="exam-meta">
                             <span class="badge ${exam.is_free ? 'badge-free' : 'badge-paid'}">${exam.is_free ? 'مجاني' : 'مدفوع'}</span>
                             ${hasAccess
-                                ? `<button type="button" class="btn btn-outline btn-sm" onclick="startExam(${exam.id})">بدء الامتحان</button>`
+                                ? `<div class="exam-actions">
+                                    ${lastResult ? `<button type="button" class="btn btn-sm btn-review" onclick="window.location.href='exam-result.html?result_id=${lastResult.id}'">مراجعة الإجابات</button>` : ''}
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="startExam(${exam.id})">${lastResult ? 'إعادة الامتحان' : 'بدء الامتحان'}</button>
+                                   </div>`
                                 : subscribeButton(monthId, '')}
                         </div>
                     </div>

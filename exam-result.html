@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نتيجة الامتحان | منصة الباسط</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="css/style.css?v=5">
+    <link rel="stylesheet" href="css/exam-result.css?v=1">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap">
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="index.html" class="logo-text">الباسط</a>
+                </div>
+                <nav class="nav">
+                    <ul class="nav-list">
+                        <li><a href="index.html" class="nav-link">الرئيسية</a></li>
+                        <li><a href="dashboard.html" class="nav-link">لوحتي</a></li>
+                    </ul>
+                </nav>
+                <div class="auth-buttons" id="authButtons"></div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="result-section">
+            <div class="container">
+                <div class="page-back-bar">
+                    <a href="dashboard.html" class="btn btn-outline">← العودة للوحة التحكم</a>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loadingState" class="loading-state">
+                    <div class="spinner"></div>
+                    <p>جاري تحميل النتيجة...</p>
+                </div>
+
+                <!-- Error State -->
+                <div id="errorState" class="error-state" style="display:none">
+                    <div class="error-card">
+                        <span class="error-icon">⚠️</span>
+                        <h2>عذراً، حدث خطأ</h2>
+                        <p id="errorMessage">لم نتمكن من تحميل نتيجة الامتحان</p>
+                        <a href="dashboard.html" class="btn btn-primary">العودة للوحة التحكم</a>
+                    </div>
+                </div>
+
+                <!-- Result Content -->
+                <div id="resultContent" style="display:none">
+                    <!-- Summary Card -->
+                    <div class="result-summary-card" id="resultSummary">
+                        <div class="summary-header">
+                            <h1 class="exam-title" id="examTitle">-</h1>
+                            <p class="exam-subtitle">نتيجة الامتحان</p>
+                        </div>
+                        <div class="summary-body">
+                            <div class="score-section">
+                                <div class="score-circle" id="scoreCircle">
+                                    <span class="score-percentage" id="scorePercentage">0%</span>
+                                </div>
+                                <div class="score-status" id="resultStatus"></div>
+                            </div>
+                            <div class="details-section">
+                                <div class="detail-row">
+                                    <span class="detail-label">الدرجة</span>
+                                    <span class="detail-value" id="scoreValue">0 / 0</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">الإجابات الصحيحة</span>
+                                    <span class="detail-value correct-count" id="correctCount">0</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">الإجابات الخاطئة</span>
+                                    <span class="detail-value wrong-count" id="wrongCount">0</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">تاريخ التقديم</span>
+                                    <span class="detail-value" id="submissionDate">-</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">الوقت المستغرق</span>
+                                    <span class="detail-value" id="timeTaken">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Review Answers Section -->
+                    <div class="review-section">
+                        <h2 class="review-title">مراجعة الإجابات</h2>
+                        <p class="review-subtitle">راجع إجاباتك وتعرف على الإجابات الصحيحة</p>
+                        <div id="questionsReview" class="questions-review"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/config.js?v=3"></script>
+    <script src="js/supabase.js?v=3"></script>
+    <script src="js/db.js?v=4"></script>
+    <script src="js/auth.js?v=5"></script>
+    <script src="js/main.js?v=3"></script>
+    <script src="js/exam-result.js?v=1"></script>
+</body>
+</html>

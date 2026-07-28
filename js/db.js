@@ -308,6 +308,178 @@ const db = {
         return data || [];
     },
 
+    // --- Enhanced Exam Attempts & Analytics ---
+    async saveExamResultEnhanced(resultData) {
+        // Store counts inside answers JSONB so they're available even without columns
+        const answersWithCounts = {
+            ...resultData.answers,
+            _correct_count: resultData.correct_count || 0,
+            _wrong_count: resultData.wrong_count || 0
+        };
+
+        const row = {
+            exam_id: resultData.exam_id,
+            user_id: resultData.user_id,
+            answers: answersWithCounts,
+            score: resultData.score,
+            total_marks: resultData.total_marks,
+            percentage: resultData.percentage,
+            passed: resultData.passed,
+            time_taken: resultData.time_taken
+        };
+
+        const { data, error } = await supabase.from('exam_results').insert(row).select().single();
+        if (error) throw error;
+        return data;
+    },
+
+    async getAllExamAttempts(filters = {}) {
+        let examIds = null;
+        if (filters.gradeId || filters.monthId) {
+            let examQuery = supabase.from('exams').select('id');
+            if (filters.gradeId) {
+                examQuery = examQuery.eq('grade_id', parseInt(filters.gradeId));
+            }
+            if (filters.monthId) {
+                examQuery = examQuery.eq('month_id', parseInt(filters.monthId));
+            }
+            const { data: matchingExams } = await examQuery;
+            examIds = (matchingExams || []).map(e => e.id);
+            if (!examIds.length) return [];
+        }
+
+        // Use LEFT JOINs to avoid failures if FK relationships are not detected
+        let query = supabase
+            .from('exam_results')
+            .select('*, exams(title, grade_id), users(name, phone, grade_id)')
+            .order('created_at', { ascending: false });
+
+        if (filters.examId) {
+            query = query.eq('exam_id', parseInt(filters.examId));
+        }
+        if (filters.userId) {
+            query = query.eq('user_id', filters.userId);
+        }
+        if (examIds) {
+            query = query.in('exam_id', examIds);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        return data || [];
+    },
+
+    async getExamAttempt(resultId) {
+        // Use LEFT JOINs for maximum compatibility
+        const { data, error } = await supabase
+            .from('exam_results')
+            .select('*, exams(title, grade_id, duration), users(name, phone, grade_id)')
+            .eq('id', parseInt(resultId))
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    async getExamAttemptsForStudent(studentId) {
+        const { data, error } = await supabase
+            .from('exam_results')
+            .select('*, exams(title, grade_id)')
+            .eq('user_id', studentId)
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
+    },
+
+    async getExamAttemptResultOnly(resultId) {
+        const { data, error } = await supabase
+            .from('exam_results')
+            .select('*')
+            .eq('id', parseInt(resultId))
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    async getExamAnalytics(examId) {
+        const { data: results, error } = await supabase
+            .from('exam_results')
+            .select('score, total_marks, percentage, passed, correct_count, wrong_count, user_id')
+            .eq('exam_id', parseInt(examId));
+        if (error) throw error;
+        if (!results || !results.length) {
+            return {
+                total_attempts: 0,
+                average_score: 0,
+                highest_score: 0,
+                lowest_score: 0,
+                pass_rate: 0,
+                fail_rate: 0,
+                average_percentage: 0
+            };
+        }
+
+        const total = results.length;
+        const totalPercentage = results.reduce((s, r) => s + (r.percentage || 0), 0);
+        const totalScore = results.reduce((s, r) => s + (r.score || 0), 0);
+        const totalMarks = results.reduce((s, r) => s + (r.total_marks || 0), 0);
+        const passedCount = results.filter(r => r.passed).length;
+        const percentages = results.map(r => r.percentage || 0);
+
+        return {
+            total_attempts: total,
+            total_unique_students: new Set(results.map(r => r.user_id)).size,
+            average_score: total > 0 ? totalScore / total : 0,
+            highest_score: percentages.length ? Math.max(...percentages) : 0,
+            lowest_score: percentages.length ? Math.min(...percentages) : 0,
+            pass_rate: total > 0 ? (passedCount / total) * 100 : 0,
+            fail_rate: total > 0 ? ((total - passedCount) / total) * 100 : 0,
+            average_percentage: total > 0 ? totalPercentage / total : 0,
+            total_correct: results.reduce((s, r) => s + (r.correct_count || 0), 0),
+            total_wrong: results.reduce((s, r) => s + (r.wrong_count || 0), 0)
+        };
+    },
+
+    async getIncorrectQuestionStats(examId) {
+        const { data: results, error } = await supabase
+            .from('exam_results')
+            .select('answers')
+            .eq('exam_id', parseInt(examId));
+        if (error) throw error;
+        if (!results || !results.length) return [];
+
+        const questionMap = {};
+        results.forEach(result => {
+            const answers = result.answers || {};
+            const details = answers.questions_detail || [];
+            details.forEach(q => {
+                const qid = q.question_id;
+                if (!questionMap[qid]) {
+                    questionMap[qid] = {
+                        question_id: qid,
+                        question_text: q.question_text,
+                        question_type: q.question_type,
+                        total_attempts: 0,
+                        wrong_count: 0,
+                        correct_count: 0
+                    };
+                }
+                questionMap[qid].total_attempts++;
+                if (q.is_correct === false) {
+                    questionMap[qid].wrong_count++;
+                } else if (q.is_correct === true) {
+                    questionMap[qid].correct_count++;
+                }
+            });
+        });
+
+        return Object.values(questionMap)
+            .map(q => ({
+                ...q,
+                wrong_percentage: q.total_attempts > 0 ? (q.wrong_count / q.total_attempts) * 100 : 0
+            }))
+            .sort((a, b) => b.wrong_count - a.wrong_count);
+    },
+
     // --- Subscriptions ---
     async getUserSubscriptions(userId) {
         const { data, error } = await supabase
@@ -421,35 +593,38 @@ const db = {
 
     // --- Stats (admin) ---
     async getAdminStats() {
-        const [users, videos, notes, audio, exams, subs, payments, finalReviews, courses, pendingReqs] = await Promise.all([
-            supabase.from('users').select('*', { count: 'exact', head: true }),
-            supabase.from('videos').select('*', { count: 'exact', head: true }),
-            supabase.from('notes').select('*', { count: 'exact', head: true }),
-            supabase.from('audio').select('*', { count: 'exact', head: true }),
-            supabase.from('exams').select('*', { count: 'exact', head: true }),
-            supabase.from('subscriptions').select('*', { count: 'exact', head: true }),
-            supabase.from('payments').select('amount, status, created_at').eq('status', 'success'),
-            supabase.from('final_reviews').select('*', { count: 'exact', head: true }),
-            supabase.from('courses').select('*', { count: 'exact', head: true }),
-            supabase.from('payment_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending')
+        const safeCount = async (query) => {
+            try {
+                const { count, error } = await query;
+                return error ? 0 : (count || 0);
+            } catch (_) { return 0; }
+        };
+
+        const [students, videos, notes, audio, exams, subscriptions, finalReviews, courses, pendingPaymentRequests] = await Promise.all([
+            safeCount(supabase.from('users').select('*', { count: 'exact', head: true })),
+            safeCount(supabase.from('videos').select('*', { count: 'exact', head: true })),
+            safeCount(supabase.from('notes').select('*', { count: 'exact', head: true })),
+            safeCount(supabase.from('audio').select('*', { count: 'exact', head: true })),
+            safeCount(supabase.from('exams').select('*', { count: 'exact', head: true })),
+            safeCount(supabase.from('subscriptions').select('*', { count: 'exact', head: true })),
+            safeCount(supabase.from('final_reviews').select('*', { count: 'exact', head: true })),
+            safeCount(supabase.from('courses').select('*', { count: 'exact', head: true })),
+            safeCount(supabase.from('payment_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'))
         ]);
 
-        const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-        const monthlyRevenue = (payments.data || [])
-            .filter(p => p.created_at >= monthStart)
-            .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+        let monthlyRevenue = 0;
+        try {
+            const { data: payments } = await supabase.from('payments').select('amount, status, created_at').eq('status', 'success');
+            const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+            monthlyRevenue = (payments || [])
+                .filter(p => p.created_at >= monthStart)
+                .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+        } catch (_) { /* ignore */ }
 
         return {
-            students: users.count || 0,
-            videos: videos.count || 0,
-            notes: notes.count || 0,
-            audio: audio.count || 0,
-            exams: exams.count || 0,
-            subscriptions: subs.count || 0,
-            finalReviews: finalReviews.count || 0,
-            courses: courses.count || 0,
-            monthlyRevenue,
-            pendingPaymentRequests: pendingReqs.count || 0
+            students, videos, notes, audio, exams,
+            subscriptions, finalReviews, courses,
+            monthlyRevenue, pendingPaymentRequests
         };
     },
 

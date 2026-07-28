@@ -463,6 +463,16 @@
     color: var(--gray-400); font-size: 12px; font-weight: 600;
 }
 
+.exam-actions {
+    display: flex; gap: 8px; flex-wrap: wrap;
+}
+
+.btn-review {
+    background: var(--primary); color: #fff; border: none; padding: 6px 14px; border-radius: 8px;
+    font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+}
+.btn-review:hover { background: var(--primary-dark); transform: translateY(-1px); }
+
 .content-desc { font-size: 13px; color: var(--gray-500); margin-bottom: 10px; line-height: 1.5; }
 
 /* ===== Empty State ===== */

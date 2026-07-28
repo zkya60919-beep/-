@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نتائج الامتحانات - منصة الباسط</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/admin-exam-results.css?v=1">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap">
+</head>
+<body class="admin-page">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <header class="admin-header">
+        <div class="container">
+            <div class="admin-header-content">
+                <div class="logo">
+                    <a href="index.html"><img src="images/logo.jpg" alt="الباسط" class="logo-img"></a>
+                    <span class="admin-badge">نتائج الامتحانات</span>
+                </div>
+                <div class="admin-user">
+                    <a href="admin.html" class="btn btn-outline btn-light">← رجوع للوحة التحكم</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="admin-main-content">
+        <div class="container">
+            <!-- Filters -->
+            <div class="results-filters">
+                <div class="filter-group">
+                    <label for="filterGrade">الصف</label>
+                    <select id="filterGrade" onchange="onFilterChange()">
+                        <option value="">كل الصفوف</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterExam">الامتحان</label>
+                    <select id="filterExam" onchange="onFilterChange()">
+                        <option value="">كل الامتحانات</option>
+                    </select>
+                </div>
+                <button class="btn btn-outline" onclick="refreshData()">🔄 تحديث</button>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="loading-state">
+                <div class="spinner"></div>
+                <p>جاري تحميل النتائج...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorState" class="error-state" style="display:none">
+                <div class="error-card">
+                    <span class="error-icon">⚠️</span>
+                    <h2>عذراً، حدث خطأ</h2>
+                    <p id="errorMessage">لم نتمكن من تحميل نتائج الامتحانات</p>
+                    <button class="btn btn-primary" onclick="refreshData()">إعادة المحاولة</button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div id="resultsContent" style="display:none">
+                <!-- Analytics Section (PART 4) -->
+                <section class="analytics-section">
+                    <h2 class="section-title">إحصائيات الامتحانات</h2>
+                    <div class="analytics-grid" id="analyticsGrid">
+                        <div class="analytics-card">
+                            <span class="analytics-icon">👥</span>
+                            <span class="analytics-value" id="totalStudents">0</span>
+                            <span class="analytics-label">عدد الطلاب</span>
+                        </div>
+                        <div class="analytics-card">
+                            <span class="analytics-icon">📊</span>
+                            <span class="analytics-value" id="avgScore">0%</span>
+                            <span class="analytics-label">متوسط الدرجات</span>
+                        </div>
+                        <div class="analytics-card">
+                            <span class="analytics-icon">⬆️</span>
+                            <span class="analytics-value" id="highestScore">0%</span>
+                            <span class="analytics-label">أعلى درجة</span>
+                        </div>
+                        <div class="analytics-card">
+                            <span class="analytics-icon">⬇️</span>
+                            <span class="analytics-value" id="lowestScore">0%</span>
+                            <span class="analytics-label">أدنى درجة</span>
+                        </div>
+                        <div class="analytics-card">
+                            <span class="analytics-icon">✅</span>
+                            <span class="analytics-value" id="passRate">0%</span>
+                            <span class="analytics-label">نسبة النجاح</span>
+                        </div>
+                        <div class="analytics-card">
+                            <span class="analytics-icon">❌</span>
+                            <span class="analytics-value" id="failRate">0%</span>
+                            <span class="analytics-label">نسبة الرسوب</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Incorrect Questions Analytics (PART 4) -->
+                <section class="incorrect-questions-section" id="incorrectQuestionsSection" style="display:none">
+                    <h2 class="section-title">الأسئلة الأكثر خطأً</h2>
+                    <p class="section-hint">الأسئلة التي أخطأ فيها معظم الطلاب — لمساعدتك في تحديد المواد الضعيفة</p>
+                    <div class="incorrect-questions-list" id="incorrectQuestionsList"></div>
+                </section>
+
+                <!-- Results Table (PART 2) -->
+                <section class="results-table-section">
+                    <div class="section-header">
+                        <h2 class="section-title">نتائج الامتحانات</h2>
+                        <div class="results-count" id="resultsCount">0 نتيجة</div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="emptyState" class="empty-state" style="display:none">
+                        <div class="empty-icon">📝</div>
+                        <h3>لا توجد نتائج</h3>
+                        <p>لم يقم أي طالب بحل امتحان بعد</p>
+                    </div>
+
+                    <!-- Table -->
+                    <div id="resultsTableWrapper" class="data-table-container">
+                        <table class="data-table results-table" id="resultsTable">
+                            <thead>
+                                <tr>
+                                    <th>الطالب</th>
+                                    <th>الصف</th>
+                                    <th>الامتحان</th>
+                                    <th>الدرجة</th>
+                                    <th>النسبة</th>
+                                    <th>صحيح</th>
+                                    <th>خطأ</th>
+                                    <th>التاريخ</th>
+                                    <th>الوقت</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsTableBody">
+                                <tr><td colspan="10" class="text-center">جاري التحميل...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="pagination" id="pagination" style="display:none">
+                        <button class="btn btn-outline btn-sm" id="prevPage" onclick="changePage(-1)" disabled>السابق</button>
+                        <span id="pageInfo">الصفحة 1 من 1</span>
+                        <button class="btn btn-outline btn-sm" id="nextPage" onclick="changePage(1)" disabled>التالي</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Student Attempt Detail Modal (PART 3) -->
+    <div class="modal" id="attemptDetailModal">
+        <div class="modal-content modal-lg">
+            <span class="close-modal" onclick="closeDetailModal()">&times;</span>
+            <div id="detailModalContent">
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>جاري تحميل التفاصيل...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js?v=3"></script>
+    <script src="js/supabase.js?v=3"></script>
+    <script src="js/db.js?v=4"></script>
+    <script src="js/auth.js?v=5"></script>
+    <script src="js/main.js?v=3"></script>
+    <script src="js/admin-exam-results.js?v=1"></script>
+</body>
+</html>

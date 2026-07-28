@@ -241,20 +241,39 @@ async function submitExam() {
     try {
         // Calculate score
         let correctCount = 0;
+        let wrongCount = 0;
         let totalMarks = 0;
         let earnedMarks = 0;
         
-        examData.exam_questions.forEach(question => {
+        // Build question-by-question details
+        const questionsDetail = examData.exam_questions.map(question => {
             totalMarks += question.marks;
+            const userAnswer = userAnswers[question.id] || null;
+            let isCorrect = null;
+            let marksEarned = 0;
             
             if (question.question_type === 'mcq' || question.question_type === 'true_false') {
-                const userAnswer = userAnswers[question.id];
-                if (userAnswer === question.correct_answer) {
+                isCorrect = userAnswer === question.correct_answer;
+                if (isCorrect) {
                     correctCount++;
+                    marksEarned = question.marks;
                     earnedMarks += question.marks;
+                } else {
+                    wrongCount++;
                 }
             }
-            // Essay questions need manual grading
+            
+            return {
+                question_id: question.id,
+                question_text: question.question_text,
+                question_type: question.question_type,
+                options: question.options,
+                correct_answer: question.correct_answer,
+                student_answer: userAnswer,
+                marks: question.marks,
+                marks_earned: marksEarned,
+                is_correct: isCorrect
+            };
         });
         
         const percentage = totalMarks > 0 ? (earnedMarks / totalMarks) * 100 : 0;
@@ -264,7 +283,7 @@ async function submitExam() {
         const examEndTime = new Date();
         const timeTakenSeconds = Math.round((examEndTime - examStartTime) / 1000);
         
-        // Save result
+        // Save result with enhanced data
         const resultData = {
             exam_id: examData.id,
             user_id: currentUser.id,
@@ -276,26 +295,53 @@ async function submitExam() {
                     duration_seconds: timeTakenSeconds,
                     browser: navigator.userAgent,
                     device: /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop'
-                }
+                },
+                questions_detail: questionsDetail,
+                _correct_count: correctCount,
+                _wrong_count: wrongCount,
+                _exam_title: examData.title
             },
             score: earnedMarks,
             total_marks: totalMarks,
             percentage: percentage,
             passed: passed,
-            time_taken: timeTakenSeconds // DB expects seconds
+            time_taken: timeTakenSeconds,
+            correct_count: correctCount,
+            wrong_count: wrongCount
         };
         
+        // Store in sessionStorage as fallback in case DB save fails
+        const localResultData = {
+            id: 'local_' + Date.now(),
+            exam_id: examData.id,
+            user_id: currentUser.id,
+            answers: {
+                answers: userAnswers,
+                questions_detail: questionsDetail,
+                _correct_count: correctCount,
+                _wrong_count: wrongCount,
+                _exam_title: examData.title
+            },
+            score: earnedMarks,
+            total_marks: totalMarks,
+            percentage: percentage,
+            passed: passed,
+            time_taken: timeTakenSeconds,
+            created_at: new Date().toISOString()
+        };
+        sessionStorage.setItem('lastExamResult', JSON.stringify(localResultData));
+        
         try {
-            await db.saveExamResult(resultData);
+            const saved = await db.saveExamResultEnhanced(resultData);
+            localStorage.removeItem(getProgressKey());
+            window.location.href = `exam-result.html?result_id=${saved.id}`;
+            return;
         } catch (e) {
-            console.warn('exam_results table not available, result not saved to DB:', e.message);
+            console.warn('Failed to save exam result to DB, using local fallback:', e.message);
+            localStorage.removeItem(getProgressKey());
+            window.location.href = 'exam-result.html?local=true';
+            return;
         }
-        
-        // Clear saved progress
-        localStorage.removeItem(getProgressKey());
-        
-        // Show results
-        showResults(earnedMarks, totalMarks, correctCount, examData.exam_questions.length - correctCount, Math.round(timeTakenSeconds / 60), percentage, passed);
         
     } catch (error) {
         console.error('Error submitting exam:', error);
