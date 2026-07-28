@@ -7,6 +7,7 @@
     <title>لوحة التحكم - الباسط</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/admin-exam-results.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -63,6 +64,10 @@
                 <div class="nav-item" data-section="exams">
                     <span>📝</span>
                     <span>الامتحانات</span>
+                </div>
+                <div class="nav-item" data-section="exam-results">
+                    <span>📊</span>
+                    <span>نتائج الطلاب</span>
                 </div>
                 <div class="nav-item" data-section="students">
                     <span>👥</span>
@@ -420,6 +425,63 @@
                         </thead>
                         <tbody id="examsTableBody">
                             <tr><td colspan="5" class="text-center">جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Exam Results Section -->
+            <section id="admin-exam-results" class="admin-section">
+                <div class="section-header">
+                    <button class="btn btn-outline" onclick="showAdminSection('dashboard')">← رجوع</button>
+                    <h2 class="section-title">نتائج الامتحانات</h2>
+                    <div class="filters">
+                        <select id="resultsGradeFilter" onchange="loadExamResults()">
+                            <option value="">كل الصفوف</option>
+                        </select>
+                        <select id="resultsMonthFilter" onchange="loadExamResults()">
+                            <option value="">كل الشهور</option>
+                        </select>
+                        <select id="resultsExamFilter" onchange="loadExamResults()">
+                            <option value="">كل الامتحانات</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="resultsAnalytics" style="display:none">
+                    <div class="results-stats-grid">
+                        <div class="stat-card-sm">
+                            <span class="stat-label">عدد المحاولات</span>
+                            <span class="stat-value" id="resultsTotalAttempts">0</span>
+                        </div>
+                        <div class="stat-card-sm">
+                            <span class="stat-label">متوسط الدرجات</span>
+                            <span class="stat-value" id="resultsAvgScore">0%</span>
+                        </div>
+                        <div class="stat-card-sm">
+                            <span class="stat-label">أعلى درجة</span>
+                            <span class="stat-value" id="resultsHighest">0%</span>
+                        </div>
+                        <div class="stat-card-sm">
+                            <span class="stat-label">نسبة النجاح</span>
+                            <span class="stat-value" id="resultsPassRate">0%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="data-table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>الطالب</th>
+                                <th>الامتحان</th>
+                                <th>الدرجة</th>
+                                <th>النسبة</th>
+                                <th>صحيح</th>
+                                <th>خطأ</th>
+                                <th>التاريخ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTableBody">
+                            <tr><td colspan="7" class="text-center">جاري التحميل...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1017,11 +1079,11 @@
 
     <script src="js/config.js?v=3"></script>
     <script src="js/supabase.js?v=3"></script>
-    <script src="js/db.js?v=3"></script>
-    <script src="js/auth.js?v=3"></script>
+    <script src="js/db.js?v=4"></script>
+    <script src="js/auth.js?v=5"></script>
     <script src="js/main.js?v=3"></script>
-    <script src="js/r2.js?v=1"></script>
-    <script src="js/admin.js?v=4"></script>
+    <script src="js/r2.js?v=4"></script>
+    <script src="js/admin.js?v=8"></script>
 </body>
 </html>
 

@@ -50,7 +50,9 @@ function closeAdminMobileMenu() {
 }
 
 onDOMReady(async () => {
-    if (!await requireAdmin()) return;
+    if (!currentUser) await checkAuth();
+    const isAdmin = (currentUser && (currentUser.division === 'admin' || currentUser.role === 'admin')) || localStorage.getItem('admin_session');
+    if (!isAdmin && !await requireAdmin()) return;
 
     initAdminNav();
 
@@ -296,7 +298,8 @@ function showAdminSection(sectionId, navEl) {
         courses: loadCourses,
         settings: loadSettings,
         'payment-requests': loadPaymentRequests,
-        'payment-settings': loadPaymentSettings
+        'payment-settings': loadPaymentSettings,
+        'exam-results': loadExamResults
     };
 
     const loader = loaders[sectionId];
@@ -401,8 +404,11 @@ async function loadMonths() {
 // Load Videos
 async function loadVideos() {
     try {
-        const gradeFilter = document.getElementById('videoGradeFilter').value;
-        const monthFilter = document.getElementById('videoMonthFilter').value;
+        const gradeEl = document.getElementById('videoGradeFilter');
+        const monthEl = document.getElementById('videoMonthFilter');
+        if (!gradeEl || !monthEl) return;
+        const gradeFilter = gradeEl.value;
+        const monthFilter = monthEl.value;
 
         let query = supabase.from('videos').select('*');
 
@@ -458,8 +464,11 @@ async function loadVideos() {
 // Load Products
 async function loadProducts() {
     try {
-        const gradeFilter = document.getElementById('productGradeFilter').value;
-        const monthFilter = document.getElementById('productMonthFilter').value;
+        const gradeEl = document.getElementById('productGradeFilter');
+        const monthEl = document.getElementById('productMonthFilter');
+        if (!gradeEl || !monthEl) return;
+        const gradeFilter = gradeEl.value;
+        const monthFilter = monthEl.value;
 
         let query = supabase.from('notes').select('*');
 
@@ -513,8 +522,11 @@ async function loadProducts() {
 // Load Audio
 async function loadAudio() {
     try {
-        const gradeFilter = document.getElementById('audioGradeFilter').value;
-        const monthFilter = document.getElementById('audioMonthFilter').value;
+        const gradeEl = document.getElementById('audioGradeFilter');
+        const monthEl = document.getElementById('audioMonthFilter');
+        if (!gradeEl || !monthEl) return;
+        const gradeFilter = gradeEl.value;
+        const monthFilter = monthEl.value;
 
         let query = supabase.from('audio').select('*');
 
@@ -568,8 +580,11 @@ async function loadAudio() {
 // Load Exams
 async function loadExams() {
     try {
-        const gradeFilter = document.getElementById('examGradeFilter').value;
-        const monthFilter = document.getElementById('examMonthFilter').value;
+        const gradeEl = document.getElementById('examGradeFilter');
+        const monthEl = document.getElementById('examMonthFilter');
+        if (!gradeEl || !monthEl) return;
+        const gradeFilter = gradeEl.value;
+        const monthFilter = monthEl.value;
 
         let query = supabase.from('exams').select('*');
 
@@ -1921,7 +1936,7 @@ async function loadCourses() {
     try {
         const { data: courses, error } = await supabase
             .from('courses')
-            .select('*, grades(name)')
+            .select('*, grades(name), course_videos(id)')
             .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -1944,7 +1959,7 @@ async function loadCourses() {
                     <td><img src="${thumbnail}" alt="" class="course-thumbnail-preview"></td>
                     <td>${course.title}</td>
                     <td>${gradeName}</td>
-                    <td>${course.video_count || 0}</td>
+                    <td>${(course.course_videos || []).length}</td>
                     <td>${formatCurrency(course.price)}</td>
                     <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                     <td>${formatDate(course.created_at)}</td>
@@ -2228,30 +2243,43 @@ async function handleCourseSubmit(event) {
 
         // Upload videos
         if (uploadedVideos.length > 0) {
-            for (let i = 0; i < uploadedVideos.length; i++) {
-                const video = uploadedVideos[i];
+            const newVideos = uploadedVideos.filter(v => v._isNew && v.file && v.duration > 0);
+            const existingVideos = uploadedVideos.filter(v => !v._isNew && v._dbId);
 
-                if (video._isNew) {
-                    if (!video.file || video.duration <= 0) {
-                        continue;
-                    }
-                    btn.textContent = `رفع فيديو ${i + 1}/${uploadedVideos.length}...`;
-                    const result = await uploadVideo(video.file, `course-${savedCourse.id}`, (pct) => {
-                        btn.textContent = `رفع فيديو ${i + 1}/${uploadedVideos.length}: ${pct}%`;
-                    });
+            // Pre-sign all new video URLs in parallel
+            const presigns = await Promise.all(newVideos.map(v =>
+                preSignFile(`course-${savedCourse.id}`, v.file.name, r2ContentType(v.file)).catch(() => null)
+            ));
 
+            // Upload new videos in parallel (3 at a time)
+            const items = newVideos.map((video, i) => ({
+                file: video.file,
+                folder: `course-${savedCourse.id}`,
+                _preSigned: presigns[i],
+                onProgress: (pct) => { btn.textContent = `رفع فيديو ${i + 1}/${newVideos.length}: ${pct}%`; }
+            }));
+            const results = await uploadFilesParallel(items, 3);
+
+            // Insert uploaded videos into DB
+            for (let i = 0; i < newVideos.length; i++) {
+                if (results[i] && !results[i].error) {
                     await supabase.from('course_videos').insert({
                         course_id: savedCourse.id,
-                        title: video.title,
-                        video_url: result.secure_url,
-                        duration: video.duration,
-                        order_number: i + 1
+                        title: newVideos[i].title,
+                        video_url: results[i].secure_url,
+                        duration: newVideos[i].duration,
+                        order_number: uploadedVideos.indexOf(newVideos[i]) + 1
                     });
-                } else if (video._dbId) {
-                    await supabase.from('course_videos')
-                        .update({ order_number: i + 1 })
-                        .eq('id', video._dbId);
+                } else if (results[i] && results[i].error) {
+                    console.error(`فشل رفع فيديو ${newVideos[i].title}:`, results[i].error);
                 }
+            }
+
+            // Update order of existing videos
+            for (const video of existingVideos) {
+                await supabase.from('course_videos')
+                    .update({ order_number: uploadedVideos.indexOf(video) + 1 })
+                    .eq('id', video._dbId);
             }
         }
 
@@ -2690,9 +2718,103 @@ window.viewStudent = viewStudent;
 window.deleteStudent = deleteStudent;
 window.showStudentDetail = showStudentDetail;
 window.assignGrade = assignGrade;
+async function loadExamResults() {
+    try {
+        const gradeEl = document.getElementById('resultsGradeFilter');
+        const monthEl = document.getElementById('resultsMonthFilter');
+        const examEl = document.getElementById('resultsExamFilter');
+
+        if (!gradeEl || !monthEl) return;
+
+        // Populate filters on first load
+        const { data: grades } = await supabase.from('grades').select('*').order('order', { ascending: true });
+        const { data: months } = await supabase.from('months').select('*').order('id', { ascending: true });
+
+        if (!gradeEl.dataset.loaded) {
+            gradeEl.innerHTML = '<option value="">كل الصفوف</option>' + grades.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+            monthEl.innerHTML = '<option value="">كل الشهور</option>' + months.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+            const { data: allExams } = await supabase.from('exams').select('id, title').order('title');
+            examEl.innerHTML = '<option value="">كل الامتحانات</option>' + (allExams || []).map(e => `<option value="${e.id}">${e.title}</option>`).join('');
+            gradeEl.dataset.loaded = '1';
+        }
+
+        const gradeFilter = gradeEl.value;
+        const monthFilter = monthEl.value;
+        const examFilter = examEl.value;
+
+        const filters = {};
+        if (examFilter) filters.examId = parseInt(examFilter);
+        if (gradeFilter || monthFilter) {
+            filters.gradeId = gradeFilter ? parseInt(gradeFilter) : null;
+            filters.monthId = monthFilter ? parseInt(monthFilter) : null;
+        }
+
+        const results = await db.getAllExamAttempts(Object.keys(filters).length ? filters : {});
+
+        const tbody = document.getElementById('resultsTableBody');
+        const analyticsEl = document.getElementById('resultsAnalytics');
+
+        if (!results.length) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">لا توجد نتائج</td></tr>';
+            if (analyticsEl) analyticsEl.style.display = 'none';
+            return;
+        }
+
+        if (analyticsEl) {
+            analyticsEl.style.display = 'block';
+            const total = results.length;
+            const scores = results.map(r => r.percentage || 0);
+            const avg = scores.reduce((a, b) => a + b, 0) / total;
+            const highest = Math.max(...scores);
+            const passedCount = results.filter(r => r.passed).length;
+
+            document.getElementById('resultsTotalAttempts').textContent = total;
+            document.getElementById('resultsAvgScore').textContent = Math.round(avg) + '%';
+            document.getElementById('resultsHighest').textContent = Math.round(highest) + '%';
+            document.getElementById('resultsPassRate').textContent = Math.round((passedCount / total) * 100) + '%';
+        }
+
+        tbody.innerHTML = results.map(r => {
+            const studentName = r.users?.name || 'غير معروف';
+            const examName = r.exams?.title || 'امتحان';
+            const perc = Math.round(r.percentage || 0);
+            const passed = r.passed;
+            const badgeClass = passed ? 'score-badge pass' : 'score-badge fail';
+
+            let correctCount = r.correct_count;
+            let wrongCount = r.wrong_count;
+            if (correctCount == null) correctCount = r.answers?._correct_count;
+            if (wrongCount == null) wrongCount = r.answers?._wrong_count;
+            if (correctCount == null && r.answers?.questions_detail) {
+                correctCount = r.answers.questions_detail.filter(q => q.is_correct === true).length;
+                wrongCount = r.answers.questions_detail.filter(q => q.is_correct === false).length;
+            }
+
+            const date = r.created_at ? new Date(r.created_at).toLocaleDateString('ar-EG') : '-';
+
+            return `
+                <tr style="cursor:pointer" onclick="window.location.href='exam-result.html?result_id=${r.id}'">
+                    <td><strong>${escapeHtml(studentName)}</strong></td>
+                    <td>${escapeHtml(examName)}</td>
+                    <td>${r.score || 0} / ${r.total_marks || 0}</td>
+                    <td><span class="${badgeClass}">${perc}%</span></td>
+                    <td>${correctCount || 0}</td>
+                    <td>${wrongCount || 0}</td>
+                    <td>${date}</td>
+                </tr>
+            `;
+        }).join('');
+
+    } catch (error) {
+        console.error('Error loading exam results:', error);
+        document.getElementById('resultsTableBody').innerHTML = '<tr><td colspan="7" class="text-center">حدث خطأ أثناء التحميل</td></tr>';
+    }
+}
+
 window.toggleAdminMobileMenu = toggleAdminMobileMenu;
 window.closeAdminMobileMenu = closeAdminMobileMenu;
 window.debounceSearch = debounceSearch;
+window.loadExamResults = loadExamResults;
 window.loadPaymentRequests = loadPaymentRequests;
 window.loadPaymentSettings = loadPaymentSettings;
 window.savePaymentSettings = savePaymentSettings;
@@ -2702,9 +2824,3 @@ window.deletePaymentReq = deletePaymentReq;
 window.showRejectModal = showRejectModal;
 window.viewReceiptImg = viewReceiptImg;
 window.debounceSearchPaymentReq = debounceSearchPaymentReq;
-setInterval(function() {
-    loadVideos();
-    loadProducts();
-    loadAudio();
-    loadExams();
-}, 30000);

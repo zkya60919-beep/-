@@ -254,6 +254,27 @@
     }
 }
 
+/* Results section */
+.results-stats-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;
+}
+.stat-card-sm {
+    background: var(--white); border-radius: 16px; padding: 20px; box-shadow: var(--shadow-md);
+    text-align: center;
+}
+.stat-card-sm .stat-label {
+    display: block; font-size: 13px; color: var(--gray-500); font-weight: 600; margin-bottom: 6px;
+}
+.stat-card-sm .stat-value {
+    display: block; font-size: 28px; font-weight: 800; color: var(--primary);
+}
+@media (max-width: 768px) {
+    .results-stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+    .results-stats-grid { grid-template-columns: 1fr; }
+}
+
 .stat-card {
     background: var(--white);
     border-radius: 20px;
