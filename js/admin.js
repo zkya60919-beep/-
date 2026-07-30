@@ -2246,16 +2246,10 @@ async function handleCourseSubmit(event) {
             const newVideos = uploadedVideos.filter(v => v._isNew && v.file && v.duration > 0);
             const existingVideos = uploadedVideos.filter(v => !v._isNew && v._dbId);
 
-            // Pre-sign all new video URLs in parallel
-            const presigns = await Promise.all(newVideos.map(v =>
-                preSignFile(`course-${savedCourse.id}`, v.file.name, r2ContentType(v.file)).catch(() => null)
-            ));
-
-            // Upload new videos in parallel (3 at a time)
+            // Upload new videos in parallel (3 at a time) — pre-signing handled internally by uploadFilesParallel
             const items = newVideos.map((video, i) => ({
                 file: video.file,
                 folder: `course-${savedCourse.id}`,
-                _preSigned: presigns[i],
                 onProgress: (pct) => { btn.textContent = `رفع فيديو ${i + 1}/${newVideos.length}: ${pct}%`; }
             }));
             const results = await uploadFilesParallel(items, 3);
