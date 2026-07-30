@@ -2242,11 +2242,12 @@ async function handleCourseSubmit(event) {
         }
 
         // Upload videos
+        let videoUploadErrors = [];
         if (uploadedVideos.length > 0) {
             const newVideos = uploadedVideos.filter(v => v._isNew && v.file && v.duration > 0);
             const existingVideos = uploadedVideos.filter(v => !v._isNew && v._dbId);
 
-            // Upload new videos in parallel (3 at a time) — pre-signing handled internally by uploadFilesParallel
+            // Upload new videos in parallel (3 at a time)
             const items = newVideos.map((video, i) => ({
                 file: video.file,
                 folder: `course-${savedCourse.id}`,
@@ -2257,15 +2258,16 @@ async function handleCourseSubmit(event) {
             // Insert uploaded videos into DB
             for (let i = 0; i < newVideos.length; i++) {
                 if (results[i] && !results[i].error) {
-                    await supabase.from('course_videos').insert({
+                    const { error: insertErr } = await supabase.from('course_videos').insert({
                         course_id: savedCourse.id,
                         title: newVideos[i].title,
                         video_url: results[i].secure_url,
                         duration: newVideos[i].duration,
                         order_number: uploadedVideos.indexOf(newVideos[i]) + 1
                     });
+                    if (insertErr) videoUploadErrors.push(`${newVideos[i].title}: ${insertErr.message}`);
                 } else if (results[i] && results[i].error) {
-                    console.error(`فشل رفع فيديو ${newVideos[i].title}:`, results[i].error);
+                    videoUploadErrors.push(`${newVideos[i].title}: ${results[i].error.message || 'خطأ في الرفع'}`);
                 }
             }
 
@@ -2284,7 +2286,11 @@ async function handleCourseSubmit(event) {
                 .in('id', deletedVideoIds);
         }
 
-        showAlert('تم حفظ الكورس بنجاح', 'success');
+        if (videoUploadErrors.length > 0) {
+            showAlert('تم حفظ الكورس ولكن فشل رفع بعض الفيديوهات: ' + videoUploadErrors.join(' | '), 'warning');
+        } else {
+            showAlert('تم حفظ الكورس بنجاح', 'success');
+        }
         closeModal('courseModal');
         loadCourses();
         

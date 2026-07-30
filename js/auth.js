@@ -127,6 +127,7 @@ async function checkAuth() {
                 });
                 const data = await res.json();
                 if (data.valid) {
+                    loadCachedUser();
                     updateUIForLoggedInUser();
                     return;
                 }

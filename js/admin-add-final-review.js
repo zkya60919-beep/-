@@ -42,18 +42,27 @@ let contentItems = {
 let contentItemCounter = 0;
 
 onDOMReady(async () => {
-    if (!await requireAdmin()) return;
-
     await loadGradesSelect();
     setupThumbnailDropZone();
     document.getElementById('finalReviewForm').addEventListener('submit', handleSubmit);
+    if (!await requireAdmin()) return;
 });
 
 async function loadGradesSelect() {
-    const grades = await db.getGrades();
-    document.getElementById('reviewGrade').innerHTML = grades.map(g =>
-        `<option value="${g.id}">${g.name}</option>`
-    ).join('');
+    try {
+        const grades = await db.getGrades();
+        const select = document.getElementById('reviewGrade');
+        if (!grades || grades.length === 0) {
+            select.innerHTML = '<option value="">لا توجد صفوف متاحة</option>';
+        } else {
+            select.innerHTML = '<option value="">اختر الصف الدراسي</option>' + grades.map(g =>
+                `<option value="${g.id}">${g.name}</option>`
+            ).join('');
+        }
+    } catch (err) {
+        console.error('Error loading grades:', err);
+        document.getElementById('reviewGrade').innerHTML = '<option value="">تعذر تحميل الصفوف</option>';
+    }
 }
 
 function setupThumbnailDropZone() {

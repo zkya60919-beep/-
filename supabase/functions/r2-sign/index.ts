@@ -30,7 +30,8 @@ function getSignatureKeyHex(secret: string, date: string, region: string, servic
 
 async function presignPut(
   accessKey: string, secretKey: string, bucket: string, endpoint: string,
-  key: string, contentType: string, expiresIn: number
+  key: string, contentType: string, expiresIn: number,
+  uploadId?: string, partNumber?: number
 ): Promise<string> {
   const region = 'auto';
   const service = 's3';
@@ -42,13 +43,16 @@ async function presignPut(
 
   const host = new URL(endpoint).host;
   const canonicalUri = `/${encodeURIComponent(bucket).replace(/%2F/g, '/')}/${key}`;
-  const canonicalQueryString = [
+  const params: string[] = [
     `X-Amz-Algorithm=AWS4-HMAC-SHA256`,
     `X-Amz-Credential=${encodeURIComponent(accessKey + '/' + credentialScope)}`,
     `X-Amz-Date=${amzDate}`,
     `X-Amz-Expires=${expiresIn}`,
     `X-Amz-SignedHeaders=${encodeURIComponent('content-type;host')}`,
-  ].sort().join('&');
+  ];
+  if (uploadId) params.push(`uploadId=${encodeURIComponent(uploadId)}`);
+  if (partNumber) params.push(`partNumber=${String(partNumber)}`);
+  const canonicalQueryString = params.sort().join('&');
 
   const canonicalHeaders = `content-type:${contentType}\nhost:${host}\n`;
   const signedHeaders = 'content-type;host';
@@ -59,7 +63,7 @@ async function presignPut(
   const signatureBytes = await hmacSha256(signingKey, stringToSign);
   const signature = Array.from(new Uint8Array(signatureBytes)).map(b => b.toString(16).padStart(2, '0')).join('');
 
-  return `${endpoint}/${bucket}/${key}?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=${encodeURIComponent(accessKey + '/' + credentialScope)}&X-Amz-Date=${amzDate}&X-Amz-Expires=${expiresIn}&X-Amz-SignedHeaders=${encodeURIComponent(signedHeaders)}&X-Amz-Signature=${signature}`;
+  return `${endpoint}/${bucket}/${key}?${canonicalQueryString}&X-Amz-Signature=${signature}`;
 }
 
 async function presignDelete(
@@ -95,6 +99,35 @@ async function presignDelete(
   return `${endpoint}/${bucket}/${key}?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=${encodeURIComponent(accessKey + '/' + credentialScope)}&X-Amz-Date=${amzDate}&X-Amz-Expires=${expiresIn}&X-Amz-SignedHeaders=${encodeURIComponent(signedHeaders)}&X-Amz-Signature=${signature}`;
 }
 
+async function s3SignedRequest(
+  accessKey: string, secretKey: string, bucket: string, endpoint: string,
+  method: string, key: string, body: string, contentType: string,
+  querystring?: string, extraHeaders?: Record<string, string>
+): Promise<Response> {
+  const region = 'auto';
+  const service = 's3';
+  const now = new Date();
+  const dateStamp = now.toISOString().replace(/[:-]|\.\d{3}/g, '').substring(0, 8);
+  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '').substring(0, 15) + 'Z';
+  const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
+  const payloadHash = await sha256Hex(body);
+  const host = new URL(endpoint).host;
+  const canonicalUri = `/${encodeURIComponent(bucket).replace(/%2F/g, '/')}/${key}`;
+  const qs = querystring || '';
+  const allHeaders: Record<string, string> = { 'content-type': contentType, 'host': host, 'x-amz-content-sha256': payloadHash, 'x-amz-date': amzDate, ...extraHeaders };
+  const signedHeaderKeys = Object.keys(allHeaders).sort();
+  const canonicalHeaders = signedHeaderKeys.map(k => `${k}:${allHeaders[k]}`).join('\n') + '\n';
+  const signedHeaders = signedHeaderKeys.join(';');
+  const canonicalRequest = `${method}\n${canonicalUri}\n${qs}\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
+  const stringToSign = `AWS4-HMAC-SHA256\n${amzDate}\n${credentialScope}\n${await sha256Hex(canonicalRequest)}`;
+  const signingKey = await getSigningKey(secretKey, dateStamp, region, service);
+  const signatureBytes = await hmacSha256(signingKey, stringToSign);
+  const signature = Array.from(new Uint8Array(signatureBytes)).map(b => b.toString(16).padStart(2, '0')).join('');
+  const url = `${endpoint}/${bucket}/${key}${qs ? '?' + qs : ''}`;
+  const headers: Record<string, string> = { ...extraHeaders, 'Content-Type': contentType, 'X-Amz-Content-Sha256': payloadHash, 'X-Amz-Date': amzDate, 'Authorization': `AWS4-HMAC-SHA256 Credential=${accessKey}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}` };
+  return fetch(url, { method, headers, body: body || undefined });
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -109,13 +142,35 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { key, content_type, action } = body;
+    const { items, key, content_type, action } = body;
 
+    const expiresIn = 3600;
+    const publicUrl = Deno.env.get('R2_PUBLIC_URL') || '';
+
+    // Batch mode: sign multiple keys in one call
+    if (Array.isArray(items) && items.length > 0) {
+      const results = await Promise.all(items.map(async (item: any) => {
+        const k = item.key;
+        const ct = item.content_type || 'application/octet-stream';
+        const act = item.action || 'upload';
+
+        if (act === 'delete') {
+          const deleteUrl = await presignDelete(accessKey, secretKey, bucket, endpoint, k, expiresIn);
+          return { key: k, delete_url: deleteUrl };
+        }
+
+        const uploadUrl = await presignPut(accessKey, secretKey, bucket, endpoint, k, ct, expiresIn);
+        const fileUrl = publicUrl ? `${publicUrl}/${k}` : '';
+        return { key: k, upload_url: uploadUrl, file_url: fileUrl };
+      }));
+
+      return Response.json({ results }, { headers: corsHeaders });
+    }
+
+    // Single mode (backward compatible)
     if (!key) {
       return Response.json({ error: 'Missing key' }, { status: 400, headers: corsHeaders });
     }
-
-    const expiresIn = 3600;
 
     if (action === 'delete') {
       const deleteUrl = await presignDelete(accessKey, secretKey, bucket, endpoint, key, expiresIn);
@@ -126,7 +181,44 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing content_type' }, { status: 400, headers: corsHeaders });
     }
 
-    const publicUrl = Deno.env.get('R2_PUBLIC_URL') || '';
+    // ── Multipart: CreateMultipartUpload ──
+    if (action === 'multipart-create') {
+      if (!key || !content_type) return Response.json({ error: 'Missing key/content_type' }, { status: 400, headers: corsHeaders });
+      const res = await s3SignedRequest(accessKey, secretKey, bucket, endpoint, 'POST', key, '', content_type, 'uploads=');
+      const xml = await res.text();
+      const uploadId = xml.match(/<UploadId>(.*?)<\/UploadId>/)?.[1];
+      if (!uploadId) return Response.json({ error: 'CreateMultipartUpload failed', detail: xml }, { status: 500, headers: corsHeaders });
+      return Response.json({ upload_id: uploadId }, { headers: corsHeaders });
+    }
+
+    // ── Multipart: Sign all parts ──
+    if (action === 'multipart-sign' && body.upload_id && body.part_count && body.part_size) {
+      if (!key || !content_type) return Response.json({ error: 'Missing key/content_type' }, { status: 400, headers: corsHeaders });
+      const results = await Promise.all(
+        Array.from({ length: body.part_count }, (_, i) => i + 1).map(async (n) => {
+          const url = await presignPut(accessKey, secretKey, bucket, endpoint, key, content_type, expiresIn, body.upload_id, n);
+          return { part_number: n, url };
+        })
+      );
+      return Response.json({ parts: results }, { headers: corsHeaders });
+    }
+
+    // ── Multipart: CompleteMultipartUpload ──
+    if (action === 'multipart-complete' && body.upload_id && body.parts) {
+      if (!key) return Response.json({ error: 'Missing key' }, { status: 400, headers: corsHeaders });
+      const partsXml = (body.parts as any[]).sort((a: any, b: any) => a.PartNumber - b.PartNumber)
+        .map((p: any) => `<Part><PartNumber>${p.PartNumber}</PartNumber><ETag>${p.ETag}</ETag></Part>`)
+        .join('');
+      const completeBody = `<CompleteMultipartUpload xmlns="http://s3.amazonaws.com/doc/2006-03-01/">${partsXml}</CompleteMultipartUpload>`;
+      const qs = `uploadId=${encodeURIComponent(body.upload_id)}`;
+      const res = await s3SignedRequest(accessKey, secretKey, bucket, endpoint, 'POST', key, completeBody, 'application/xml', qs);
+      if (res.ok) {
+        const fileUrl = publicUrl ? `${publicUrl}/${key}` : '';
+        return Response.json({ ok: true, file_url: fileUrl }, { headers: corsHeaders });
+      }
+      return Response.json({ error: 'CompleteMultipartUpload failed', status: res.status, detail: await res.text() }, { status: 500, headers: corsHeaders });
+    }
+
     const uploadUrl = await presignPut(accessKey, secretKey, bucket, endpoint, key, content_type, expiresIn);
     const fileUrl = publicUrl ? `${publicUrl}/${key}` : '';
 

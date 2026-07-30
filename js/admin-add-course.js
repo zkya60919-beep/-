@@ -302,25 +302,39 @@ async function handleCourseSubmit(event) {
         let uploadedCount = 0;
         let failedCount = 0;
         let lastError = '';
-        for (let i = 0; i < uploadedVideos.length; i++) {
-            const video = uploadedVideos[i];
-            try {
-                const result = await uploadVideo(video.file, `course-${course.id}`, (pct) => {
-                    submitBtn.textContent = `رفع ${i + 1}/${uploadedVideos.length}: ${pct}%`;
-                });
 
-                await supabase.from('course_videos').insert({
-                    course_id: course.id,
-                    video_url: result.secure_url,
-                    title: video.customTitle || video.name.replace(/\.[^/.]+$/, ''),
-                    order_number: i + 1,
-                    duration: video.duration || 0
-                });
-                uploadedCount++;
-            } catch (videoErr) {
-                console.error(`فشل رفع الفيديو ${video.name}:`, videoErr);
+        // Pre-sign all URLs in parallel
+        const presigns = await Promise.all(uploadedVideos.map(v =>
+            preSignFile(`course-${course.id}`, v.file.name, v.file.type || 'video/mp4').catch(() => null)
+        ));
+
+        // Upload all videos in parallel (3 at a time)
+        const items = uploadedVideos.map((video, i) => ({
+            file: video.file,
+            folder: `course-${course.id}`,
+            _preSigned: presigns[i],
+            onProgress: (pct) => { submitBtn.textContent = `رفع ${i + 1}/${uploadedVideos.length}: ${pct}%`; }
+        }));
+        const results = await uploadFilesParallel(items, 3);
+
+        for (let i = 0; i < uploadedVideos.length; i++) {
+            if (results[i] && !results[i].error) {
+                try {
+                    await supabase.from('course_videos').insert({
+                        course_id: course.id,
+                        video_url: results[i].secure_url,
+                        title: uploadedVideos[i].customTitle || uploadedVideos[i].name.replace(/\.[^/.]+$/, ''),
+                        order_number: i + 1,
+                        duration: uploadedVideos[i].duration || 0
+                    });
+                    uploadedCount++;
+                } catch (dbErr) {
+                    failedCount++;
+                    lastError = dbErr.message || dbErr.toString();
+                }
+            } else {
                 failedCount++;
-                lastError = videoErr.message || videoErr.toString();
+                lastError = (results[i] && results[i].error && results[i].error.message) || 'فشل الرفع';
             }
         }
 

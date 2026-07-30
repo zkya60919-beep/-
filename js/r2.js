@@ -41,7 +41,7 @@ async function r2SignBatch(items) {
   return res.json();
 }
 
-const MULTIPART_THRESHOLD = 5 * 1024 * 1024;
+const MULTIPART_THRESHOLD = 100 * 1024 * 1024;
 const PART_SIZE = 5 * 1024 * 1024;
 const MULTIPART_CONCURRENCY = 5;
 
@@ -267,29 +267,6 @@ async function preSignBatch(files) {
 
 async function uploadFilesParallel(items, concurrency) {
   concurrency = concurrency || 5;
-
-  // Step 1: Batch pre-sign ALL files in ONE Edge Function call
-  const needSign = items.filter(it => !it._preSigned);
-  if (needSign.length > 0) {
-    try {
-      const batchSigs = await preSignBatch(needSign.map(it => ({
-        file: it.file,
-        folder: it.folder || 'uploads'
-      })));
-      needSign.forEach((it, i) => { it._preSigned = batchSigs[i]; });
-    } catch (_) {
-      // Fallback: individual signing
-      await Promise.all(needSign.map(async (it) => {
-        if (!it._preSigned) {
-          try {
-            it._preSigned = await preSignFile(it.folder || 'uploads', it.file.name, r2ContentType(it.file));
-          } catch (_) {}
-        }
-      }));
-    }
-  }
-
-  // Step 2: Upload in parallel with concurrency limit
   let idx = 0;
   const results = [];
   async function worker() {
