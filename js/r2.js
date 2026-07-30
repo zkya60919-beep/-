@@ -31,7 +31,68 @@ async function r2Sign(key, contentType, action) {
   return res.json();
 }
 
-function uploadDirect(file, folder, onProgress) {
+async function r2SignBatch(items) {
+  const res = await fetch(`${CONFIG.SUPABASE.URL}/functions/v1/${R2.SIGN_FN}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', apikey: CONFIG.SUPABASE.ANON_KEY, Authorization: `Bearer ${CONFIG.SUPABASE.ANON_KEY}` },
+    body: JSON.stringify({ items })
+  });
+  if (!res.ok) throw new Error('فشل الحصول على توقيعات الرفع');
+  return res.json();
+}
+
+const MULTIPART_THRESHOLD = 5 * 1024 * 1024;
+const PART_SIZE = 5 * 1024 * 1024;
+const MULTIPART_CONCURRENCY = 5;
+
+function r2EfPost(body) {
+  return fetch(`${CONFIG.SUPABASE.URL}/functions/v1/${R2.SIGN_FN}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', apikey: CONFIG.SUPABASE.ANON_KEY, Authorization: `Bearer ${CONFIG.SUPABASE.ANON_KEY}` },
+    body: JSON.stringify(body)
+  });
+}
+
+async function r2MultipartInit(key, contentType) {
+  const res = await r2EfPost({ action: 'multipart-create', key, content_type: contentType });
+  if (!res.ok) throw new Error('فشل بدء الرفع المتعدد');
+  const d = await res.json();
+  return d.upload_id;
+}
+
+async function r2MultipartSignParts(key, contentType, uploadId, partCount) {
+  const res = await r2EfPost({ action: 'multipart-sign', key, content_type: contentType, upload_id: uploadId, part_count: partCount, part_size: PART_SIZE });
+  if (!res.ok) throw new Error('فشل توقيع الأجزاء');
+  const d = await res.json();
+  return d.parts;
+}
+
+async function r2MultipartComplete(key, uploadId, parts) {
+  const res = await r2EfPost({ action: 'multipart-complete', key, upload_id: uploadId, parts });
+  if (!res.ok) throw new Error('فشل إنهاء الرفع المتعدد');
+  return res.json();
+}
+
+async function uploadPart(partUrl, blob, partNum, ct) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', partUrl);
+    xhr.setRequestHeader('Content-Type', ct);
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const etag = xhr.getResponseHeader('ETag');
+        resolve({ PartNumber: partNum, ETag: etag });
+      } else {
+        reject(new Error(`خطأ رفع الجزء ${partNum}: ${xhr.status}`));
+      }
+    };
+    xhr.onerror = () => reject(new Error('انقطع الاتصال أثناء رفع جزء'));
+    xhr.timeout = 300000;
+    xhr.send(blob);
+  });
+}
+
+async function uploadDirect(file, folder, onProgress, preSignedUrl) {
   return new Promise(async (resolve, reject) => {
     try {
       const t = file.type || '';
@@ -45,13 +106,66 @@ function uploadDirect(file, folder, onProgress) {
         throw new Error('حجم PDF يتجاوز 50 ميجابايت');
       }
 
-      const uploadFolder = folder || 'uploads';
-      const key = getR2Key(uploadFolder, file.name);
       const ct = r2ContentType(file);
-      const sig = await r2Sign(key, ct, 'upload');
+      let upload_url, file_url, key;
+
+      if (preSignedUrl) {
+        upload_url = preSignedUrl.upload_url;
+        file_url = preSignedUrl.file_url;
+        key = preSignedUrl.key;
+      } else {
+        const uploadFolder = folder || 'uploads';
+        const k = getR2Key(uploadFolder, file.name);
+        const sig = await r2Sign(k, ct, 'upload');
+        upload_url = sig.upload_url;
+        file_url = sig.file_url;
+        key = sig.key;
+      }
+
+      if (file.size > MULTIPART_THRESHOLD) {
+        const totalParts = Math.ceil(file.size / PART_SIZE);
+        if (onProgress) onProgress(0, 'جاري بدء الرفع المتعدد...');
+
+        const uploadId = await r2MultipartInit(key, ct);
+        const partsMeta = await r2MultipartSignParts(key, ct, uploadId, totalParts);
+        const completedParts = [];
+        let uploadedBytes = 0;
+
+        let partIdx = 0;
+        async function partWorker() {
+          while (partIdx < totalParts) {
+            const p = partIdx++;
+            const start = p * PART_SIZE;
+            const end = Math.min(start + PART_SIZE, file.size);
+            const blob = file.slice(start, end);
+            const result = await uploadPart(partsMeta[p].url, blob, p + 1, ct);
+            completedParts.push(result);
+            uploadedBytes += end - start;
+            if (onProgress) {
+              const pct = Math.round((uploadedBytes / file.size) * 100);
+              onProgress(pct, `رفع ${pct}%`);
+            }
+          }
+        }
+
+        const workers = [];
+        for (let w = 0; w < Math.min(MULTIPART_CONCURRENCY, totalParts); w++) workers.push(partWorker());
+        await Promise.all(workers);
+
+        const final = await r2MultipartComplete(key, uploadId, completedParts);
+        if (onProgress) onProgress(100, 'تم الرفع 100%');
+        resolve({
+          secure_url: final.file_url || file_url,
+          public_id: key,
+          key: key,
+          bytes: file.size,
+          format: file.name.split('.').pop()
+        });
+        return;
+      }
 
       const xhr = new XMLHttpRequest();
-      xhr.open('PUT', sig.upload_url);
+      xhr.open('PUT', upload_url);
       xhr.setRequestHeader('Content-Type', ct);
 
       let isAborted = false;
@@ -68,9 +182,9 @@ function uploadDirect(file, folder, onProgress) {
         if (xhr.status >= 200 && xhr.status < 300) {
           if (onProgress) onProgress(100, 'تم الرفع 100%');
           resolve({
-            secure_url: sig.file_url,
-            public_id: sig.key,
-            key: sig.key,
+            secure_url: file_url,
+            public_id: key,
+            key: key,
             bytes: file.size,
             format: file.name.split('.').pop()
           });
@@ -131,10 +245,77 @@ async function uploadFile(file, folder, onProgress) {
   return uploadAttachment(file, folder, onProgress);
 }
 
+async function preSignFile(folder, filename, contentType) {
+  const key = getR2Key(folder, filename);
+  const sig = await r2Sign(key, contentType, 'upload');
+  return { upload_url: sig.upload_url, file_url: sig.file_url, key: sig.key };
+}
+
+async function preSignBatch(files) {
+  const batchItems = files.map(f => ({
+    key: getR2Key(f.folder || 'uploads', f.file.name),
+    content_type: r2ContentType(f.file),
+    action: 'upload'
+  }));
+  const res = await r2SignBatch(batchItems);
+  return (res.results || []).map((r, i) => ({
+    upload_url: r.upload_url,
+    file_url: r.file_url,
+    key: r.key
+  }));
+}
+
+async function uploadFilesParallel(items, concurrency) {
+  concurrency = concurrency || 5;
+
+  // Step 1: Batch pre-sign ALL files in ONE Edge Function call
+  const needSign = items.filter(it => !it._preSigned);
+  if (needSign.length > 0) {
+    try {
+      const batchSigs = await preSignBatch(needSign.map(it => ({
+        file: it.file,
+        folder: it.folder || 'uploads'
+      })));
+      needSign.forEach((it, i) => { it._preSigned = batchSigs[i]; });
+    } catch (_) {
+      // Fallback: individual signing
+      await Promise.all(needSign.map(async (it) => {
+        if (!it._preSigned) {
+          try {
+            it._preSigned = await preSignFile(it.folder || 'uploads', it.file.name, r2ContentType(it.file));
+          } catch (_) {}
+        }
+      }));
+    }
+  }
+
+  // Step 2: Upload in parallel with concurrency limit
+  let idx = 0;
+  const results = [];
+  async function worker() {
+    while (idx < items.length) {
+      const i = idx++;
+      const item = items[i];
+      try {
+        results[i] = await uploadDirect(item.file, item.folder, item.onProgress, item._preSigned);
+      } catch (err) {
+        results[i] = { error: err };
+      }
+    }
+  }
+  const workers = [];
+  for (let w = 0; w < Math.min(concurrency, items.length); w++) workers.push(worker());
+  await Promise.all(workers);
+  return results;
+}
+
 window.uploadImage = uploadImage;
 window.uploadVideo = uploadVideo;
 window.uploadPDF = uploadPDF;
 window.uploadAttachment = uploadAttachment;
 window.uploadFile = uploadFile;
+window.uploadFilesParallel = uploadFilesParallel;
+window.preSignFile = preSignFile;
+window.preSignBatch = preSignBatch;
 window.deleteCloudinaryFile = deleteCloudinaryFile;
 window.R2 = R2;
