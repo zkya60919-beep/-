@@ -272,13 +272,13 @@
             const speedMenu = document.getElementById('cpSpeedMenu');
             const speedLabel = document.getElementById('cpSpeedLabel');
             const fsBtn = document.getElementById('cpFullscreenBtn');
-            const barWrap = document.getElementById('cpProgressWrap');
             const bar = document.getElementById('cpProgressBar');
             const played = document.getElementById('cpPlayed');
             const thumb = document.getElementById('cpThumb');
             const buffered = document.getElementById('cpBuffered');
             const timeCur = document.getElementById('cpCurrentTime');
             const timeDur = document.getElementById('cpDuration');
+            const controlsEl = document.getElementById('courseControls');
 
             let playUrl = videoData.video_url;
             try {
@@ -315,11 +315,16 @@
                 playBtn.querySelector('.icon-play').style.display = 'none';
                 playBtn.querySelector('.icon-pause').style.display = 'block';
                 centerPlay.classList.add('hide');
+                controlsEl.classList.add('controls-hidden');
             });
             video.addEventListener('pause', () => {
                 playBtn.querySelector('.icon-play').style.display = 'block';
                 playBtn.querySelector('.icon-pause').style.display = 'none';
                 centerPlay.classList.remove('hide');
+                controlsEl.classList.remove('controls-hidden');
+            });
+            video.addEventListener('ended', () => {
+                controlsEl.classList.remove('controls-hidden');
             });
 
             video.addEventListener('timeupdate', () => {
@@ -328,7 +333,6 @@
                 played.style.width = pct + '%';
                 thumb.style.left = pct + '%';
                 timeCur.textContent = fmt(video.currentTime);
-                showBar();
             });
             video.addEventListener('durationchange', () => { timeDur.textContent = fmt(video.duration); });
             video.addEventListener('progress', () => {
@@ -403,18 +407,10 @@
                 if (c) c.classList.toggle('course-player-fullscreen', isFull);
             });
 
-            let barTimeout;
-            function showBar() {
-                barWrap.style.display = 'block';
-                clearTimeout(barTimeout);
-                barTimeout = setTimeout(() => { barWrap.style.display = 'none'; }, 3000);
-            }
-            ['click', 'touchstart', 'mousemove', 'keydown'].forEach(ev => document.addEventListener(ev, showBar, { passive: true }));
-
             document.addEventListener('keydown', (e) => {
                 if (e.code === 'Space' && document.activeElement !== volSlider) { e.preventDefault(); togglePlay(); }
-                if (e.code === 'ArrowLeft') { e.preventDefault(); video.currentTime = Math.max(video.currentTime - 5, 0); showBar(); }
-                if (e.code === 'ArrowRight') { e.preventDefault(); video.currentTime = Math.min(video.currentTime + 5, video.duration); showBar(); }
+                if (e.code === 'ArrowLeft') { e.preventDefault(); video.currentTime = Math.max(video.currentTime - 5, 0); }
+                if (e.code === 'ArrowRight') { e.preventDefault(); video.currentTime = Math.min(video.currentTime + 5, video.duration); }
                 if (e.code === 'ArrowUp') { e.preventDefault(); video.volume = Math.min(video.volume + 0.1, 1); volSlider.value = video.volume; }
                 if (e.code === 'ArrowDown') { e.preventDefault(); video.volume = Math.max(video.volume - 0.1, 0); volSlider.value = video.volume; }
                 if (e.key === 'f' || e.key === 'F') { e.preventDefault(); fsBtn.click(); }

@@ -66,6 +66,17 @@
     opacity: 1;
 }
 
+/* Auto-hide controls while playing — always show when paused */
+.course-video-container .player-controls:not(.controls-hidden) {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.course-video-container .player-controls.controls-hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
 /* Progress Bar */
 .progress-bar-container {
     margin-bottom: 12px;
