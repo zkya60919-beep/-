@@ -613,11 +613,17 @@ const db = {
         ]);
 
         let monthlyRevenue = 0;
+        const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
         try {
             const { data: payments } = await supabase.from('payments').select('amount, status, created_at').eq('status', 'success');
-            const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
             monthlyRevenue = (payments || [])
                 .filter(p => p.created_at >= monthStart)
+                .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+        } catch (_) { /* ignore */ }
+        try {
+            const { data: requests } = await supabase.from('payment_requests').select('amount, status, created_at, approved_at').eq('status', 'approved');
+            monthlyRevenue += (requests || [])
+                .filter(p => (p.approved_at || p.created_at) >= monthStart)
                 .reduce((sum, p) => sum + Number(p.amount || 0), 0);
         } catch (_) { /* ignore */ }
 

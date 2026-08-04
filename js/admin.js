@@ -112,23 +112,44 @@ async function loadRevenueReports() {
         const todayStart = new Date(); todayStart.setHours(0,0,0,0);
         const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
-        const { data: allPayments } = await supabase
-            .from('payments')
-            .select('amount, status, created_at, users(name)')
-            .order('created_at', { ascending: false });
+        let paymob = [];
+        let manual = [];
+        try {
+            const { data } = await supabase
+                .from('payments')
+                .select('amount, status, created_at, users(name)')
+                .order('created_at', { ascending: false });
+            paymob = data || [];
+        } catch (e) {}
 
-        if (!allPayments) return;
+        try {
+            const { data } = await supabase
+                .from('payment_requests')
+                .select('amount, status, created_at, approved_at, student_name, users:student_id(name)')
+                .order('created_at', { ascending: false });
+            manual = data || [];
+        } catch (e) {}
 
-        const successful = allPayments.filter(p => p.status === 'success');
-        const failed = allPayments.filter(p => p.status === 'failed');
+        const successful = [];
+        const failed = [];
+
+        (paymob || []).forEach(p => {
+            if (p.status === 'success') successful.push({ amount: Number(p.amount || 0), createdAt: p.created_at, name: p.users?.name || 'طالب' });
+            if (p.status === 'failed') failed.push({ amount: Number(p.amount || 0), createdAt: p.created_at });
+        });
+
+        (manual || []).forEach(p => {
+            if (p.status === 'approved') successful.push({ amount: Number(p.amount || 0), createdAt: p.approved_at || p.created_at, name: p.student_name || p.users?.name || 'طالب' });
+            if (p.status === 'rejected') failed.push({ amount: Number(p.amount || 0), createdAt: p.created_at });
+        });
 
         const todayRevenue = successful
-            .filter(p => new Date(p.created_at) >= todayStart)
-            .reduce((s, p) => s + Number(p.amount || 0), 0);
+            .filter(p => new Date(p.createdAt) >= todayStart)
+            .reduce((s, p) => s + p.amount, 0);
 
         const monthRevenue = successful
-            .filter(p => new Date(p.created_at) >= monthStart)
-            .reduce((s, p) => s + Number(p.amount || 0), 0);
+            .filter(p => new Date(p.createdAt) >= monthStart)
+            .reduce((s, p) => s + p.amount, 0);
 
         const todayEl = document.getElementById('todayRevenue');
         if (todayEl) todayEl.textContent = formatCurrency(todayRevenue);
@@ -145,19 +166,25 @@ async function loadRevenueReports() {
         // Latest payments list
         const latestEl = document.getElementById('latestPaymentsList');
         if (latestEl) {
-            const latest5 = allPayments.slice(0, 10);
-            latestEl.innerHTML = latest5.map(p => `
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6">
-                    <div>
-                        <strong>${p.users?.name || 'طالب'}</strong>
-                        <span style="font-size:13px;color:var(--gray-500);margin-right:8px">${new Date(p.created_at).toLocaleDateString('ar-EG')}</span>
+            const latest10 = [...successful]
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                .slice(0, 10);
+            if (!latest10.length) {
+                latestEl.innerHTML = '<p class="text-center" style="color:var(--gray-500);padding:20px">لا توجد مدفوعات</p>';
+            } else {
+                latestEl.innerHTML = latest10.map(p => `
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6">
+                        <div>
+                            <strong>${escapeHtml(p.name)}</strong>
+                            <span style="font-size:13px;color:var(--gray-500);margin-right:8px">${new Date(p.createdAt).toLocaleDateString('ar-EG')}</span>
+                        </div>
+                        <div>
+                            <span style="font-weight:700;margin-left:8px">${formatCurrency(p.amount)}</span>
+                            <span style="font-size:13px;padding:2px 8px;border-radius:4px;background:#d1fae5;color:#065f46">ناجح</span>
+                        </div>
                     </div>
-                    <div>
-                        <span style="font-weight:700;margin-left:8px">${formatCurrency(p.amount)}</span>
-                        <span style="font-size:13px;padding:2px 8px;border-radius:4px;background:${p.status === 'success' ? '#d1fae5' : '#fee2e2'};color:${p.status === 'success' ? '#065f46' : '#991b1b'}">${p.status === 'success' ? 'ناجح' : p.status === 'pending' ? 'معلق' : 'فاشل'}</span>
-                    </div>
-                </div>
-            `).join('');
+                `).join('');
+            }
         }
     } catch (error) {
         console.error('Error loading revenue reports:', error);
@@ -175,12 +202,13 @@ function destroyCharts() {
 async function loadCharts() {
     try {
         destroyCharts();
-        const [{ data: users }, { data: grades }, { data: videos }, { data: subs }, { data: payments }] = await Promise.all([
+        const [{ data: users }, { data: grades }, { data: videos }, { data: subs }, { data: payments }, { data: manualPayments }] = await Promise.all([
             supabase.from('users').select('*'),
             supabase.from('grades').select('*'),
             supabase.from('videos').select('grade_id'),
             supabase.from('subscriptions').select('status, end_date'),
-            supabase.from('payments').select('amount, status, created_at').eq('status', 'success')
+            supabase.from('payments').select('amount, status, created_at').eq('status', 'success'),
+            supabase.from('payment_requests').select('amount, status, created_at, approved_at').eq('status', 'approved')
         ]);
 
         const students = (users || []).filter(u => u.division !== 'admin');
@@ -232,10 +260,14 @@ async function loadCharts() {
         }
 
         const byMonth = {};
-        (payments || []).forEach(p => {
+        const revenueRows = [
+            ...(payments || []).map(p => ({ amount: Number(p.amount || 0), created_at: p.created_at })),
+            ...(manualPayments || []).map(p => ({ amount: Number(p.amount || 0), created_at: p.approved_at || p.created_at }))
+        ];
+        revenueRows.forEach(p => {
             const d = new Date(p.created_at);
             const key = d.toLocaleDateString('ar-EG', { month: 'short', year: 'numeric' });
-            byMonth[key] = (byMonth[key] || 0) + Number(p.amount || 0);
+            byMonth[key] = (byMonth[key] || 0) + p.amount;
         });
         const revLabels = Object.keys(byMonth).slice(-6);
         const revData = revLabels.map(k => byMonth[k]);
