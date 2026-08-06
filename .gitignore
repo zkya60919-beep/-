@@ -10,5 +10,13 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
+# Dev/server files (should not be deployed)
+server.js
+start_server.bat
+scratch/
+scripts/
+real-test.pdf
+temp-test.pdf
+
 .vercel
 .env*
