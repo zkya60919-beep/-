@@ -6,16 +6,66 @@
 
     <!-- ===== SEO Primary Tags ===== -->
     <title>تفاصيل الكورس | منصة الباسط للعلوم الشرعية</title>
-    <meta name="description" content="تفاصيل الكورس على منصة الباسط للعلوم الشرعية">
-    <meta name="keywords" content="كورسات الباسط, تفاصيل الكورس, منصة الباسط, علوم شرعية">
+    <meta name="description" content="تصفح تفاصيل الكورسات التعليمية في العلوم الشرعية على منصة الباسط - كورسات الأزهر للمراحل الإعدادية والثانوية مع أ/ محمد عبد الباسط.">
+    <meta name="keywords" content="كورسات الباسط, تفاصيل الكورس, منصة الباسط, كورسات الأزهر, شرح الثانوية الأزهرية, مواد الأزهر, علوم شرعية">
     <meta name="author" content="أ/ محمد عبد الباسط">
-    <meta name="robots" content="index, follow">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <link rel="canonical" href="https://albasit.vercel.app/course-details.html">
+    <link rel="alternate" hreflang="ar" href="https://albasit.vercel.app/course-details.html">
+    <link rel="alternate" hreflang="x-default" href="https://albasit.vercel.app/course-details.html">
+
+    <!-- ===== Open Graph / Facebook ===== -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://albasit.vercel.app/course-details.html">
+    <meta property="og:title" content="كورسات العلوم الشرعية | منصة الباسط">
+    <meta property="og:description" content="تصفح الكورسات التعليمية في العلوم الشرعية للأزهر الشريف - فيديوهات ومذكرات وامتحانات مع أ/ محمد عبد الباسط.">
+    <meta property="og:image" content="https://albasit.vercel.app/images/logo.jpg">
+    <meta property="og:image:alt" content="منصة الباسط للعلوم الشرعية">
+    <meta property="og:locale" content="ar_EG">
+    <meta property="og:site_name" content="منصة الباسط">
+
+    <!-- ===== Twitter Card ===== -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="كورسات العلوم الشرعية | منصة الباسط">
+    <meta name="twitter:description" content="تصفح الكورسات التعليمية في العلوم الشرعية للأزهر الشريف مع أ/ محمد عبد الباسط.">
+    <meta name="twitter:image" content="https://albasit.vercel.app/images/logo.jpg">
+
+    <!-- ===== Icons & Manifest ===== -->
+    <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="images/favicon-32x32.png" sizes="32x32" type="image/png">
+    <link rel="icon" href="images/favicon-16x16.png" sizes="16x16" type="image/png">
+    <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="manifest" href="manifest.json">
+
+    <!-- ===== Structured Data Schema.org ===== -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "EducationalOrganization",
+      "@id": "https://albasit.vercel.app/#organization",
+      "name": "منصة الباسط للعلوم الشرعية",
+      "alternateName": "منصة الباسط",
+      "description": "منصة تعليمية احترافية توفر دروس العلوم الشرعية للمراحل الإعدادية والثانوية",
+      "url": "https://albasit.vercel.app",
+      "logo": "https://albasit.vercel.app/images/logo.jpg",
+      "knowsLanguage": "ar",
+      "areaServed": "EG",
+      "sameAs": [
+        "https://wa.me/201127025715",
+        "https://facebook.com/albasit",
+        "https://youtube.com/@albasit",
+        "https://t.me/albasit",
+        "https://instagram.com/albasit"
+      ]
+    }
+    </script>
 
     <!-- ===== Performance: Preconnect ===== -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="dns-prefetch" href="https://supabase.co">
-    <link rel="preconnect" href="https://supabase.co">
+    <link rel="dns-prefetch" href="https://olnilgksaopmlzulnftw.supabase.co">
+    <link rel="preconnect" href="https://olnilgksaopmlzulnftw.supabase.co">
 
     <!-- ===== Styles ===== -->
     <link rel="stylesheet" href="css/style.css">
@@ -101,6 +151,8 @@
                 if (error || !course) {
                     throw error || new Error('Course not found');
                 }
+
+                updateCourseSEO(course);
 
                 const container = document.getElementById('courseDetailsContainer');
                 const thumbnail = course.thumbnail || 'images/logo.jpg';
@@ -275,6 +327,83 @@
         function watchCourse(courseId) {
             // Redirect to course player page
             window.location.href = `course-player.html?id=${courseId}`;
+        }
+
+        // Update SEO metadata (title, description, canonical, OG, Twitter, JSON-LD) based on the loaded course
+        function updateCourseSEO(course) {
+            const site = 'https://albasit.vercel.app';
+            const courseUrl = site + '/course-details.html?id=' + course.id;
+            const thumbnail = course.thumbnail || site + '/images/logo.jpg';
+            const title = (course.title || 'كورس') + ' | منصة الباسط للعلوم الشرعية';
+            const description = ((course.description || 'كورس تعليمي في العلوم الشرعية على منصة الباسط للأزهر الشريف.').length > 155
+                ? (course.description || '').slice(0, 152) + '...'
+                : (course.description || 'كورس تعليمي في العلوم الشرعية على منصة الباسط للأزهر الشريف.'));
+
+            document.title = title;
+
+            const setMeta = (attr, name, content) => {
+                let el = document.head.querySelector(`meta[${attr}="${name}"]`);
+                if (!el) { el = document.createElement('meta'); el.setAttribute(attr, name); document.head.appendChild(el); }
+                el.setAttribute('content', content);
+            };
+
+            setMeta('name', 'description', description);
+            setMeta('name', 'robots', 'index, follow, max-image-preview:large');
+            setMeta('property', 'og:title', title);
+            setMeta('property', 'og:description', description);
+            setMeta('property', 'og:url', courseUrl);
+            setMeta('property', 'og:image', thumbnail);
+            setMeta('property', 'og:type', 'website');
+            setMeta('name', 'twitter:title', title);
+            setMeta('name', 'twitter:description', description);
+            setMeta('name', 'twitter:image', thumbnail);
+
+            let canonical = document.head.querySelector('link[rel="canonical"]');
+            if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical); }
+            canonical.href = courseUrl;
+
+            document.querySelectorAll('script[data-course-jsonld]').forEach(s => s.remove());
+            const schema = document.createElement('script');
+            schema.type = 'application/ld+json';
+            schema.setAttribute('data-course-jsonld', '1');
+            schema.textContent = JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'Course',
+                'name': course.title,
+                'description': course.description || 'كورس تعليمي في العلوم الشرعية على منصة الباسط.',
+                'url': courseUrl,
+                'image': thumbnail,
+                'inLanguage': 'ar',
+                'provider': {
+                    '@type': 'EducationalOrganization',
+                    '@id': site + '/#organization',
+                    'name': 'منصة الباسط للعلوم الشرعية',
+                    'url': site,
+                    'logo': site + '/images/logo.jpg',
+                    'sameAs': ['https://wa.me/201127025715']
+                },
+                'hasCourseInstance': {
+                    '@type': 'CourseInstance',
+                    'courseMode': 'online',
+                    'courseWorkload': 'PT6H',
+                    'inLanguage': 'ar',
+                    'provider': { '@type': 'Organization', 'name': 'منصة الباسط للعلوم الشرعية' }
+                }
+            });
+            document.head.appendChild(schema);
+
+            const breadcrumb = document.createElement('script');
+            breadcrumb.type = 'application/ld+json';
+            breadcrumb.setAttribute('data-course-jsonld', '1');
+            breadcrumb.textContent = JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'BreadcrumbList',
+                'itemListElement': [
+                    { '@type': 'ListItem', 'position': 1, 'name': 'الرئيسية', 'item': site + '/' },
+                    { '@type': 'ListItem', 'position': 2, 'name': course.title, 'item': courseUrl }
+                ]
+            });
+            document.head.appendChild(breadcrumb);
         }
 
         // Expose functions globally

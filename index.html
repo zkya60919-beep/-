@@ -12,6 +12,11 @@
     <meta name="robots" content="index, follow, max-image-preview:large">
     <meta name="language" content="Arabic">
     <link rel="canonical" href="https://albasit.vercel.app/">
+    <link rel="alternate" hreflang="ar" href="https://albasit.vercel.app/">
+    <link rel="alternate" hreflang="x-default" href="https://albasit.vercel.app/">
+
+    <!-- ===== Performance: Preload LCP image ===== -->
+    <link rel="preload" as="image" href="images/teacher.jpeg" fetchpriority="high">
 
     <!-- ===== Open Graph / Facebook ===== -->
     <meta property="og:type" content="website">
@@ -34,10 +39,14 @@
     {
       "@context": "https://schema.org",
       "@type": "EducationalOrganization",
+      "@id": "https://albasit.vercel.app/#organization",
       "name": "منصة الباسط للعلوم الشرعية",
+      "alternateName": "منصة الباسط",
       "description": "منصة تعليمية احترافية توفر دروس العلوم الشرعية للمراحل الإعدادية والثانوية",
       "url": "https://albasit.vercel.app",
       "logo": "https://albasit.vercel.app/images/logo.jpg",
+      "knowsLanguage": "ar",
+      "areaServed": "EG",
       "contactPoint": {
         "@type": "ContactPoint",
         "telephone": "+201127025715",
@@ -45,7 +54,11 @@
         "availableLanguage": "Arabic"
       },
       "sameAs": [
-        "https://wa.me/201127025715"
+        "https://wa.me/201127025715",
+        "https://facebook.com/albasit",
+        "https://youtube.com/@albasit",
+        "https://t.me/albasit",
+        "https://instagram.com/albasit"
       ],
       "founder": {
         "@type": "Person",
@@ -54,6 +67,34 @@
       }
     }
     </script>
+
+    <!-- ===== WebSite Schema ===== -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "منصة الباسط للعلوم الشرعية",
+      "alternateName": "منصة الباسط",
+      "url": "https://albasit.vercel.app/",
+      "inLanguage": "ar",
+      "publisher": {
+        "@type": "EducationalOrganization",
+        "name": "منصة الباسط للعلوم الشرعية",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://albasit.vercel.app/images/logo.jpg"
+        }
+      }
+    }
+    </script>
+
+    <!-- ===== Icons & Manifest ===== -->
+    <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="images/favicon-32x32.png" sizes="32x32" type="image/png">
+    <link rel="icon" href="images/favicon-16x16.png" sizes="16x16" type="image/png">
+    <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="manifest" href="manifest.json">
 
     <!-- ===== Performance: Preconnect ===== -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -152,7 +193,7 @@
                         <div class="teacher-card">
                             <div class="teacher-card-glow" aria-hidden="true"></div>
                             <div class="teacher-avatar">
-                                <img src="images/teacher.jpeg" alt="أستاذ محمد عبد الباسط - مدرس العلوم الشرعية" width="280" height="280" loading="eager">
+                                <img src="images/teacher.jpeg" alt="أستاذ محمد عبد الباسط - مدرس العلوم الشرعية" width="280" height="280" loading="eager" fetchpriority="high" decoding="async">
                             </div>
                             <div class="teacher-info">
                                 <div class="teacher-badge">👨‍🏫 معلم</div>
@@ -289,6 +330,12 @@
                     <ul>
                         <li><a href="index.html">الرئيسية</a></li>
                         <li><a href="about.html">نبذة عنا</a></li>
+                        <li><a href="teachers.html">المعلمون</a></li>
+                        <li><a href="faq.html">الأسئلة الشائعة</a></li>
+                        <li><a href="student-guide.html">دليل الطالب</a></li>
+                        <li><a href="contact.html">تواصل معنا</a></li>
+                        <li><a href="privacy-policy.html">سياسة الخصوصية</a></li>
+                        <li><a href="terms.html">الشروط والأحكام</a></li>
                         <li><a href="dashboard.html">لوحة الطالب</a></li>
                     </ul>
                 </div>
@@ -303,6 +350,9 @@
                         <a href="https://wa.me/201102958780" target="_blank" rel="noopener noreferrer">
                             🛠️ الدعم الفني: 01102958780
                         </a>
+                    </p>
+                    <p class="footer-contact-info">
+                        <a href="contact.html">📧 صفحة التواصل</a>
                     </p>
                     <p class="footer-seo-text">منصة الباسط للعلوم الشرعية — شرح احترافي للعلوم الشرعية للمرحلة الإعدادية والثانوية في مصر</p>
                 </div>

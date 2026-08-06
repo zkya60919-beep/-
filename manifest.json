@@ -1,0 +1,32 @@
+{
+  "name": "منصة الباسط للعلوم الشرعية",
+  "short_name": "منصة الباسط",
+  "description": "منصة تعليمية احترافية لشرح العلوم الشرعية للمراحل الإعدادية والثانوية مع أ/ محمد عبد الباسط - فيديوهات ومذكرات وامتحانات تفاعلية",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/images/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

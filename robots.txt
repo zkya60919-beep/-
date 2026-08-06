@@ -1,14 +1,38 @@
 User-agent: *
 Allow: /
+
+# صفحات الإدارة والاختبار والتطبيق (ممنوعة من الفهرسة)
 Disallow: /admin.html
 Disallow: /admin-add-video.html
 Disallow: /admin-add-note.html
 Disallow: /admin-add-exam.html
 Disallow: /admin-add-audio.html
 Disallow: /admin-add-final-review.html
-Disallow: /disable-rls.sql
-Disallow: /setup-database.sql
+Disallow: /admin-add-course.html
+Disallow: /admin-exam-results.html
+Disallow: /test-login.html
+Disallow: /cloudinary-upload-doc.html
+Disallow: /course-player.html
+Disallow: /pdf-viewer.html
+Disallow: /exam-result.html
+Disallow: /student-payment-requests.html
+Disallow: /dashboard.html
+Disallow: /months.html
+Disallow: /video.html
+Disallow: /exam.html
+Disallow: /payment.html
+Disallow: /payment-final-review.html
+Disallow: /select-grade.html
+Disallow: /final-reviews-view.html
+
+# ملفات المشروع الحساسة
 Disallow: /scratch/
+Disallow: /scripts/
+Disallow: /*.sql
+Disallow: /package-lock.json
+Disallow: /server.js
+Disallow: /real-test.pdf
+Disallow: /temp-test.pdf
 
 # السماح لجميع محركات البحث بفهرسة المنصة
 Sitemap: https://albasit.vercel.app/sitemap.xml
