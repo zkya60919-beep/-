@@ -35,4 +35,4 @@ Disallow: /real-test.pdf
 Disallow: /temp-test.pdf
 
 # السماح لجميع محركات البحث بفهرسة المنصة
-Sitemap: https://albasit.vercel.app/sitemap.xml
+Sitemap: https://albaist.vercel.app/sitemap.xml
