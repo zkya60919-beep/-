@@ -331,7 +331,7 @@ async function loadVideos(monthId) {
                                 <div class="lock-icon">🔒</div>
                                 <p>محتوى مدفوع</p>
                                 ${price > 0 ? `<p class="price">${price} ج.م</p>` : ''}
-                                <button type="button" class="btn btn-primary btn-sm" onclick="purchaseContent('video', ${video.id}, ${price})">شراء الفيديو</button>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="subscribeToMonth(${monthId}, '')">شراء الفيديو</button>
                             </div>`}
                     </div>
                     <div class="video-info">
