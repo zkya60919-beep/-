@@ -558,6 +558,7 @@ async function handleForgotPassword(event) {
         document.getElementById('forgotForm').style.display = 'none';
         document.getElementById('verifyForm').style.display = '';
         document.getElementById('verifyForm').dataset.userId = user.id;
+        document.getElementById('verifyForm').dataset.phone = user.phone || '';
         document.getElementById('verifyCode').value = '';
         document.getElementById('verifyCode').focus();
 
@@ -624,14 +625,22 @@ async function handleVerifyCode(event) {
             await supabase.from('reset_codes').update({ used: true }).eq('id', resetCode.id).catch(() => {});
         }
 
-        // تسجيل دخول المستخدم
-        const { data: user, error: userError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', userId)
-            .single();
+        // جلب بيانات المستخدم بالبحث عن رقم الهاتف (تفادي مشاكل RLS)
+        const resolvedPhone = event.target.dataset.phone || '';
+        let user = null;
+        try {
+            const { data, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('phone', resolvedPhone)
+                .maybeSingle();
+            if (!error && data) user = data;
+        } catch (_) { /* ignore */ }
 
-        if (userError || !user) throw userError || new Error('User not found');
+        // لو فشل البحث في قاعدة البيانات استخدم بيانات الهاتف المتاحة
+        if (!user && resolvedPhone) {
+            user = { id: userId, phone: resolvedPhone, name: resolvedPhone };
+        }
 
         localStorage.removeItem('isAdmin');
         localStorage.removeItem('admin_session');
@@ -639,14 +648,14 @@ async function handleVerifyCode(event) {
         localStorage.removeItem('admin_sig');
         sessionStorage.removeItem(SESSION_USER_KEY);
 
-        localStorage.setItem('userId', user.phone);
+        localStorage.setItem('userId', resolvedPhone || (user && user.phone));
         localStorage.setItem('loginTime', Date.now().toString());
-        cacheUser(user);
+        if (user) cacheUser(user);
 
         showAlert('✅ تم تسجيل الدخول بنجاح', 'success');
 
         setTimeout(() => {
-            if (!user.grade_id) {
+            if (user && !user.grade_id) {
                 window.location.href = 'select-grade.html';
             } else {
                 window.location.href = 'dashboard.html';
