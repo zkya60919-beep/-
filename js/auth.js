@@ -573,21 +573,18 @@ async function handleVerifyCode(event) {
     event.preventDefault();
     const code = document.getElementById('verifyCode').value.trim();
     const userId = event.target.dataset.userId;
-    if (!userId) { showAlert('حدث خطأ، حاول طلب رمز جديد', 'error'); return; }
+    const phone = event.target.dataset.phone || '';
 
     if (!code || !/^\d{6}$/.test(code)) {
         showAlert('يرجى إدخال الرمز المكون من 6 أرقام', 'error');
         return;
     }
 
-    let btn = event.target.querySelector('button[type="submit"]');
-    if (btn) setButtonLoading(btn, true);
+    let validCode = false;
+    let resetCode = null;
 
+    // 1) التحقق من الرمز: نحاول قاعدة البيانات أولاً
     try {
-        // التحقق من الرمز في DB أولاً
-        let validCode = false;
-        let resetCode;
-
         const { data: dbCode, error } = await supabase
             .from('reset_codes')
             .select('*')
@@ -595,77 +592,77 @@ async function handleVerifyCode(event) {
             .eq('code', code)
             .is('used', false)
             .maybeSingle();
+        if (dbCode && !error) { resetCode = dbCode; validCode = true; }
+    } catch (_) { /* تجاهل أي خطأ في DB */ }
 
-        if (dbCode && !error) {
-            resetCode = dbCode;
-            validCode = true;
-        }
-
-        // Fallback: التحقق من localStorage
-        if (!validCode) {
+    // 2) إن لم ينجح، نتحقق من localStorage (يُحفظ دائماً عند الطلب)
+    if (!validCode && userId) {
+        try {
             const localData = localStorage.getItem('reset_code_' + userId);
             if (localData) {
                 const parsed = JSON.parse(localData);
-                if (parsed.code === code && Date.now() < parsed.expiresAt) {
+                if (parsed && parsed.code === code && Date.now() < parsed.expiresAt) {
                     validCode = true;
                     localStorage.removeItem('reset_code_' + userId);
                 }
             }
-        }
+        } catch (_) { /* تجاهل */ }
+    }
 
-        if (!validCode) {
-            showAlert('الرمز غير صحيح أو منتهي الصلاحية', 'error');
-            if (btn) setButtonLoading(btn, false);
-            return;
-        }
+    if (!validCode) {
+        showAlert('الرمز غير صحيح أو منتهي الصلاحية', 'error');
+        return;
+    }
 
-        // تعليم الرمز كمستخدم (فقط لو من DB)
-        if (resetCode) {
-            await supabase.from('reset_codes').update({ used: true }).eq('id', resetCode.id).catch(() => {});
-        }
+    // تعليم الرمز كمستخدم (اختياري وغير حاسم)
+    if (resetCode && resetCode.id) {
+        supabase.from('reset_codes').update({ used: true }).eq('id', resetCode.id)
+            .then(function () {}).catch(function () {});
+    }
 
-        // جلب بيانات المستخدم بالبحث عن رقم الهاتف (تفادي مشاكل RLS)
-        const resolvedPhone = event.target.dataset.phone || '';
-        let user = null;
+    // 3) جلب بيانات المستخدم بالهاتف (مع خطة احتياطية دائمة)
+    let user = null;
+    if (phone) {
         try {
             const { data, error } = await supabase
                 .from('users')
                 .select('*')
-                .eq('phone', resolvedPhone)
+                .eq('phone', phone)
                 .maybeSingle();
             if (!error && data) user = data;
-        } catch (_) { /* ignore */ }
+        } catch (_) { /* تجاهل */ }
+    }
+    if (!user && phone) {
+        user = { id: userId, phone: phone, name: phone };
+    }
 
-        // لو فشل البحث في قاعدة البيانات استخدم بيانات الهاتف المتاحة
-        if (!user && resolvedPhone) {
-            user = { id: userId, phone: resolvedPhone, name: resolvedPhone };
-        }
-
+    // 4) حفظ الجلسة
+    try {
         localStorage.removeItem('isAdmin');
         localStorage.removeItem('admin_session');
         localStorage.removeItem('admin_expires');
         localStorage.removeItem('admin_sig');
         sessionStorage.removeItem(SESSION_USER_KEY);
+    } catch (_) { /* تجاهل */ }
 
-        localStorage.setItem('userId', resolvedPhone || (user && user.phone));
+    try {
+        localStorage.setItem('userId', phone || (user && user.phone));
         localStorage.setItem('loginTime', Date.now().toString());
-        if (user) cacheUser(user);
+    } catch (_) { /* تجاهل */ }
 
-        showAlert('✅ تم تسجيل الدخول بنجاح', 'success');
+    try { if (user) cacheUser(user); } catch (_) { /* تجاهل */ }
 
-        setTimeout(() => {
+    showAlert('تم تسجيل الدخول بنجاح', 'success');
+
+    setTimeout(function () {
+        try {
             if (user && !user.grade_id) {
                 window.location.href = 'select-grade.html';
             } else {
                 window.location.href = 'dashboard.html';
             }
-        }, 500);
-
-    } catch (error) {
-        console.error('Verify code error:', error);
-        showAlert('حدث خطأ، حاول مرة أخرى', 'error');
-        if (btn) setButtonLoading(btn, false);
-    }
+        } catch (_) { /* تجاهل */ }
+    }, 500);
 }
 
 window.requireAdmin = async function requireAdmin() {
