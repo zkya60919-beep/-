@@ -519,12 +519,11 @@ async function handleForgotPassword(event) {
             savedLocally = true;
         }
 
-        if (savedLocally) {
-            localStorage.setItem('reset_code_' + user.id, JSON.stringify({
-                code,
-                expiresAt
-            }));
-        }
+        // Always store the code locally as a fallback (covers all RLS states)
+        localStorage.setItem('reset_code_' + user.id, JSON.stringify({
+            code,
+            expiresAt
+        }));
 
         // محاولة إرسال SMS عبر Edge Function (إذا كانت منشورة)
         try {
