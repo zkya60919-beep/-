@@ -491,6 +491,220 @@
     box-shadow: var(--shadow-md);
 }
 
+.action-btn.view {
+    background: #7C3AED;
+    color: var(--white);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 10px;
+}
+
+.action-btn.view:hover {
+    background: #6D28D9;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.clickable-row {
+    cursor: pointer;
+}
+
+.clickable-row:hover {
+    background: var(--gray-50);
+}
+
+/* Result detail modal */
+.result-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px;
+    background: var(--gray-50);
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+.result-detail-student {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.result-detail-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--primary-color, #2563EB);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.result-detail-student strong {
+    display: block;
+    font-size: 16px;
+}
+
+.result-detail-phone {
+    font-size: 13px;
+    color: var(--gray-500);
+    direction: ltr;
+    display: inline-block;
+}
+
+.result-detail-exam {
+    font-weight: 700;
+    color: var(--primary-color, #2563EB);
+}
+
+.result-detail-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.result-stat {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 10px 12px;
+    text-align: center;
+}
+
+.result-stat .rs-label {
+    display: block;
+    font-size: 12px;
+    color: var(--gray-500);
+    margin-bottom: 4px;
+}
+
+.result-stat .rs-value {
+    display: block;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.result-stat .rs-pass { color: #10B981; }
+.result-stat .rs-fail { color: #EF4444; }
+
+.result-detail-subtitle {
+    font-size: 16px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--gray-200);
+}
+
+.result-questions-list {
+    max-height: 55vh;
+    overflow-y: auto;
+    padding-left: 4px;
+}
+
+.result-question-card {
+    border: 1px solid var(--gray-200);
+    border-right: 4px solid var(--gray-300);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    background: var(--white);
+}
+
+.result-question-card.correct { border-right-color: #10B981; }
+.result-question-card.incorrect { border-right-color: #EF4444; }
+.result-question-card.ungraded { border-right-color: #F59E0B; }
+
+.rqc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.rqc-number {
+    font-weight: 700;
+    color: var(--gray-600);
+    font-size: 14px;
+}
+
+.rqc-badge {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+.rqc-badge.correct { background: #D1FAE5; color: #059669; }
+.rqc-badge.incorrect { background: #FEE2E2; color: #DC2626; }
+.rqc-badge.ungraded { background: #FEF3C7; color: #D97706; }
+
+.rqc-text {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    line-height: 1.7;
+}
+
+.rqc-answers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.rqc-answer {
+    border-radius: 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--gray-200);
+    background: var(--gray-50);
+}
+
+.rqc-answer .rqc-label {
+    display: block;
+    font-size: 12px;
+    color: var(--gray-500);
+    margin-bottom: 3px;
+}
+
+.rqc-answer .rqc-value {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.rqc-answer.student.ok { background: #ECFDF5; border-color: #A7F3D0; }
+.rqc-answer.student.bad { background: #FEF2F2; border-color: #FECACA; }
+.rqc-answer.correct { background: #ECFDF5; border-color: #A7F3D0; }
+
+.rqc-explanation {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #FFFBEB;
+    border-radius: 8px;
+    border: 1px solid #FDE68A;
+}
+
+.rqc-explanation .rqc-label {
+    display: block;
+    font-size: 12px;
+    color: #B45309;
+    margin-bottom: 3px;
+}
+
+.rqc-explanation p {
+    margin: 0;
+    font-size: 14px;
+}
+
+@media (max-width: 600px) {
+    .rqc-answers { grid-template-columns: 1fr; }
+}
+
 .course-download-list {
     max-height: 400px;
     overflow-y: auto;

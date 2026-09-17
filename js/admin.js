@@ -2903,6 +2903,143 @@ window.viewStudent = viewStudent;
 window.deleteStudent = deleteStudent;
 window.showStudentDetail = showStudentDetail;
 window.assignGrade = assignGrade;
+function getAdminAnswerText(question, answerValue) {
+    if (answerValue === null || answerValue === undefined || answerValue === '') return 'لم يتم الإجابة';
+    if (question.question_type === 'mcq') {
+        const options = question.options || [];
+        const idx = parseInt(answerValue);
+        if (!isNaN(idx) && idx >= 0 && idx < options.length) return options[idx];
+        return String(answerValue);
+    }
+    if (question.question_type === 'true_false') {
+        return String(answerValue) === 'true' ? 'صح' : 'خطأ';
+    }
+    return String(answerValue);
+}
+
+function renderAdminQuestionCard(q, index) {
+    const isEssay = q.question_type === 'essay';
+    const isCorrect = q.is_correct;
+    let label, cls;
+    if (isEssay || isCorrect === undefined || isCorrect === null) {
+        label = 'بانتظار التصحيح';
+        cls = 'ungraded';
+    } else if (isCorrect === true) {
+        label = '✅ صحيح';
+        cls = 'correct';
+    } else {
+        label = '❌ خطأ';
+        cls = 'incorrect';
+    }
+
+    const studentAnswerText = getAdminAnswerText(q, q.student_answer);
+    const correctAnswerText = getAdminAnswerText(q, q.correct_answer);
+    const showCorrect = isCorrect === false || isEssay;
+    const explanation = q.teacher_explanation || '';
+    const studentCls = isCorrect === true ? 'ok' : (isCorrect === false ? 'bad' : '');
+
+    return `
+        <div class="result-question-card ${cls}">
+            <div class="rqc-header">
+                <span class="rqc-number">سؤال ${index + 1}</span>
+                <span class="rqc-badge ${cls}">${label}</span>
+            </div>
+            <div class="rqc-text">${escapeHtml(q.question_text || '')}</div>
+            <div class="rqc-answers">
+                <div class="rqc-answer student ${studentCls}">
+                    <span class="rqc-label">إجابة الطالب</span>
+                    <span class="rqc-value">${escapeHtml(studentAnswerText)}</span>
+                </div>
+                ${showCorrect ? `
+                <div class="rqc-answer correct">
+                    <span class="rqc-label">الإجابة الصحيحة</span>
+                    <span class="rqc-value">${escapeHtml(correctAnswerText)}</span>
+                </div>` : ''}
+            </div>
+            ${explanation ? `
+            <div class="rqc-explanation">
+                <span class="rqc-label">ملاحظة المدرس</span>
+                <p>${escapeHtml(explanation)}</p>
+            </div>` : ''}
+        </div>
+    `;
+}
+
+async function viewExamResult(resultId) {
+    const body = document.getElementById('resultDetailBody');
+    if (!body) return;
+
+    body.innerHTML = '<p class="text-center" style="padding:30px;color:var(--gray-500)">جاري التحميل...</p>';
+    openModal('resultDetailModal');
+
+    try {
+        let result;
+        try {
+            result = await db.getExamAttempt(resultId);
+        } catch (_) {
+            result = await db.getExamAttemptResultOnly(resultId);
+        }
+
+        if (!result) {
+            body.innerHTML = '<p class="text-center" style="padding:30px;color:#EF4444">لم يتم العثور على النتيجة</p>';
+            return;
+        }
+
+        const answersData = result.answers || {};
+        const questionsDetail = Array.isArray(answersData.questions_detail) ? answersData.questions_detail : [];
+
+        let correctCount = result.correct_count;
+        let wrongCount = result.wrong_count;
+        if (correctCount == null) correctCount = answersData._correct_count;
+        if (wrongCount == null) wrongCount = answersData._wrong_count;
+        if (correctCount == null && questionsDetail.length) {
+            correctCount = questionsDetail.filter(q => q.is_correct === true).length;
+            wrongCount = questionsDetail.filter(q => q.is_correct === false).length;
+        }
+        correctCount = correctCount || 0;
+        wrongCount = wrongCount || 0;
+
+        const studentName = result.users?.name || 'غير معروف';
+        const studentPhone = result.users?.phone || '-';
+        const examTitle = result.exams?.title || answersData._exam_title || 'امتحان';
+        const perc = Math.round(result.percentage || 0);
+        const passed = !!result.passed;
+        const date = result.created_at ? new Date(result.created_at).toLocaleString('ar-EG') : '-';
+        const timeTaken = result.time_taken ? formatDuration(result.time_taken) : '-';
+
+        const questionsHtml = questionsDetail.length
+            ? questionsDetail.map((q, i) => renderAdminQuestionCard(q, i)).join('')
+            : '<div class="empty-state" style="text-align:center;padding:30px"><div class="empty-icon">📝</div><h3>لا توجد تفاصيل</h3><p>تفاصيل الأسئلة غير متوفرة لهذا الامتحان</p></div>';
+
+        body.innerHTML = `
+            <div class="result-detail-header">
+                <div class="result-detail-student">
+                    <div class="result-detail-avatar">${escapeHtml(studentName).charAt(0) || '?'}</div>
+                    <div>
+                        <strong>${escapeHtml(studentName)}</strong>
+                        <span class="result-detail-phone">${escapeHtml(studentPhone)}</span>
+                    </div>
+                </div>
+                <div class="result-detail-exam">${escapeHtml(examTitle)}</div>
+            </div>
+            <div class="result-detail-stats">
+                <div class="result-stat"><span class="rs-label">الدرجة</span><span class="rs-value">${result.score || 0} / ${result.total_marks || 0}</span></div>
+                <div class="result-stat"><span class="rs-label">النسبة</span><span class="rs-value">${perc}%</span></div>
+                <div class="result-stat"><span class="rs-label">النتيجة</span><span class="rs-value ${passed ? 'rs-pass' : 'rs-fail'}">${passed ? 'ناجح' : 'راسب'}</span></div>
+                <div class="result-stat"><span class="rs-label">صحيح</span><span class="rs-value">${correctCount}</span></div>
+                <div class="result-stat"><span class="rs-label">خطأ</span><span class="rs-value">${wrongCount}</span></div>
+                <div class="result-stat"><span class="rs-label">الوقت</span><span class="rs-value">${timeTaken}</span></div>
+                <div class="result-stat"><span class="rs-label">التاريخ</span><span class="rs-value" style="font-size:13px">${date}</span></div>
+            </div>
+            <h3 class="result-detail-subtitle">إجابات الطالب (${questionsDetail.length} سؤال)</h3>
+            <div class="result-questions-list">${questionsHtml}</div>
+        `;
+    } catch (err) {
+        console.error('Error viewing exam result:', err);
+        body.innerHTML = '<p class="text-center" style="padding:30px;color:#EF4444">تعذر تحميل تفاصيل النتيجة</p>';
+    }
+}
+
 async function loadExamResults() {
     try {
         const gradeEl = document.getElementById('resultsGradeFilter');
@@ -2940,7 +3077,7 @@ async function loadExamResults() {
         const analyticsEl = document.getElementById('resultsAnalytics');
 
         if (!results.length) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center">لا توجد نتائج</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center">لا توجد نتائج</td></tr>';
             if (analyticsEl) analyticsEl.style.display = 'none';
             return;
         }
@@ -2978,7 +3115,7 @@ async function loadExamResults() {
             const date = r.created_at ? new Date(r.created_at).toLocaleDateString('ar-EG') : '-';
 
             return `
-                <tr style="cursor:pointer" onclick="window.location.href='exam-result.html?result_id=${r.id}'">
+                <tr class="clickable-row" onclick="viewExamResult(${r.id})">
                     <td><strong>${escapeHtml(studentName)}</strong></td>
                     <td>${escapeHtml(examName)}</td>
                     <td>${r.score || 0} / ${r.total_marks || 0}</td>
@@ -2986,13 +3123,18 @@ async function loadExamResults() {
                     <td>${correctCount || 0}</td>
                     <td>${wrongCount || 0}</td>
                     <td>${date}</td>
+                    <td>
+                        <button class="action-btn view" title="عرض النتيجة" onclick="event.stopPropagation(); viewExamResult(${r.id})">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </td>
                 </tr>
             `;
         }).join('');
 
     } catch (error) {
         console.error('Error loading exam results:', error);
-        document.getElementById('resultsTableBody').innerHTML = '<tr><td colspan="7" class="text-center">حدث خطأ أثناء التحميل</td></tr>';
+        document.getElementById('resultsTableBody').innerHTML = '<tr><td colspan="8" class="text-center">حدث خطأ أثناء التحميل</td></tr>';
     }
 }
 
@@ -3000,6 +3142,7 @@ window.toggleAdminMobileMenu = toggleAdminMobileMenu;
 window.closeAdminMobileMenu = closeAdminMobileMenu;
 window.debounceSearch = debounceSearch;
 window.loadExamResults = loadExamResults;
+window.viewExamResult = viewExamResult;
 window.loadPaymentRequests = loadPaymentRequests;
 window.loadPaymentSettings = loadPaymentSettings;
 window.savePaymentSettings = savePaymentSettings;
