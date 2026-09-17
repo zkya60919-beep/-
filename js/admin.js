@@ -478,6 +478,7 @@ async function loadVideos() {
                     <td>${video.is_free ? 'مجاني' : 'مدفوع'}</td>
                     <td>
                         <div class="action-buttons">
+                            <button class="action-btn download" onclick="downloadVideoById(${video.id})">تحميل</button>
                             <button class="action-btn edit" onclick="editVideo(${video.id})">تعديل</button>
                             <button class="action-btn delete" onclick="deleteVideo(${video.id})">حذف</button>
                         </div>
@@ -1997,6 +1998,7 @@ async function loadCourses() {
                     <td>${formatDate(course.created_at)}</td>
                     <td>
                         <div class="action-buttons">
+                            <button class="action-btn download" onclick="downloadCourse(${course.id})">تحميل</button>
                             <button class="action-btn edit" onclick="editCourse(${course.id})">تعديل</button>
                             <button class="action-btn delete" onclick="deleteCourse(${course.id})">حذف</button>
                             ${course.status === 'published' 
@@ -2420,6 +2422,152 @@ async function toggleCourseStatus(courseId, newStatus) {
     }
 }
 
+// ===== Download Functions (Videos & Courses) =====
+
+function getVideoDownloadUrl(video) {
+    return video.video_url || video.playback_url || video.hls_url || '';
+}
+
+function getDownloadFilename(url, baseName) {
+    const clean = String(url || '').split('?')[0].split('#')[0];
+    const extMatch = clean.match(/\.([a-z0-9]{2,5})$/i);
+    const ext = extMatch ? extMatch[1].toLowerCase() : 'mp4';
+    const base = String(baseName || 'video').trim() || 'video';
+    return `${base}.${ext}`;
+}
+
+async function downloadFile(url, filename) {
+    let targetUrl = url;
+    if (typeof getFileProxyUrl === 'function') {
+        targetUrl = getFileProxyUrl(url);
+    }
+    try {
+        const res = await fetch(targetUrl);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const blob = await res.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objectUrl;
+        a.download = filename || getDownloadFilename(url, 'download');
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 2000);
+        return true;
+    } catch (err) {
+        console.error('Download error:', err);
+        window.open(url, '_blank');
+        return false;
+    }
+}
+
+async function downloadVideoById(videoId) {
+    try {
+        const video = await db.getVideo(videoId);
+        if (!video) { showAlert('الفيديو غير موجود', 'error'); return; }
+        const url = getVideoDownloadUrl(video);
+        if (!url) { showAlert('لا يوجد ملف فيديو لهذا العنصر', 'error'); return; }
+        showAlert('جاري تجهيز الفيديو للتحميل...', 'info');
+        await downloadFile(url, getDownloadFilename(url, video.title || 'video'));
+    } catch (err) {
+        console.error('Error downloading video:', err);
+        showAlert('تعذر تحميل الفيديو: ' + (err.message || err), 'error');
+    }
+}
+
+let _courseDownloadId = null;
+
+async function downloadCourse(courseId) {
+    try {
+        const { data: course, error } = await supabase
+            .from('courses')
+            .select('*, course_videos(*)')
+            .eq('id', courseId)
+            .single();
+        if (error) throw error;
+        if (!course) { showAlert('الكورس غير موجود', 'error'); return; }
+
+        _courseDownloadId = course.id;
+        document.getElementById('courseDownloadTitle').textContent = course.title || 'كورس';
+
+        const list = document.getElementById('courseDownloadList');
+        const videos = course.course_videos || [];
+        if (!videos.length) {
+            list.innerHTML = '<p class="text-center" style="padding:30px;color:var(--gray-500)">لا توجد فيديوهات في هذا الكورس</p>';
+        } else {
+            list.innerHTML = videos.map((v, i) => {
+                const url = getVideoDownloadUrl(v);
+                const btn = url
+                    ? `<button class="btn btn-outline btn-sm" onclick="downloadSingleCourseVideo(${v.id})">⬇ تحميل</button>`
+                    : '<span style="color:var(--gray-500);font-size:13px">لا يوجد رابط</span>';
+                return `
+                    <div class="sub-item" style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;margin-bottom:8px;margin-top:8px;background:var(--gray-50);border-radius:10px;border:1px solid var(--gray-200)">
+                        <div style="min-width:0">
+                            <strong>${i + 1}. ${escapeHtml(v.title || 'فيديو')}</strong>
+                            ${v.duration ? `<span style="font-size:12px;color:var(--gray-500);margin-right:8px">${formatDuration(v.duration)}</span>` : ''}
+                        </div>
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0">${btn}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        openModal('courseDownloadModal');
+    } catch (err) {
+        console.error('Error loading course for download:', err);
+        showAlert('تعذر تحميل بيانات الكورس', 'error');
+    }
+}
+
+async function downloadSingleCourseVideo(videoId) {
+    try {
+        const { data: v, error } = await supabase.from('course_videos').select('*').eq('id', videoId).single();
+        if (error || !v) throw error || new Error('غير موجود');
+        const url = getVideoDownloadUrl(v);
+        if (!url) { showAlert('لا يوجد رابط لهذا الفيديو', 'error'); return; }
+        await downloadFile(url, getDownloadFilename(url, v.title || 'video'));
+    } catch (err) {
+        console.error('Error downloading course video:', err);
+        showAlert('تعذر تحميل الفيديو', 'error');
+    }
+}
+
+async function downloadAllCourseVideos() {
+    if (!_courseDownloadId) return;
+    const btn = document.getElementById('downloadAllBtn');
+    try {
+        const { data: course, error } = await supabase
+            .from('courses')
+            .select('*, course_videos(*)')
+            .eq('id', _courseDownloadId)
+            .single();
+        if (error) throw error;
+        const videos = (course.course_videos || []).filter(v => getVideoDownloadUrl(v));
+        if (!videos.length) { showAlert('لا توجد فيديوهات قابلة للتحميل', 'error'); return; }
+
+        btn.disabled = true;
+        btn.textContent = 'جاري التحميل...';
+        showAlert(`سيتم تحميل ${videos.length} فيديو — امنح المتصفح إذن التحميل المتعدد إذا طُلب`, 'info');
+
+        for (let i = 0; i < videos.length; i++) {
+            const v = videos[i];
+            const url = getVideoDownloadUrl(v);
+            btn.textContent = `جاري التحميل ${i + 1}/${videos.length}...`;
+            await downloadFile(url, getDownloadFilename(url, v.title || ('video-' + (i + 1))));
+            await new Promise(r => setTimeout(r, 1000));
+        }
+
+        btn.disabled = false;
+        btn.textContent = '⬇ تحميل الكل';
+        showAlert('تم بدء تحميل جميع الفيديوهات', 'success');
+    } catch (err) {
+        console.error('Error downloading all course videos:', err);
+        btn.disabled = false;
+        btn.textContent = '⬇ تحميل الكل';
+        showAlert('حدث خطأ أثناء التحميل', 'error');
+    }
+}
+
 // Helper functions
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
@@ -2454,6 +2602,11 @@ window.loadGrades = loadGrades;
 window.loadProjects = loadProjects;
 window.loadCourses = loadCourses;
 window.editVideo = editVideo;
+window.downloadVideoById = downloadVideoById;
+window.downloadCourse = downloadCourse;
+window.downloadSingleCourseVideo = downloadSingleCourseVideo;
+window.downloadAllCourseVideos = downloadAllCourseVideos;
+window.downloadFile = downloadFile;
 window.editProduct = editProduct;
 // --- Payment Requests ---
 let paymentReqSearchTimeout;

@@ -480,6 +480,22 @@
     box-shadow: var(--shadow-md);
 }
 
+.action-btn.download {
+    background: #2563EB;
+    color: var(--white);
+}
+
+.action-btn.download:hover {
+    background: #1D4ED8;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.course-download-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
 /* Settings */
 .settings-container {
     background: var(--white);

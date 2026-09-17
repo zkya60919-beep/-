@@ -992,6 +992,21 @@
         </div>
     </div>
 
+    <!-- Course Download Modal -->
+    <div class="modal" id="courseDownloadModal">
+        <div class="modal-content modal-lg">
+            <span class="close-modal" onclick="closeModal('courseDownloadModal')">&times;</span>
+            <h2 class="modal-title">تحميل الكورس</h2>
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+                <span id="courseDownloadTitle" style="font-weight:700;font-size:16px"></span>
+                <button type="button" class="btn btn-primary btn-sm" id="downloadAllBtn" onclick="downloadAllCourseVideos()">⬇ تحميل الكل</button>
+            </div>
+            <div id="courseDownloadList" class="course-download-list">
+                <p class="text-center" style="padding:30px;color:var(--gray-500)">جاري التحميل...</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Payment Requests Section -->
     <section id="admin-payment-requests" class="admin-section">
         <div class="section-header">
