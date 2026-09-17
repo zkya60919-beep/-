@@ -74,6 +74,13 @@
     <script src="js/main.js?v=3"></script>
     <script>
         let qIndex = 0;
+        const editExamId = new URLSearchParams(location.search).get('edit');
+        const isEditMode = !!editExamId;
+
+        function esc(value) {
+            return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
         function setUploadProgress(pct, text) {
             const fill = document.getElementById('progressFill');
             const label = document.getElementById('progressText');
@@ -86,34 +93,37 @@
             group.classList.toggle('hidden', isFree);
             if (isFree) document.getElementById('examPrice').value = '';
         }
-        function addQuestion() {
-            const id = qIndex++;
-            const html = `
+        function questionBlockHTML(id, q) {
+            q = q || {};
+            const isMCQ = q.question_type !== 'true_false';
+            const opts = isMCQ ? (Array.isArray(q.options) && q.options.length ? q.options : ['', '', '', '']) : [];
+            const answer = q.correct_answer != null ? String(q.correct_answer) : '';
+            return `
                 <div class="question-block" data-qid="${id}">
                     <div class="form-group">
                         <label>نص السؤال</label>
-                        <input type="text" class="q-text" required>
+                        <input type="text" class="q-text" value="${esc(q.question_text)}" required>
                     </div>
                     <div class="form-group">
                         <label>النوع</label>
                         <select class="q-type" onchange="toggleOptions(this)">
-                            <option value="mcq">اختيار من متعدد</option>
-                            <option value="true_false">صح / خطأ</option>
+                            <option value="mcq"${isMCQ ? ' selected' : ''}>اختيار من متعدد</option>
+                            <option value="true_false"${!isMCQ ? ' selected' : ''}>صح / خطأ</option>
                         </select>
                     </div>
-                    <div class="q-options">
-                        <input type="text" class="opt" placeholder="خيار 1">
-                        <input type="text" class="opt" placeholder="خيار 2">
-                        <input type="text" class="opt" placeholder="خيار 3">
-                        <input type="text" class="opt" placeholder="خيار 4">
+                    <div class="q-options"${isMCQ ? '' : ' style="display:none"'}>
+                        ${opts.map((o, i) => `<input type="text" class="opt" placeholder="خيار ${i + 1}" value="${esc(o)}">`).join('')}
                     </div>
                     <div class="form-group">
                         <label>الإجابة الصحيحة (رقم الخيار 0-3 أو true/false)</label>
-                        <input type="text" class="q-answer" required>
+                        <input type="text" class="q-answer" value="${esc(answer)}" required>
                     </div>
                     <button type="button" class="btn btn-outline btn-sm" onclick="this.closest('.question-block').remove()">حذف</button>
                 </div>`;
-            document.getElementById('questionsContainer').insertAdjacentHTML('beforeend', html);
+        }
+        function addQuestion() {
+            const id = qIndex++;
+            document.getElementById('questionsContainer').insertAdjacentHTML('beforeend', questionBlockHTML(id, null));
         }
         function toggleOptions(sel) {
             const block = sel.closest('.question-block');
@@ -123,7 +133,6 @@
         document.addEventListener('DOMContentLoaded', async () => {
             if (!await requireAdmin()) return;
             toggleExamPrice();
-            addQuestion();
             const grades = await db.getGrades();
             const g = document.getElementById('examGrade');
             g.innerHTML = grades.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
@@ -140,6 +149,51 @@
                 const preview = document.getElementById('examFilePreview');
                 if (file && preview) preview.innerHTML = `<div style="padding:8px;border:1px solid #eee;border-radius:6px;">${file.name} - ${(file.size/1024/1024).toFixed(2)} م.ب</div>`;
             });
+
+            if (isEditMode) {
+                try {
+                    const exam = await db.getExam(parseInt(editExamId, 10));
+                    if (!exam) throw new Error('الامتحان غير موجود');
+
+                    document.title = 'تعديل امتحان - منصة الباسط';
+                    const badge = document.querySelector('.admin-badge');
+                    if (badge) badge.textContent = 'تعديل امتحان';
+                    const title = document.querySelector('.form-page-title');
+                    if (title) title.textContent = 'تعديل امتحان';
+                    const submitBtn = document.querySelector('#examForm button[type="submit"]');
+                    if (submitBtn) submitBtn.textContent = 'حفظ التعديلات';
+
+                    g.value = exam.grade_id || '';
+                    await months();
+                    document.getElementById('examMonth').value = exam.month_id || '';
+                    document.getElementById('examTitle').value = exam.title || '';
+                    document.getElementById('examDuration').value = exam.duration || 30;
+                    document.getElementById('examFree').checked = !!exam.is_free;
+                    toggleExamPrice();
+                    if (!exam.is_free && exam.price) document.getElementById('examPrice').value = exam.price;
+
+                    if (exam.file_url) {
+                        const preview = document.getElementById('examFilePreview');
+                        if (preview) preview.innerHTML = `<div style="padding:8px;border:1px solid #eee;border-radius:6px;">ملف حالي: <a href="${esc(exam.file_url)}" target="_blank">${esc(exam.file_url.split('/').pop())}</a> — اختَر ملفاً جديداً لاستبداله (اختياري)</div>`;
+                    }
+
+                    const container = document.getElementById('questionsContainer');
+                    container.innerHTML = '';
+                    if (exam.exam_questions && exam.exam_questions.length) {
+                        exam.exam_questions.forEach(q => {
+                            container.insertAdjacentHTML('beforeend', questionBlockHTML(qIndex++, q));
+                        });
+                    } else {
+                        addQuestion();
+                    }
+                } catch (err) {
+                    console.error('Error loading exam for edit:', err);
+                    showAlert('تعذر تحميل بيانات الامتحان', 'error');
+                    addQuestion();
+                }
+            } else {
+                addQuestion();
+            }
 
             document.getElementById('examForm').onsubmit = async (e) => {
                 e.preventDefault();
@@ -178,18 +232,24 @@
                 }
 
                 try {
-                    const exam = await db.createExam({
+                    const examData = {
                         grade_id: parseInt(g.value),
                         month_id: parseInt(document.getElementById('examMonth').value),
                         title: document.getElementById('examTitle').value,
                         duration: parseInt(document.getElementById('examDuration').value),
                         is_free: isFree
-                    });
+                    };
+                    let exam;
+                    if (isEditMode) {
+                        exam = await db.updateExam(parseInt(editExamId, 10), examData);
+                    } else {
+                        exam = await db.createExam(examData);
+                    }
                     if (fileUrl) {
                         try { await db.updateExam(exam.id, { file_url: fileUrl }); } catch (e) { console.warn('file_url column not available:', e.message); }
                     }
                     await db.saveExamQuestions(exam.id, questions);
-                    showAlert('تم حفظ الامتحان', 'success');
+                    showAlert(isEditMode ? 'تم تحديث الامتحان' : 'تم حفظ الامتحان', 'success');
                     setTimeout(() => location.href = 'admin.html', 1000);
                 } catch (err) { console.error('Exam save error:', err); showAlert('خطأ: ' + (err.message || 'حدث خطأ'), 'error'); }
             };

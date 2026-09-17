@@ -3,11 +3,16 @@
 let thumbFile = null;
 let videoFile = null;
 
+const editParams = new URLSearchParams(window.location.search);
+const editVideoId = editParams.get('edit');
+const isEditMode = !!editVideoId;
+
 onDOMReady(async () => {
     if (!await requireAdmin()) return;
     bindFilePickers();
     bindActions();
     await loadGradesAndMonths();
+    if (isEditMode) await loadVideoForEdit();
 });
 
 function bindActions() {
@@ -94,14 +99,58 @@ async function loadMonthsForGrade() {
     document.getElementById('videoMonth').innerHTML = months.map((m) => `<option value="${m.id}">${m.name}</option>`).join('');
 }
 
+async function loadVideoForEdit() {
+    try {
+        const video = await db.getVideo(parseInt(editVideoId, 10));
+        if (!video) throw new Error('الفيديو غير موجود');
+
+        // Update page chrome to edit mode
+        document.title = 'تعديل فيديو - لوحة المدرس';
+        const badge = document.querySelector('.admin-badge');
+        if (badge) badge.textContent = 'تعديل فيديو';
+        const title = document.querySelector('.form-page-title');
+        if (title) title.textContent = 'تعديل فيديو';
+        document.getElementById('submitBtn').textContent = 'حفظ التعديلات';
+
+        // Reveal thumbnail + pricing groups in edit mode
+        const thumbGroup = document.querySelector('.media-upload-grid .form-group');
+        if (thumbGroup) thumbGroup.style.display = 'block';
+        const pricingGroup = document.querySelector('.pricing-group');
+        if (pricingGroup) pricingGroup.style.display = 'block';
+
+        // Fill fields
+        document.getElementById('videoGrade').value = video.grade_id || '';
+        await loadMonthsForGrade();
+        document.getElementById('videoMonth').value = video.month_id || '';
+        document.getElementById('videoTitle').value = video.title || '';
+        document.getElementById('videoDescription').value = video.description || '';
+        document.getElementById('videoFree').checked = !!video.is_free;
+
+        if (video.thumbnail) {
+            const preview = document.getElementById('thumbPreview');
+            preview.src = video.thumbnail;
+            preview.style.display = 'block';
+            const tb = document.getElementById('thumbBadge');
+            tb.textContent = `✓ ${video.thumbnail.split('/').pop().slice(-30)}`;
+            tb.style.display = 'inline-flex';
+        }
+
+        const vb = document.getElementById('videoBadge');
+        vb.textContent = '✓ الفيديو الحالي محفوظ — اختر ملف جديد لاستبداله (اختياري)';
+        vb.style.display = 'inline-flex';
+    } catch (err) {
+        console.error('Error loading video for edit:', err);
+        showAlert('تعذر تحميل بيانات الفيديو', 'error');
+    }
+}
+
 async function handleSubmit(e) {
     e.preventDefault();
-    if (!videoFile) {
+    if (!isEditMode && !videoFile) {
         showAlert('اختر ملف فيديو أولاً', 'error');
         return;
     }
-    // Pre-check file size
-    if (videoFile.size > 500 * 1024 * 1024) {
+    if (videoFile && videoFile.size > 500 * 1024 * 1024) {
         showAlert(`حجم الفيديو (${formatBytes(videoFile.size)}) يتجاوز الحد المسموح (500 م.ب)`);
         return;
     }
@@ -113,35 +162,60 @@ async function handleSubmit(e) {
     document.getElementById('retryBtn').style.display = 'none';
 
     try {
-        const [videoResult, thumbResult] = await Promise.all([
-            uploadVideo(videoFile, 'monthly-videos', (pct) => {
+        let videoResult = null;
+        let thumbResult = null;
+
+        if (videoFile) {
+            videoResult = await uploadVideo(videoFile, 'monthly-videos', (pct) => {
                 setStatus(`رفع الفيديو ${pct}%`, pct);
                 document.getElementById('uploadPercentage').textContent = `${pct}%`;
                 document.getElementById('uploadProgressBarFill').style.width = `${pct}%`;
-            }),
-            thumbFile ? uploadImage(thumbFile, 'thumbnails') : Promise.resolve(null)
-        ]);
+            });
+        }
+        if (thumbFile) {
+            thumbResult = await uploadImage(thumbFile, 'thumbnails', (pct) => {
+                setStatus(`رفع الصورة ${pct}%`, pct);
+                document.getElementById('uploadPercentage').textContent = `${pct}%`;
+                document.getElementById('uploadProgressBarFill').style.width = `${pct}%`;
+            });
+        }
 
         const thumbnailUrl = thumbResult?.secure_url || null;
+        const videoUrl = videoResult?.secure_url || null;
 
-        setStatus('حفظ البيانات في Supabase...', 98);
-        await db.createVideo({
+        const payload = {
             grade_id: parseInt(document.getElementById('videoGrade').value, 10),
             month_id: parseInt(document.getElementById('videoMonth').value, 10),
             title: document.getElementById('videoTitle').value.trim(),
             description: document.getElementById('videoDescription').value.trim(),
-            video_url: videoResult.secure_url,
-            playback_url: videoResult.secure_url,
-            thumbnail: thumbnailUrl,
             is_free: document.getElementById('videoFree').checked
-        });
+        };
+
+        if (thumbnailUrl) payload.thumbnail = thumbnailUrl;
+
+        setStatus('حفظ البيانات في Supabase...', 98);
+        if (isEditMode) {
+            if (videoUrl) {
+                payload.video_url = videoUrl;
+                payload.playback_url = videoUrl;
+                payload.hls_url = null;
+                payload.cloudinary_public_id = null;
+            }
+            await db.updateVideo(parseInt(editVideoId, 10), payload);
+        } else {
+            if (!videoUrl) throw new Error('لم يتم رفع ملف الفيديو');
+            payload.video_url = videoUrl;
+            payload.playback_url = videoUrl;
+            payload.thumbnail = thumbnailUrl;
+            await db.createVideo(payload);
+        }
 
         setStatus('تم بنجاح', 100);
-        showAlert('تم رفع الفيديو وحفظه بنجاح', 'success');
+        showAlert(isEditMode ? 'تم تحديث الفيديو بنجاح' : 'تم رفع الفيديو وحفظه بنجاح', 'success');
         setTimeout(() => { window.location.href = 'admin.html'; }, 1000);
     } catch (err) {
         console.error(err);
-        showAlert(err.message || 'فشل رفع الفيديو', 'error');
+        showAlert(err.message || 'فشل حفظ الفيديو', 'error');
         document.getElementById('retryBtn').style.display = 'inline-flex';
         setButtonLoading(submitBtn, false);
     }
@@ -156,7 +230,7 @@ function setStatus(text, percent) {
 
 function setButtonLoading(btn, loading) {
     btn.disabled = loading;
-    btn.textContent = loading ? 'جارٍ رفع الفيديو...' : 'رفع وحفظ الفيديو';
+    btn.textContent = loading ? 'جارٍ رفع الفيديو...' : (isEditMode ? 'حفظ التعديلات' : 'رفع وحفظ الفيديو');
 }
 
 function formatBytes(bytes) {
